@@ -110,5 +110,5 @@ def doInstall(String label, String buildType) {
     cd ${buildType}/build
     make install
   """
-  archiveArtifacts artifacts: "${buildType}/install-${label}-${buildType}/*", onlyIfSuccessful: true
+  archiveArtifacts artifacts: "${buildType}/install-${label}-${buildType}/**/*", onlyIfSuccessful: true
 }
