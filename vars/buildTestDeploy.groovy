@@ -1,7 +1,14 @@
-def call() {
+def call(ArrayList<String> dependencyList) {
   pipeline {
     agent none
     stages {
+      stage('obtainArtefacts') {
+        steps {
+          dependencyList.each {
+            copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+          }
+        }
+      }
       stage('build') {
         parallel {
           stage('build Ubuntu 16.04 Release') {
