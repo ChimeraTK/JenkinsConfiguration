@@ -85,7 +85,7 @@ def doTest(String label, String buildType) {
     ctest --no-compress-output -T Test
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: '${buildType}/build/Testing/*/*.xml') ])
+         tools: [ CTest(pattern: "${buildType}/build/Testing/*/*.xml") ])
 }
 
 def doCoverage(String label, String buildType) {
