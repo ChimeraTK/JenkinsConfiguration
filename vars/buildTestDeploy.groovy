@@ -94,12 +94,12 @@ def doCoverage(String label, String buildType) {
     make coverage
     /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
   """
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '${buildType}/build/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "${buildType}/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   publishHTML (target: [
       allowMissing: false,
       alwaysLinkToLastBuild: false,
       keepAll: false,
-      reportDir: '${buildType}/build/coverage_html',
+      reportDir: "${buildType}/build/coverage_html",
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
@@ -110,5 +110,5 @@ def doInstall(String label, String buildType) {
     cd ${buildType}/build
     make install
   """
-  archiveArtifacts artifacts: '${buildType}/install-${label}-${buildType}/*', onlyIfSuccessful: true
+  archiveArtifacts artifacts: "${buildType}/install-${label}-${buildType}/*", onlyIfSuccessful: true
 }
