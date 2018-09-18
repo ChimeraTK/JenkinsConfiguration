@@ -24,10 +24,10 @@ def call() {
 
 def doBuild() {
   echo "HERE doBuild()"
-  sh '
+  sh '''
     mkdir build
     cd build
     cmake ..
     make
-  '
+  '''
 }
