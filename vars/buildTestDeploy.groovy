@@ -4,8 +4,10 @@ def call(ArrayList<String> dependencyList) {
     stages {
       stage('obtainArtefacts') {
         steps {
-          dependencyList.each {
-            copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+          script {
+            dependencyList.each {
+              copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+            }
           }
         }
       }
