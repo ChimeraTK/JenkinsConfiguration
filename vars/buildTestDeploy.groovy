@@ -59,7 +59,7 @@ def doAllDebug() {
   doCoverage()
 }
 
-def doBuild(string buildType) {
+def doBuild(String buildType) {
   echo "HERE doBuild()"
   sh """
     rm -rf build
