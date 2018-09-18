@@ -1,6 +1,6 @@
-def call(String param) {
+def call(String label) {
   pipeline {
-    agent { label 'Ubuntu1604' }
+    agent { label ${label} }
     stages {
       stage('build') {
         steps {
