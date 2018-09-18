@@ -43,7 +43,7 @@ def doStaticAnalysis() {
   echo "HERE doStaticAnalysis()"
   sh """
     cd build
-    cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml
+    cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml .
   """
 }
 def doTest() {
