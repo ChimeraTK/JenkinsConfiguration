@@ -29,13 +29,13 @@ def call() {
             }
           }
           stage('build SUSE Tumbeweed Release') {
-            agent { label "SUSEtumbeweed" }
+            agent { label "SUSEtumbleweed" }
             steps {
               doAllRelease()
             }
           }
           stage('build SUSE Tumbeweed Debug') {
-            agent { label "SUSEtumbeweed" }
+            agent { label "SUSEtumbleweed" }
             steps {
               doAllDebug()
             }
