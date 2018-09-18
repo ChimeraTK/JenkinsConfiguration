@@ -55,5 +55,5 @@ def doTest() {
   """
   sh "cat build/Testing/*/Test.xml"
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: 'build/Testing/*/*.xml') ]))
+         tools: [ CTest(pattern: 'build/Testing/*/*.xml') ])
 }
