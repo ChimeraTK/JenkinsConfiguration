@@ -1,10 +1,21 @@
-def call(String TargetType) {
+def call() {
   pipeline {
-    agent { label "${TargetType}" }
+    agent none
     stages {
       stage('build') {
-        steps {
-          doBuild()
+        parallel {
+          stage('build Ubuntu 16.04') {
+            agent { label "Ubuntu1604" }
+            steps {
+              doBuild()
+            }
+          }
+          stage('build Ubuntu 18.04') {
+            agent { label "Ubuntu1804" }
+            steps {
+              doBuild()
+            }
+          }
         }
       }
     }
