@@ -82,7 +82,7 @@ def doStaticAnalysis(String label, String buildType) {
 def doTest(String label, String buildType) {
   sh """
     cd ${buildType}/build
-    ctest --no-compress-output -T Test_${label}_${buildType}
+    ctest --no-compress-output -T Test
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
          tools: [ CTest(pattern: '${buildType}/build/Testing/*/*.xml') ])
