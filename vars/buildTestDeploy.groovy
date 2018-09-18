@@ -67,7 +67,7 @@ def doBuild(String label, String buildType) {
     mkdir -p ${buildType}/build
     mkdir -p ${buildType}/install-${label}-${buildType}
     cd ${buildType}/build
-    cmake .. -DCMAKE_INSTALL_PREFIX=../install-${label}-${buildType} -DCMAKE_BUILD_TYPE=${buildType}
+    cmake ../.. -DCMAKE_INSTALL_PREFIX=../install-${label}-${buildType} -DCMAKE_BUILD_TYPE=${buildType}
     make $MAKEOPTS
   """
 }
