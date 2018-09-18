@@ -7,37 +7,37 @@ def call() {
           stage('build Ubuntu 16.04 Release') {
             agent { label "Ubuntu1604" }
             steps {
-              doAllRelease()
+              doAllRelease("Ubuntu1604")
             }
           }
           stage('build Ubuntu 16.04 Debug') {
             agent { label "Ubuntu1604" }
             steps {
-              doAllDebug()
+              doAllDebug("Ubuntu1604")
             }
           }
           stage('build Ubuntu 18.04 Release') {
             agent { label "Ubuntu1804" }
             steps {
-              doAllRelease()
+              doAllRelease("Ubuntu1804")
             }
           }
           stage('build Ubuntu 18.04 Debug') {
             agent { label "Ubuntu1804" }
             steps {
-              doAllDebug()
+              doAllDebug("Ubuntu1804")
             }
           }
           stage('build SUSE Tumbeweed Release') {
             agent { label "SUSEtumbleweed" }
             steps {
-              doAllRelease()
+              doAllRelease("SUSEtumbleweed")
             }
           }
           stage('build SUSE Tumbeweed Debug') {
             agent { label "SUSEtumbleweed" }
             steps {
-              doAllDebug()
+              doAllDebug("SUSEtumbleweed")
             }
           }
         }
@@ -46,49 +46,49 @@ def call() {
   }
 }
 
-def doAllRelease() {
-  doBuild("Release")
-  doStaticAnalysis("Release")
-  doTest("Release")
-  doInstall("Release")
+def doAllRelease(String label) {
+  doBuild(label,"Release")
+  doStaticAnalysis(label,"Release")
+  doTest(label,"Release")
+  doInstall(label,"Release")
 }
 
-def doAllDebug() {
-  doBuild("Debug")
-  doStaticAnalysis("Debug")
-  doTest("Debug")
-  doCoverage("Debug")
-  doInstall("Debug")
+def doAllDebug(String label) {
+  doBuild(label,"Debug")
+  doStaticAnalysis(label,"Debug")
+  doTest(label,"Debug")
+  doCoverage(label,"Debug")
+  doInstall(label,"Debug")
 }
 
-def doBuild(String buildType) {
+def doBuild(String label, String buildType) {
   sh """
     rm -rf ${buildType}
     mkdir -p ${buildType}/build
-    mkdir -p ${buildType}/install
+    mkdir -p ${buildType}/install-${label}-${buildType}
     cd ${buildType}/build
-    cmake .. -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=${buildType}
+    cmake .. -DCMAKE_INSTALL_PREFIX=../install-${label}-${buildType} -DCMAKE_BUILD_TYPE=${buildType}
     make $MAKEOPTS
   """
 }
 
-def doStaticAnalysis(String buildType) {
+def doStaticAnalysis(String label, String buildType) {
   sh """
     cd ${buildType}/build
     cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml .
   """
 }
 
-def doTest(String buildType) {
+def doTest(String label, String buildType) {
   sh """
     cd ${buildType}/build
-    ctest --no-compress-output -T Test
+    ctest --no-compress-output -T Test_${label}_${buildType}
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
          tools: [ CTest(pattern: '${buildType}/build/Testing/*/*.xml') ])
 }
 
-def doCoverage(String buildType) {
+def doCoverage(String label, String buildType) {
   sh """
     cd ${buildType}/build
     make coverage
@@ -101,14 +101,14 @@ def doCoverage(String buildType) {
       keepAll: false,
       reportDir: '${buildType}/build/coverage_html',
       reportFiles: 'index.html',
-      reportName: "LCOV coverage report"
+      reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
 }
 
-def doInstall(String buildType) {
+def doInstall(String label, String buildType) {
   sh """
     cd ${buildType}/build
     make install
   """
-  archiveArtifacts artifacts: '${buildType}/install/*', onlyIfSuccessful: true
+  archiveArtifacts artifacts: '${buildType}/install-${label}-${buildType}/*', onlyIfSuccessful: true
 }
