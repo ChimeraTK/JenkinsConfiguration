@@ -48,56 +48,67 @@ def call() {
 
 def doAllRelease() {
   doBuild("Release")
-  doStaticAnalysis()
-  doTest()
+  doStaticAnalysis("Release")
+  doTest("Release")
+  doInstall("Release")
 }
 
 def doAllDebug() {
   doBuild("Debug")
-  doStaticAnalysis()
-  doTest()
-  doCoverage()
+  doStaticAnalysis("Debug")
+  doTest("Debug")
+  doCoverage("Debug")
+  doInstall("Debug")
 }
 
 def doBuild(String buildType) {
   sh """
-    rm -rf build
-    mkdir build
-    cd build
-    cmake .. -DCMAKE_BUILD_TYPE=${buildType}
+    rm -rf ${buildType}
+    mkdir -p ${buildType}/build
+    mkdir -p ${buildType}/install
+    cd ${buildType}/build
+    cmake .. -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=${buildType}
     make $MAKEOPTS
   """
 }
 
-def doStaticAnalysis() {
+def doStaticAnalysis(String buildType) {
   sh """
-    cd build
+    cd ${buildType}/build
     cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml .
   """
 }
 
-def doTest() {
+def doTest(String buildType) {
   sh """
-    cd build
+    cd ${buildType}/build
     ctest --no-compress-output -T Test
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: 'build/Testing/*/*.xml') ])
+         tools: [ CTest(pattern: '${buildType}/build/Testing/*/*.xml') ])
 }
 
-def doCoverage() {
+def doCoverage(String buildType) {
   sh """
-    cd build
+    cd ${buildType}/build
     make coverage
     /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
   """
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'build/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '${buildType}/build/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   publishHTML (target: [
       allowMissing: false,
       alwaysLinkToLastBuild: false,
       keepAll: false,
-      reportDir: 'build/coverage_html',
+      reportDir: '${buildType}/build/coverage_html',
       reportFiles: 'index.html',
       reportName: "LCOV coverage report"
   ])  
+}
+
+def doInstall(String buildType) {
+  sh """
+    cd ${buildType}/build
+    make install
+  """
+  archiveArtifacts artifacts: '${buildType}/install/*', onlyIfSuccessful: true
 }
