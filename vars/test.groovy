@@ -1,3 +1,7 @@
 def call(String param) {
-  echo "Hallo hier myTest param = ${param}"
+    stage('build') {
+      steps {
+        echo "Hallo hier myTest param = ${param}"
+      }
+    }
 }
