@@ -1,3 +1,3 @@
-def myTest() {
-  echo "Hallo hier myTest"
+def call(String param) {
+  echo "Hallo hier myTest param = ${param}"
 }
