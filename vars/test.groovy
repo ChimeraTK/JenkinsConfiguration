@@ -1,3 +1,12 @@
 def call(String param) {
-    echo "Hallo hier myTest param = ${param}"
+pipeline {
+  agent any
+  stages {
+    stage('build') {
+      steps {
+        echo "Hallo hier myTest param = ${param}"
+      }
+    }
+  }
+}
 }
