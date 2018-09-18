@@ -60,7 +60,6 @@ def doAllDebug() {
 }
 
 def doBuild(String buildType) {
-  echo "HERE doBuild()"
   sh """
     rm -rf build
     mkdir build
@@ -71,7 +70,6 @@ def doBuild(String buildType) {
 }
 
 def doStaticAnalysis() {
-  echo "HERE doStaticAnalysis()"
   sh """
     cd build
     cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml .
@@ -79,7 +77,6 @@ def doStaticAnalysis() {
 }
 
 def doTest() {
-  echo "HERE doTest()"
   sh """
     cd build
     ctest --no-compress-output -T Test
@@ -89,7 +86,6 @@ def doTest() {
 }
 
 def doCoverage() {
-  echo "HERE doCoverage()"
   sh """
     cd build
     make coverage
