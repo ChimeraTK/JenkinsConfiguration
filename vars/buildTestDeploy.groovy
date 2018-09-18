@@ -46,10 +46,12 @@ def doStaticAnalysis() {
     cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml .
   """
 }
+
 def doTest() {
   echo "HERE doTest()"
   sh """
     cd build
-    ctest --no-compress-output -T Test -V
+    ctest --no-compress-output -T Test
   """
+  junit 'build/Testing/**/Test.xml'
 }
