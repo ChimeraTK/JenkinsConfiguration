@@ -1,6 +1,6 @@
 def call(String label) {
   pipeline {
-    agent { label ${label} }
+    agent { label "${label}" }
     stages {
       stage('build') {
         steps {
