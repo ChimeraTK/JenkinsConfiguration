@@ -53,5 +53,6 @@ def doTest() {
     cd build
     ctest --no-compress-output -T Test
   """
-  junit 'build/Testing/**/Test.xml'
+  sh "cat build/Testing/**/Test.xml"
+  junit "build/Testing/**/Test.xml"
 }
