@@ -53,6 +53,7 @@ def doTest() {
     cd build
     ctest --no-compress-output -T Test
   """
-  sh "cat build/Testing/**/Test.xml"
-  junit "build/Testing/**/Test.xml"
+  sh "cat build/Testing/*/Test.xml"
+  xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+         tools: [ BoostTest(pattern: 'build/Testing/*.xml') ]))
 }
