@@ -1,6 +1,6 @@
-def call(String label) {
+def call(String TargetType) {
   pipeline {
-    agent { label "${label}" }
+    agent { label "${TargetType}" }
     stages {
       stage('build') {
         steps {
