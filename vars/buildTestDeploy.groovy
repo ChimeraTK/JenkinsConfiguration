@@ -2,7 +2,28 @@ def call(ArrayList<String> dependencyList) {
   pipeline {
     agent none
     stages {
-      stage('obtainArtefacts') {
+      stage('obtain artefacts for Ubuntu 16.04') {
+        agent { label "Ubuntu1604" }
+        steps {
+          script {
+            dependencyList.each {
+              copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+            }
+          }
+        }
+      }
+      stage('obtain artefacts for Ubuntu 18.04') {
+        agent { label "Ubuntu1804" }
+        steps {
+          script {
+            dependencyList.each {
+              copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+            }
+          }
+        }
+      }
+      stage('obtain artefacts for SUSE Tumbeweed') {
+        agent { label "SUSEtumbleweed" }
         steps {
           script {
             dependencyList.each {
