@@ -7,13 +7,13 @@ def call() {
           stage('build Ubuntu 16.04') {
             agent { label "Ubuntu1604" }
             steps {
-              doBuild()
+              doEverything()
             }
           }
           stage('build Ubuntu 18.04') {
             agent { label "Ubuntu1804" }
             steps {
-              doBuild()
+              doEverything()
             }
           }
         }
@@ -22,12 +22,33 @@ def call() {
   }
 }
 
+def doEverything() {
+  doBuild()
+  doStaticAnalysis()
+  doTest()
+}
+
 def doBuild() {
   echo "HERE doBuild()"
-  sh '''
+  sh """
     mkdir build
     cd build
     cmake ..
-    make
-  '''
+    make $MAKEOPTS
+  """
+}
+
+def doStaticAnalysis() {
+  echo "HERE doStaticAnalysis()"
+  sh """
+    cd build
+    cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml
+  """
+}
+def doTest() {
+  echo "HERE doTest()"
+  sh """
+    cd build
+    ctest --no-compress-output -T Test -V
+  """
 }
