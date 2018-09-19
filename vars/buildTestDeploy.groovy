@@ -67,15 +67,6 @@ def doAllDebug(ArrayList<String> dependencyList, String label) {
   doInstall(label,"Debug")
 }
 
-def cleanUp() {
-  sh """
-    cd build/root
-    for d in dev bin lib lib64 usr etc source ; do
-      fusermount -u \$d
-    done
-  """
-}
-
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   script {
     dependencyList.each {
@@ -151,4 +142,13 @@ def doInstall(String label, String buildType) {
     tar zcf ../install-${label}-${buildType}.tgz install
   """
   archiveArtifacts artifacts: "build/install-${label}-${buildType}.tgz", onlyIfSuccessful: true
+}
+
+def cleanUp() {
+  sh """
+    cd build/root
+    for d in dev bin lib lib64 usr etc ; do
+      fusermount -u \$d
+    done
+  """
 }
