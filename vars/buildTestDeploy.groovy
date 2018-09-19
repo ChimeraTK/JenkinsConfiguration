@@ -7,42 +7,42 @@ def call(ArrayList<String> dependencyList) {
           stage('build Ubuntu 16.04 Release') {
             agent { label "Ubuntu1604" }
             steps {
-              doAllRelease("Ubuntu1604")
+              doAllRelease(dependencyList, "Ubuntu1604")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 16.04 Debug') {
             agent { label "Ubuntu1604" }
             steps {
-              doAllDebug("Ubuntu1604")
+              doAllDebug(dependencyList, "Ubuntu1604")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Release') {
             agent { label "Ubuntu1804" }
             steps {
-              doAllRelease("Ubuntu1804")
+              doAllRelease(dependencyList, "Ubuntu1804")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Debug') {
             agent { label "Ubuntu1804" }
             steps {
-              doAllDebug("Ubuntu1804")
+              doAllDebug(dependencyList, "Ubuntu1804")
             }
             post { always { cleanUp() } }
           }
           stage('build SUSE Tumbeweed Release') {
             agent { label "SUSEtumbleweed" }
             steps {
-              doAllRelease("SUSEtumbleweed")
+              doAllRelease(dependencyList, "SUSEtumbleweed")
             }
             post { always { cleanUp() } }
           }
           stage('build SUSE Tumbeweed Debug') {
             agent { label "SUSEtumbleweed" }
             steps {
-              doAllDebug("SUSEtumbleweed")
+              doAllDebug(dependencyList, "SUSEtumbleweed")
             }
             post { always { cleanUp() } }
           }
@@ -52,14 +52,14 @@ def call(ArrayList<String> dependencyList) {
   }
 }
 
-def doAllRelease(String label) {
-  doBuild(label,"Release")
+def doAllRelease(ArrayList<String> dependencyList, String label) {
+  doBuild(dependencyList, label, "Release")
   doStaticAnalysis(label,"Release")
   doTest(label,"Release")
-  doInstall(label,"Release")
+  doInstall(dependencyList, label, "Release")
 }
 
-def doAllDebug(String label) {
+def doAllDebug(ArrayList<String> dependencyList, String label) {
   doBuild(label,"Debug")
   doStaticAnalysis(label,"Debug")
   doTest(label,"Debug")
@@ -76,7 +76,7 @@ def cleanUp() {
   """
 }
 
-def doBuild(String label, String buildType) {
+def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   script {
     dependencyList.each {
       copyArtifacts filter: "build/install-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
