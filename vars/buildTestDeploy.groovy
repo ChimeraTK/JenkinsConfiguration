@@ -100,7 +100,7 @@ def doBuild(String label, String buildType) {
     ln -sfn ../.. source
     mkdir build
     mkdir install
-    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+    fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
       cmake ../source -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULES_PATH=../../artefacts/${buildType}/install-${label}-${buildType}/share/cmake-${CMAKE_VERSION}/Modules
       make $MAKEOPTS
@@ -117,7 +117,7 @@ def doStaticAnalysis(String label, String buildType) {
 def doTest(String label, String buildType) {
   sh """
     cd build/root-${label}-${buildType}
-    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+    fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
       ctest --no-compress-output -T Test
 ....ENDCHROOT
@@ -129,7 +129,7 @@ def doTest(String label, String buildType) {
 def doCoverage(String label, String buildType) {
   sh """
     cd build/root-${label}-${buildType}
-    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+    fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
       make coverage
 ....ENDCHROOT
@@ -150,7 +150,7 @@ def doCoverage(String label, String buildType) {
 def doInstall(String label, String buildType) {
   sh """
     cd build/root-${label}-${buildType}
-    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+    fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
       make install
 ....ENDCHROOT
