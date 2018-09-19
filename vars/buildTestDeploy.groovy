@@ -2,32 +2,36 @@ def call(ArrayList<String> dependencyList) {
   pipeline {
     agent none
     stages {
-      stage('obtain artefacts for Ubuntu 16.04') {
-        agent { label "Ubuntu1604" }
-        steps {
-          script {
-            dependencyList.each {
-              copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+      stage('obtain artefacts') {
+        parallel {
+          stage('obtain artefacts for Ubuntu 16.04') {
+            agent { label "Ubuntu1604" }
+            steps {
+              script {
+                dependencyList.each {
+                  copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+                }
+              }
             }
           }
-        }
-      }
-      stage('obtain artefacts for Ubuntu 18.04') {
-        agent { label "Ubuntu1804" }
-        steps {
-          script {
-            dependencyList.each {
-              copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+          stage('obtain artefacts for Ubuntu 18.04') {
+            agent { label "Ubuntu1804" }
+            steps {
+              script {
+                dependencyList.each {
+                  copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+                }
+              }
             }
           }
-        }
-      }
-      stage('obtain artefacts for SUSE Tumbeweed') {
-        agent { label "SUSEtumbleweed" }
-        steps {
-          script {
-            dependencyList.each {
-              copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+          stage('obtain artefacts for SUSE Tumbeweed') {
+            agent { label "SUSEtumbleweed" }
+            steps {
+              script {
+                dependencyList.each {
+                  copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+                }
+              }
             }
           }
         }
@@ -39,11 +43,17 @@ def call(ArrayList<String> dependencyList) {
             steps {
               doAllRelease("Ubuntu1604")
             }
+            post always {
+              cleanUp()
+            }
           }
           stage('build Ubuntu 16.04 Debug') {
             agent { label "Ubuntu1604" }
             steps {
               doAllDebug("Ubuntu1604")
+            }
+            post always {
+              cleanUp()
             }
           }
           stage('build Ubuntu 18.04 Release') {
@@ -51,11 +61,17 @@ def call(ArrayList<String> dependencyList) {
             steps {
               doAllRelease("Ubuntu1804")
             }
+            post always {
+              cleanUp()
+            }
           }
           stage('build Ubuntu 18.04 Debug') {
             agent { label "Ubuntu1804" }
             steps {
               doAllDebug("Ubuntu1804")
+            }
+            post always {
+              cleanUp()
             }
           }
           stage('build SUSE Tumbeweed Release') {
@@ -63,11 +79,17 @@ def call(ArrayList<String> dependencyList) {
             steps {
               doAllRelease("SUSEtumbleweed")
             }
+            post always {
+              cleanUp()
+            }
           }
           stage('build SUSE Tumbeweed Debug') {
             agent { label "SUSEtumbleweed" }
             steps {
               doAllDebug("SUSEtumbleweed")
+            }
+            post always {
+              cleanUp()
             }
           }
         }
@@ -91,18 +113,28 @@ def doAllDebug(String label) {
   doInstall(label,"Debug")
 }
 
+def cleanUp() {
+  sh """
+    cd build/root
+    for d in dev bin lib lib64 usr etc source ; do
+      fusermount -u $d
+    done
+  """
+}
+
 def doBuild(String label, String buildType) {
   sh """
-    rm -rf build/root-${label}-${buildType}
-    mkdir -p build/root-${label}-${buildType}
-    cd build/root-${label}-${buildType}
-    ln -sfn /dev /bin /lib /lib64 /usr /etc .
-    ln -sfn ../.. source
-    mkdir build
-    mkdir install
+    rm -rf build/root
+    mkdir -p build/root
+    cd build/root
+    mkdir dev bin lib lib64 usr etc source build install
+    bindfs -n ../.. source
+    for d in dev bin lib lib64 usr etc ; do
+      bindfs -n /$d $d
+    done
     fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
-      cmake ../source -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULES_PATH=../../artefacts/${buildType}/install-${label}-${buildType}/share/cmake-${CMAKE_VERSION}/Modules
+      cmake ../source -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULES_PATH=/install/share/cmake-${CMAKE_VERSION}/Modules
       make $MAKEOPTS
 ....ENDCHROOT
   """
@@ -116,7 +148,7 @@ def doStaticAnalysis(String label, String buildType) {
 
 def doTest(String label, String buildType) {
   sh """
-    cd build/root-${label}-${buildType}
+    cd build/root
     fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
       ctest --no-compress-output -T Test
@@ -128,7 +160,7 @@ def doTest(String label, String buildType) {
 
 def doCoverage(String label, String buildType) {
   sh """
-    cd build/root-${label}-${buildType}
+    cd build/root
     fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
       make coverage
@@ -149,7 +181,7 @@ def doCoverage(String label, String buildType) {
 
 def doInstall(String label, String buildType) {
   sh """
-    cd build/root-${label}-${buildType}
+    cd build/root
     fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
       make install
