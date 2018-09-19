@@ -116,7 +116,7 @@ def doBuild(String label, String buildType) {
     mkdir -p build/root
     cd build/root
     mkdir dev bin lib lib64 usr etc source build install
-    for a in ../../artefacts-*/build/install-${label}-${buildType}*.tgz ; do
+    for a in ../../artefacts/build/install-${label}-${buildType}*.tgz ; do
       tar zxf \$a
     done
     bindfs -n ../.. source
