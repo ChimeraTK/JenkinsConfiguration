@@ -112,7 +112,7 @@ def cleanUp() {
 
 def doBuild(String label, String buildType) {
   sh """
-    rm -rf build/root
+    rm -rf --one-file-system build/root
     mkdir -p build/root
     cd build/root
     mkdir dev bin lib lib64 usr etc source build install
