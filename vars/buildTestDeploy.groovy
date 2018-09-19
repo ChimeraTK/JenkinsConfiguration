@@ -19,7 +19,7 @@ def call(ArrayList<String> dependencyList) {
             steps {
               script {
                 dependencyList.each {
-                  copyArtifacts filter: 'install-Ubuntu1804-*, fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
+                  copyArtifacts filter: 'install-Ubuntu1804-*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts'
                 }
               }
             }
