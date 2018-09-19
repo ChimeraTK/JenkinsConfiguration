@@ -93,26 +93,34 @@ def doAllDebug(String label) {
 
 def doBuild(String label, String buildType) {
   sh """
-    rm -rf ${buildType}
-    mkdir -p ${buildType}/build
-    mkdir -p ${buildType}/install-${label}-${buildType}
-    cd ${buildType}/build
-    cmake ../.. -DCMAKE_INSTALL_PREFIX=../install-${label}-${buildType} -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULES_PATH=../../artefacts/${buildType}/install-${label}-${buildType}/share/cmake-${CMAKE_VERSION}/Modules
-    make $MAKEOPTS
+    rm -rf build/root-${label}-${buildType}
+    mkdir -p build/root-${label}-${buildType}
+    cd build/root-${label}-${buildType}
+    ln -sfn /dev /bin /lib /lib64 /usr /etc .
+    ln -sfn ../.. source
+    mkdir build
+    mkdir install
+    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+      cd /build
+      cmake ../source -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULES_PATH=../../artefacts/${buildType}/install-${label}-${buildType}/share/cmake-${CMAKE_VERSION}/Modules
+      make $MAKEOPTS
+....ENDCHROOT
   """
 }
 
 def doStaticAnalysis(String label, String buildType) {
   sh """
-    cd ${buildType}/build
-    cppcheck --enable=all --xml --xml-version=2 2> ./cppcheck.xml .
+    cppcheck --enable=all --xml --xml-version=2 . 2> ./build/cppcheck.xml
   """
 }
 
 def doTest(String label, String buildType) {
   sh """
-    cd ${buildType}/build
-    ctest --no-compress-output -T Test
+    cd build/root-${label}-${buildType}
+    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+      cd /build
+      ctest --no-compress-output -T Test
+....ENDCHROOT
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
          tools: [ CTest(pattern: "${buildType}/build/Testing/*/*.xml") ])
@@ -120,8 +128,12 @@ def doTest(String label, String buildType) {
 
 def doCoverage(String label, String buildType) {
   sh """
-    cd ${buildType}/build
-    make coverage
+    cd build/root-${label}-${buildType}
+    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+      cd /build
+      make coverage
+....ENDCHROOT
+    cd ..
     /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
   """
   cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "${buildType}/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
@@ -137,8 +149,12 @@ def doCoverage(String label, String buildType) {
 
 def doInstall(String label, String buildType) {
   sh """
-    cd ${buildType}/build
-    make install
+    cd build/root-${label}-${buildType}
+    fakechroot /usr/sbin/chroot . /bin/bash <<....ENDCHROOT
+      cd /build
+      make install
+....ENDCHROOT
+    tar zcf ../install-${label}-${buildType}.tgz install
   """
-  archiveArtifacts artifacts: "${buildType}/install-${label}-${buildType}/**/*", onlyIfSuccessful: true
+  archiveArtifacts artifacts: "build/install-${label}-${buildType}.tgz", onlyIfSuccessful: true
 }
