@@ -9,7 +9,7 @@ def call(ArrayList<String> dependencyList) {
             steps {
               script {
                 dependencyList.each {
-                  copyArtifacts filter: 'build/install-Ubuntu1604-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts-${it}"
+                  copyArtifacts filter: 'build/install-Ubuntu1604-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
                 }
               }
             }
@@ -19,7 +19,7 @@ def call(ArrayList<String> dependencyList) {
             steps {
               script {
                 dependencyList.each {
-                  copyArtifacts filter: 'build/install-Ubuntu1804-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts-${it}"
+                  copyArtifacts filter: 'build/install-Ubuntu1804-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
                 }
               }
             }
@@ -29,7 +29,7 @@ def call(ArrayList<String> dependencyList) {
             steps {
               script {
                 dependencyList.each {
-                  copyArtifacts filter: 'build/install-SUSEtumbleweed-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts-${it}"
+                  copyArtifacts filter: 'build/install-SUSEtumbleweed-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
                 }
               }
             }
