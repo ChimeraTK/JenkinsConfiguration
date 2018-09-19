@@ -2,44 +2,15 @@ def call(ArrayList<String> dependencyList) {
   pipeline {
     agent none
     stages {
-      stage('obtain artefacts') {
-        parallel {
-          stage('obtain artefacts for Ubuntu 16.04') {
-            agent { label "Ubuntu1604" }
-            steps {
-              script {
-                dependencyList.each {
-                  copyArtifacts filter: 'build/install-Ubuntu1604-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-                }
-              }
-            }
-          }
-          stage('obtain artefacts for Ubuntu 18.04') {
-            agent { label "Ubuntu1804" }
-            steps {
-              script {
-                dependencyList.each {
-                  copyArtifacts filter: 'build/install-Ubuntu1804-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-                }
-              }
-            }
-          }
-          stage('obtain artefacts for SUSE Tumbeweed') {
-            agent { label "SUSEtumbleweed" }
-            steps {
-              script {
-                dependencyList.each {
-                  copyArtifacts filter: 'build/install-SUSEtumbleweed-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-                }
-              }
-            }
-          }
-        }
-      }
       stage('build') {
         parallel {
           stage('build Ubuntu 16.04 Release') {
             agent { label "Ubuntu1604" }
+            script {
+              dependencyList.each {
+                copyArtifacts filter: 'build/install-Ubuntu1604-Release.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+              }
+            }
             steps {
               doAllRelease("Ubuntu1604")
             }
@@ -47,6 +18,11 @@ def call(ArrayList<String> dependencyList) {
           }
           stage('build Ubuntu 16.04 Debug') {
             agent { label "Ubuntu1604" }
+            script {
+              dependencyList.each {
+                copyArtifacts filter: 'build/install-Ubuntu1604-Debug.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+              }
+            }
             steps {
               doAllDebug("Ubuntu1604")
             }
@@ -54,6 +30,11 @@ def call(ArrayList<String> dependencyList) {
           }
           stage('build Ubuntu 18.04 Release') {
             agent { label "Ubuntu1804" }
+            script {
+              dependencyList.each {
+                copyArtifacts filter: 'build/install-Ubuntu1804-Release.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+              }
+            }
             steps {
               doAllRelease("Ubuntu1804")
             }
@@ -61,6 +42,11 @@ def call(ArrayList<String> dependencyList) {
           }
           stage('build Ubuntu 18.04 Debug') {
             agent { label "Ubuntu1804" }
+            script {
+              dependencyList.each {
+                copyArtifacts filter: 'build/install-Ubuntu1804-Debug.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+              }
+            }
             steps {
               doAllDebug("Ubuntu1804")
             }
@@ -68,6 +54,11 @@ def call(ArrayList<String> dependencyList) {
           }
           stage('build SUSE Tumbeweed Release') {
             agent { label "SUSEtumbleweed" }
+            script {
+              dependencyList.each {
+                copyArtifacts filter: 'build/install-SUSEtumbleweed-Release.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+              }
+            }
             steps {
               doAllRelease("SUSEtumbleweed")
             }
@@ -75,6 +66,11 @@ def call(ArrayList<String> dependencyList) {
           }
           stage('build SUSE Tumbeweed Debug') {
             agent { label "SUSEtumbleweed" }
+            script {
+              dependencyList.each {
+                copyArtifacts filter: 'build/install-SUSEtumbleweed-Debug.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+              }
+            }
             steps {
               doAllDebug("SUSEtumbleweed")
             }
