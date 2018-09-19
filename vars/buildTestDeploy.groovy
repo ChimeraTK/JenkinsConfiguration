@@ -130,7 +130,7 @@ def doBuild(String label, String buildType) {
 
 def doStaticAnalysis(String label, String buildType) {
   sh """
-    cppcheck --enable=all --xml --xml-version=2  -ibuild. 2> ./build/cppcheck.xml
+    cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
   """
 }
 
