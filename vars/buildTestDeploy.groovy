@@ -43,54 +43,42 @@ def call(ArrayList<String> dependencyList) {
             steps {
               doAllRelease("Ubuntu1604")
             }
-            post always {
-              cleanUp()
-            }
+            post { always { cleanUp() } }
           }
           stage('build Ubuntu 16.04 Debug') {
             agent { label "Ubuntu1604" }
             steps {
               doAllDebug("Ubuntu1604")
             }
-            post always {
-              cleanUp()
-            }
+            post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Release') {
             agent { label "Ubuntu1804" }
             steps {
               doAllRelease("Ubuntu1804")
             }
-            post always {
-              cleanUp()
-            }
+            post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Debug') {
             agent { label "Ubuntu1804" }
             steps {
               doAllDebug("Ubuntu1804")
             }
-            post always {
-              cleanUp()
-            }
+            post { always { cleanUp() } }
           }
           stage('build SUSE Tumbeweed Release') {
             agent { label "SUSEtumbleweed" }
             steps {
               doAllRelease("SUSEtumbleweed")
             }
-            post always {
-              cleanUp()
-            }
+            post { always { cleanUp() } }
           }
           stage('build SUSE Tumbeweed Debug') {
             agent { label "SUSEtumbleweed" }
             steps {
               doAllDebug("SUSEtumbleweed")
             }
-            post always {
-              cleanUp()
-            }
+            post { always { cleanUp() } }
           }
         }
       }
