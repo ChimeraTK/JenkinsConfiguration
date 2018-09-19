@@ -90,7 +90,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     if [ -e ../../artefacts/build/install-${label}-${buildType}.tgz ] ; then
       tar zxf ../../artefacts/build/install-${label}-${buildType}.tgz
     fi
-    rsync -avx ../../ source/
+    rsync -avx ../../ --exclude=build source/
     for d in dev bin lib lib64 usr etc ; do
       bindfs -n /\$d \$d
     done
