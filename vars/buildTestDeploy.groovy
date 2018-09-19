@@ -125,7 +125,7 @@ def doBuild(String label, String buildType) {
     done
     fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
-      cmake ../source -DCMAKE_INSTALL_PREFIX=/install -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULES_PATH=/install/share/cmake-${CMAKE_VERSION}/Modules
+      cmake ../source -DCMAKE_INSTALL_PREFIX=/install -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULE_PATH=/install/share/cmake-${CMAKE_VERSION}/Modules
       make $MAKEOPTS
 ....ENDCHROOT
   """
