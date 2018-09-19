@@ -105,7 +105,7 @@ def cleanUp() {
   sh """
     cd build/root
     for d in dev bin lib lib64 usr etc source ; do
-      fusermount -u $d
+      fusermount -u \$d
     done
   """
 }
@@ -118,7 +118,7 @@ def doBuild(String label, String buildType) {
     mkdir dev bin lib lib64 usr etc source build install
     bindfs -n ../.. source
     for d in dev bin lib lib64 usr etc ; do
-      bindfs -n /$d $d
+      bindfs -n /\$d \$d
     done
     fakechroot chroot . /bin/bash <<....ENDCHROOT
       cd /build
