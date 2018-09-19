@@ -9,7 +9,7 @@ def call(ArrayList<String> dependencyList) {
             steps {
               script {
                 dependencyList.each {
-                  copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts-${it}'
+                  copyArtifacts filter: 'build/install-Ubuntu1604-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts-${it}"
                 }
               }
             }
@@ -19,7 +19,7 @@ def call(ArrayList<String> dependencyList) {
             steps {
               script {
                 dependencyList.each {
-                  copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts-${it}'
+                  copyArtifacts filter: 'build/install-Ubuntu1804-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts-${it}"
                 }
               }
             }
@@ -29,7 +29,7 @@ def call(ArrayList<String> dependencyList) {
             steps {
               script {
                 dependencyList.each {
-                  copyArtifacts filter: '**/**', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: 'artefacts-${it}'
+                  copyArtifacts filter: 'build/install-SUSEtumbleweed-*.tgz', fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts-${it}"
                 }
               }
             }
@@ -116,7 +116,7 @@ def doBuild(String label, String buildType) {
     mkdir -p build/root
     cd build/root
     mkdir dev bin lib lib64 usr etc source build install
-    for a in ../../artefacts-*/install-${label}-${buildType}*.tgz ; do
+    for a in ../../artefacts-*/build/install-${label}-${buildType}*.tgz ; do
       tar zxf \$a
     done
     bindfs -n ../.. source
