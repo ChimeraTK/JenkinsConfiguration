@@ -56,7 +56,7 @@ def doAllRelease(ArrayList<String> dependencyList, String label) {
   doBuild(dependencyList, label, "Release")
   doStaticAnalysis(label,"Release")
   doTest(label,"Release")
-  doInstall(dependencyList, label, "Release")
+  doInstall(label, "Release")
 }
 
 def doAllDebug(ArrayList<String> dependencyList, String label) {
