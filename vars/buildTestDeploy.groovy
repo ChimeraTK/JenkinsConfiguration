@@ -100,7 +100,6 @@ def doTest(String label, String buildType) {
   sh """
     cd build/build
     ctest --no-compress-output -T Test
-....ENDCHROOT
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
          tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
