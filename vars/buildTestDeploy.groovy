@@ -74,22 +74,19 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     }
   }
   sh """
-    rm -rf --one-file-system build/root
-    mkdir -p build/root
-    cd build/root
-    mkdir dev bin lib lib64 usr etc source build install
+    rm -rf --one-file-system build
+    mkdir -p build/build
+    mkdir -p build/install
+    mkdir -p build/depends
+    cd build/depends
     if [ -e ../../artefacts/build/install-${label}-${buildType}.tgz ] ; then
       tar zxf ../../artefacts/build/install-${label}-${buildType}.tgz
+      find -name Find*.cmake -exec sed -i \{\} -e 's_/installprefix_${WORKSPACE}/build/depends_g' \;
+      #find -name *.so -exec chrpath ....
     fi
-    rsync -avx ../../ --exclude=build source/
-    for d in dev bin lib lib64 usr etc ; do
-      bindfs -n /\$d \$d
-    done
-    fakechroot chroot . /bin/bash <<....ENDCHROOT
-      cd /build
-      cmake ../source -DCMAKE_INSTALL_PREFIX=/install -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULE_PATH=/install/share/cmake-${CMAKE_VERSION}/Modules
-      make $MAKEOPTS
-....ENDCHROOT
+    cd ../build
+    cmake ../.. -DCMAKE_INSTALL_PREFIX=/installprefix -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MODULE_PATH=../depends/share/cmake-${CMAKE_VERSION}/Modules
+    make $MAKEOPTS
   """
 }
 
@@ -101,32 +98,26 @@ def doStaticAnalysis(String label, String buildType) {
 
 def doTest(String label, String buildType) {
   sh """
-    cd build/root
-    fakechroot chroot . /bin/bash <<....ENDCHROOT
-      cd /build
-      ctest --no-compress-output -T Test
+    cd build/build
+    ctest --no-compress-output -T Test
 ....ENDCHROOT
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: "${buildType}/build/Testing/*/*.xml") ])
+         tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
 }
 
 def doCoverage(String label, String buildType) {
   sh """
-    cd build/root
-    fakechroot chroot . /bin/bash <<....ENDCHROOT
-      cd /build
-      make coverage
-....ENDCHROOT
-    cd ..
+    cd build/build
+    make coverage
     /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
   """
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "${buildType}/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "build/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   publishHTML (target: [
       allowMissing: false,
       alwaysLinkToLastBuild: false,
       keepAll: false,
-      reportDir: "${buildType}/build/coverage_html",
+      reportDir: "build/build/coverage_html",
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
@@ -134,21 +125,13 @@ def doCoverage(String label, String buildType) {
 
 def doInstall(String label, String buildType) {
   sh """
-    cd build/root
-    fakechroot chroot . /bin/bash <<....ENDCHROOT
-      cd /build
-      make install
-....ENDCHROOT
-    tar zcf ../install-${label}-${buildType}.tgz install
+    cd build/build
+    make install DESTDIR=../install
+    cd ../install
+    tar zcf ../install-${label}-${buildType}.tgz .
   """
-  archiveArtifacts artifacts: "build/install-${label}-${buildType}.tgz", onlyIfSuccessful: true
+  archiveArtifacts artifacts: "build/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
 }
 
 def cleanUp() {
-  sh """
-    cd build/root
-    for d in dev bin lib lib64 usr etc ; do
-      fusermount -u \$d
-    done
-  """
 }
