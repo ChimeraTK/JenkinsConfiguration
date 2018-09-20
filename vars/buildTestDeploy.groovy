@@ -81,7 +81,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     cd build/depends
     if [ -e ../../artefacts/build/install-${label}-${buildType}.tgz ] ; then
       tar zxf ../../artefacts/build/install-${label}-${buildType}.tgz
-      find -name Find*.cmake -exec sed -i \{\} -e 's_/installprefix_${WORKSPACE}/build/depends_g' \;
+      find -name Find*.cmake -exec sed -i \\{\\} -e 's_/installprefix_${WORKSPACE}/build/depends_g' \\;
       #find -name *.so -exec chrpath ....
     fi
     cd ../build
