@@ -60,7 +60,7 @@ def doAllRelease(ArrayList<String> dependencyList, String label) {
 }
 
 def doAllDebug(ArrayList<String> dependencyList, String label) {
-  doBuild(label,"Debug")
+  doBuild(dependencyList, label,"Debug")
   doStaticAnalysis(label,"Debug")
   doTest(label,"Debug")
   doCoverage(label,"Debug")
