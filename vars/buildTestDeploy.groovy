@@ -5,28 +5,28 @@ def call(ArrayList<String> dependencyList) {
       stage('build') {
         parallel {
           stage('build Ubuntu 16.04 Release') {
-            agent { docker { image "ubuntu:xenial" } }
+            agent { dockerfile { filename "xenial.docker" } }
             steps {
               doAllRelease(dependencyList, "Ubuntu1604")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 16.04 Debug') {
-            agent { docker { image "ubuntu:xenial" } }
+            agent { dockerfile { filename "xenial.docker" } }
             steps {
               doAllDebug(dependencyList, "Ubuntu1604")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Release') {
-            agent { docker { image "ubuntu:bionic" } }
+            agent { dockerfile { filename "bionic.docker" } }
             steps {
               doAllRelease(dependencyList, "Ubuntu1804")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Debug') {
-            agent { docker { image "ubuntu:bionic" } }
+            agent { dockerfile { filename "bionic.docker" } }
             steps {
               doAllDebug(dependencyList, "Ubuntu1804")
             }
