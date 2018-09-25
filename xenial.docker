@@ -1,0 +1,3 @@
+FROM ubuntu:xenial
+
+RUN apk add -U cmake g++ libboost-dev
