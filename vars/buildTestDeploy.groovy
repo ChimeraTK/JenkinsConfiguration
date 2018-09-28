@@ -102,7 +102,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   script {
     echo("doBuild ${label} 1")
     dependencyList.each {
-      copyArtifacts filter: "build/install-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+      copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
     echo("doBuild ${label} 2")
   }
@@ -110,8 +110,8 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   sh """
     mkdir -p build/build
     mkdir -p build/install
-    if [ -e /workspace/artefacts/build/install-${label}-${buildType}.tgz ] ; then
-      tar zxf /workspace/artefacts/build/install-${label}-${buildType}.tgz -L /
+    for a in artefacts/install-*-${label}-${buildType}.tgz ] ; then
+      tar zxf "${a}" -L /
     fi
     cd build/build
     cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
