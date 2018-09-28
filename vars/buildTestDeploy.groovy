@@ -168,9 +168,9 @@ def doInstall(String label, String buildType) {
     ls /workspace
     mount
     echo ==================================================
-    sudo tar zcf /workspace/install-${label}-${buildType}.tgz .
+    tar zcf /workspace/install-${label}-${buildType}.tgz .
   """
-  archiveArtifacts artifacts: "build/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
+  archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
   echo("doInstall END ${label}")
 }
 
