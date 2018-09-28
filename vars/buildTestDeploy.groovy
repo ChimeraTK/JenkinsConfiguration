@@ -8,7 +8,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:xenial"
-                args "-v \"${env.WORKSPACE}\":/workspace"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
               }
             }
             steps {
@@ -22,7 +22,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:xenial"
-                args "-v \"${env.WORKSPACE}\":/workspace"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
               }
             }
             steps {
@@ -36,7 +36,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:bionic"
-                args "-v \"${env.WORKSPACE}\":/workspace"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
               }
             }
             steps {
@@ -50,7 +50,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:bionic"
-                args "-v \"${env.WORKSPACE}\":/workspace"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
               }
             }
             steps {
