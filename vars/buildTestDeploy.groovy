@@ -78,12 +78,15 @@ def doAllDebug(ArrayList<String> dependencyList, String label) {
 }
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
+  echo("doBuild ${label}")
   script {
-    echo("doBuild ${label}")
+    echo("doBuild ${label} 1")
     dependencyList.each {
       copyArtifacts filter: "build/install-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
+    echo("doBuild ${label} 2")
   }
+  echo("doBuild ${label} 3")
   sh """
     rm -rf --one-file-system build
     mkdir -p build/build
