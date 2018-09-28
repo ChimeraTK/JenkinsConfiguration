@@ -53,6 +53,7 @@ def call(ArrayList<String> dependencyList) {
 }
 
 def doAllRelease(ArrayList<String> dependencyList, String label) {
+  echo("doAllRelease ${label}")
   doBuild(dependencyList, label, "Release")
   doStaticAnalysis(label,"Release")
   doTest(label,"Release")
@@ -60,6 +61,7 @@ def doAllRelease(ArrayList<String> dependencyList, String label) {
 }
 
 def doAllDebug(ArrayList<String> dependencyList, String label) {
+  echo("doAllDebug ${label}")
   doBuild(dependencyList, label,"Debug")
   doStaticAnalysis(label,"Debug")
   doTest(label,"Debug")
@@ -69,6 +71,7 @@ def doAllDebug(ArrayList<String> dependencyList, String label) {
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   script {
+    echo("doBuild ${label}")
     dependencyList.each {
       copyArtifacts filter: "build/install-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
