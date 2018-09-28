@@ -7,28 +7,36 @@ def call(ArrayList<String> dependencyList) {
           stage('build Ubuntu 16.04 Release') {
             agent { docker { image "builder:xenial" } }
             steps {
+              echo("Running for Ubuntu 16.04 Release")
               doAllRelease(dependencyList, "Ubuntu1604")
+              echo("Done with Ubuntu 16.04 Release")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 16.04 Debug') {
             agent { docker { image "builder:xenial" } }
             steps {
+              echo("Running for Ubuntu 16.04 Debug")
               doAllDebug(dependencyList, "Ubuntu1604")
+              echo("Done with Ubuntu 16.04 Debug")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Release') {
             agent { docker { image "builder:bionic" } }
             steps {
+              echo("Running for Ubuntu 18.04 Release")
               doAllRelease(dependencyList, "Ubuntu1804")
+              echo("Done with Ubuntu 18.04 Release")
             }
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Debug') {
             agent { docker { image "builder:bionic" } }
             steps {
+              echo("Running for Ubuntu 18.04 Debug")
               doAllDebug(dependencyList, "Ubuntu1804")
+              echo("Done with Ubuntu 18.04 Debug")
             }
             post { always { cleanUp() } }
           }
@@ -87,24 +95,30 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     make $MAKEOPTS
   """
+  echo("doBuild END ${label}")
 }
 
 def doStaticAnalysis(String label, String buildType) {
+  echo("doStaticAnalysis ${label}")
   sh """
     cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
   """
+  echo("doStaticAnalysis END ${label}")
 }
 
 def doTest(String label, String buildType) {
+  echo("doTest ${label}")
   sh """
     cd build/build
     ctest --no-compress-output -T Test
   """
   //xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
   //       tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
+  echo("doTest END ${label}")
 }
 
 def doCoverage(String label, String buildType) {
+  echo("doCoverage ${label}")
   sh """
     cd build/build
     make coverage
@@ -119,9 +133,11 @@ def doCoverage(String label, String buildType) {
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
+  echo("doCoverage END ${label}")
 }
 
 def doInstall(String label, String buildType) {
+  echo("doInstall ${label}")
   sh """
     cd build/build
     make install DESTDIR=../install
@@ -129,7 +145,9 @@ def doInstall(String label, String buildType) {
     tar zcf ../install-${label}-${buildType}.tgz .
   """
   archiveArtifacts artifacts: "build/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
+  echo("doInstall END ${label}")
 }
 
 def cleanUp() {
+  echo("cleanUp...")
 }
