@@ -141,8 +141,8 @@ def doTest(String label, String buildType) {
     cd build/build
     ctest --no-compress-output -T Test
   """
-  //xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-  //       tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
+  xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+         tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
   echo("doTest END ${label}")
 }
 
