@@ -5,7 +5,12 @@ def call(ArrayList<String> dependencyList) {
       stage('build') {
         parallel {
           stage('build Ubuntu 16.04 Release') {
-            agent { docker { image "builder:xenial" args "-v \"${WORKSPACE}\":/workspace" } }
+            agent {
+              docker {
+                image "builder:xenial"
+                args "-v \"${WORKSPACE}\":/workspace"
+              }
+            }
             steps {
               echo("Running for Ubuntu 16.04 Release")
               doAllRelease(dependencyList, "Ubuntu1604")
@@ -14,7 +19,12 @@ def call(ArrayList<String> dependencyList) {
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 16.04 Debug') {
-            agent { docker { image "builder:xenial" args "-v \"${WORKSPACE}\":/workspace" } }
+            agent {
+              docker {
+                image "builder:xenial"
+                args "-v \"${WORKSPACE}\":/workspace"
+              }
+            }
             steps {
               echo("Running for Ubuntu 16.04 Debug")
               doAllDebug(dependencyList, "Ubuntu1604")
@@ -23,7 +33,12 @@ def call(ArrayList<String> dependencyList) {
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Release') {
-            agent { docker { image "builder:bionic" args "-v \"${WORKSPACE}\":/workspace" } }
+            agent {
+              docker {
+                image "builder:bionic"
+                args "-v \"${WORKSPACE}\":/workspace"
+              }
+            }
             steps {
               echo("Running for Ubuntu 18.04 Release")
               doAllRelease(dependencyList, "Ubuntu1804")
@@ -32,7 +47,12 @@ def call(ArrayList<String> dependencyList) {
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Debug') {
-            agent { docker { image "builder:bionic" args "-v \"${WORKSPACE}\":/workspace" } }
+            agent {
+              docker {
+                image "builder:bionic"
+                args "-v \"${WORKSPACE}\":/workspace"
+              }
+            }
             steps {
               echo("Running for Ubuntu 18.04 Debug")
               doAllDebug(dependencyList, "Ubuntu1804")
