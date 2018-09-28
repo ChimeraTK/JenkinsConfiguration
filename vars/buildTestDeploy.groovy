@@ -165,11 +165,10 @@ def doInstall(String label, String buildType) {
     make install DESTDIR=../install
     cd ../install
     echo ==================================================
-    whoami
     ls /workspace
     mount
     echo ==================================================
-    tar zcf /workspace/install-${label}-${buildType}.tgz .
+    sudo tar zcf /workspace/install-${label}-${buildType}.tgz .
   """
   archiveArtifacts artifacts: "build/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
   echo("doInstall END ${label}")
