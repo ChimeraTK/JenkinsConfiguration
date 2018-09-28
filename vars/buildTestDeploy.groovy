@@ -108,11 +108,18 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   }
   echo("doBuild ${label} 3")
   sh """
+    rm -rf build
     mkdir -p build/build
     mkdir -p build/install
+    echo ============================================
+    ls
+    ls artefacts
+    echo ============================================
     for a in artefacts/install-*-${label}-${buildType}.tgz ] ; then
+      echo === $a
       tar zxf "${a}" -L /
     fi
+    echo ============================================
     cd build/build
     cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     make $MAKEOPTS
