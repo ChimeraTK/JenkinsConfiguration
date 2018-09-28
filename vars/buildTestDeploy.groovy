@@ -21,7 +21,9 @@ def call(ArrayList<String> dependencyList) {
           stage('build Ubuntu 18.04 Release') {
             agent { docker { image "builder:bionic" } }
             steps {
+              echo("U1804 rel 001")
               doAllRelease(dependencyList, "Ubuntu1804")
+              echo("U1804 rel 999")
             }
             post { always { cleanUp() } }
           }
@@ -53,10 +55,15 @@ def call(ArrayList<String> dependencyList) {
 }
 
 def doAllRelease(ArrayList<String> dependencyList, String label) {
+  echo("${label} rel 101")
   doBuild(dependencyList, label, "Release")
+  echo("${label} rel 102")
   doStaticAnalysis(label,"Release")
+  echo("${label} rel 103")
   doTest(label,"Release")
+  echo("${label} rel 104")
   doInstall(label, "Release")
+  echo("${label} rel 105")
 }
 
 def doAllDebug(ArrayList<String> dependencyList, String label) {
@@ -69,9 +76,11 @@ def doAllDebug(ArrayList<String> dependencyList, String label) {
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   script {
+    echo("${label} rel 201")
     dependencyList.each {
       copyArtifacts filter: "build/install-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
+    echo("${label} rel 202")
   }
   sh """
     rm -rf --one-file-system build
