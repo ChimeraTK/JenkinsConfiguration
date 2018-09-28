@@ -8,7 +8,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:xenial"
-                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0 --device=/dev/pcieunidummys6 --device=/dev/mtcadummys0 --device=/dev/noioctrldummys5"
               }
             }
             steps {
@@ -22,7 +22,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:xenial"
-                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0 --device=/dev/pcieunidummys6 --device=/dev/mtcadummys0 --device=/dev/noioctrldummys5"
               }
             }
             steps {
@@ -36,7 +36,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:bionic"
-                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0 --device=/dev/pcieunidummys6 --device=/dev/mtcadummys0 --device=/dev/noioctrldummys5"
               }
             }
             steps {
@@ -50,7 +50,7 @@ def call(ArrayList<String> dependencyList) {
             agent {
               docker {
                 image "builder:bionic"
-                args "-v \"${env.WORKSPACE}\":/workspace -u 0"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0 --device=/dev/pcieunidummys6 --device=/dev/mtcadummys0 --device=/dev/noioctrldummys5"
               }
             }
             steps {
