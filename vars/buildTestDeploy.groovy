@@ -117,7 +117,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     echo ============================================
     for a in artefacts/install-*-${label}-${buildType}.tgz ] ; then
       echo === $a
-      tar zxf \"\$\{a\}\" -L /
+      tar zxf \"\${a}\" -L /
     fi
     echo ============================================
     cd build/build
