@@ -113,7 +113,6 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     mkdir -p build/install
     echo ============================================
     ls
-    ls artefacts
     echo ============================================
     for a in artefacts/install-*-${label}-${buildType}.tgz ; do
       echo === \$a
