@@ -164,6 +164,11 @@ def doInstall(String label, String buildType) {
     cd build/build
     make install DESTDIR=../install
     cd ../install
+    echo ==================================================
+    whoami
+    ls /workspace
+    mount
+    echo ==================================================
     tar zcf /workspace/install-${label}-${buildType}.tgz .
   """
   archiveArtifacts artifacts: "build/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
