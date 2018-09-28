@@ -114,10 +114,12 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     echo ============================================
     ls
     echo ============================================
-    for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-      echo === \$a
-      tar zxf \"\${a}\" -C /
-    done
+    if [ -d artefacts ]; then
+      for a in artefacts/install-*-${label}-${buildType}.tgz ; do
+        echo === \$a
+        tar zxf \"\${a}\" -C /
+      done
+    fi
     echo ============================================
     cd build/build
     cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
