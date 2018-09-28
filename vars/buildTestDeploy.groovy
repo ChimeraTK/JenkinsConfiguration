@@ -170,7 +170,7 @@ def doInstall(String label, String buildType) {
     echo ==================================================
     tar zcf /workspace/install-${label}-${buildType}.tgz .
   """
-  archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
+  archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   echo("doInstall END ${label}")
 }
 
