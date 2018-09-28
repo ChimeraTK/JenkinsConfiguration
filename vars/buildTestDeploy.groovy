@@ -5,7 +5,7 @@ def call(ArrayList<String> dependencyList) {
       stage('build') {
         parallel {
           stage('build Ubuntu 16.04 Release') {
-            agent { docker { image "builder:xenial" } }
+            agent { docker { image "builder:xenial" args "-v \"${WORKSPACE}\":/workspace" } }
             steps {
               echo("Running for Ubuntu 16.04 Release")
               doAllRelease(dependencyList, "Ubuntu1604")
@@ -14,7 +14,7 @@ def call(ArrayList<String> dependencyList) {
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 16.04 Debug') {
-            agent { docker { image "builder:xenial" } }
+            agent { docker { image "builder:xenial" args "-v \"${WORKSPACE}\":/workspace" } }
             steps {
               echo("Running for Ubuntu 16.04 Debug")
               doAllDebug(dependencyList, "Ubuntu1604")
@@ -23,7 +23,7 @@ def call(ArrayList<String> dependencyList) {
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Release') {
-            agent { docker { image "builder:bionic" } }
+            agent { docker { image "builder:bionic" args "-v \"${WORKSPACE}\":/workspace" } }
             steps {
               echo("Running for Ubuntu 18.04 Release")
               doAllRelease(dependencyList, "Ubuntu1804")
@@ -32,7 +32,7 @@ def call(ArrayList<String> dependencyList) {
             post { always { cleanUp() } }
           }
           stage('build Ubuntu 18.04 Debug') {
-            agent { docker { image "builder:bionic" } }
+            agent { docker { image "builder:bionic" args "-v \"${WORKSPACE}\":/workspace" } }
             steps {
               echo("Running for Ubuntu 18.04 Debug")
               doAllDebug(dependencyList, "Ubuntu1804")
@@ -88,11 +88,10 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   }
   echo("doBuild ${label} 3")
   sh """
-    rm -rf --one-file-system build
     mkdir -p build/build
     mkdir -p build/install
-    if [ -e artefacts/build/install-${label}-${buildType}.tgz ] ; then
-      tar zxf artefacts/build/install-${label}-${buildType}.tgz -L /
+    if [ -e /workspace/artefacts/build/install-${label}-${buildType}.tgz ] ; then
+      tar zxf /workspace/artefacts/build/install-${label}-${buildType}.tgz -L /
     fi
     cd build/build
     cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
@@ -145,7 +144,7 @@ def doInstall(String label, String buildType) {
     cd build/build
     make install DESTDIR=../install
     cd ../install
-    tar zcf ../install-${label}-${buildType}.tgz .
+    tar zcf /workspace/install-${label}-${buildType}.tgz .
   """
   archiveArtifacts artifacts: "build/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: true
   echo("doInstall END ${label}")
