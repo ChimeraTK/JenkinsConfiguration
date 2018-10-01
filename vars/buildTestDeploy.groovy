@@ -107,6 +107,7 @@ def doAllDebug(ArrayList<String> dependencyList, String label) {
     doStaticAnalysis(label,"Debug")
     doTest(label,"Debug")
     doCoverage(label,"Debug")
+    doValgrind(label,"Debug")
     doInstall(label,"Debug")
   }
 }
@@ -177,6 +178,33 @@ def doCoverage(String label, String buildType) {
   ])  
   echo("doCoverage END ${label}")
 }
+
+def doValgrind(String label, String buildType) {
+  echo("doValgrind ${label}")
+  sh """
+    cd build/build
+    TESTS=`ctest -N | grep "Test *\#" | sed -e 's/^ *Test *\#.*: //'`
+    for test in \$TEST; do
+      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.\${test}.memcheck.valgrind ctest -R \${test}
+      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=valgrind.\${test}.helgrind.valgrind ctest -R \${test}
+    done
+  """
+  publishValgrind (
+    failBuildOnInvalidReports: false,
+    failBuildOnMissingReports: false,
+    failThresholdDefinitelyLost: '',
+    failThresholdInvalidReadWrite: '',
+    failThresholdTotal: '',
+    pattern: '*.valgrind',
+    publishResultsForAbortedBuilds: false,
+    publishResultsForFailedBuilds: false,
+    sourceSubstitutionPaths: '',
+    unstableThresholdDefinitelyLost: '',
+    unstableThresholdInvalidReadWrite: '',
+    unstableThresholdTotal: ''
+  )
+}
+
 
 def doInstall(String label, String buildType) {
   echo("doInstall ${label}")
