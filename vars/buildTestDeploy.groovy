@@ -121,16 +121,12 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     rm -rf build
     sudo -u msk_jenkins mkdir -p build/build
     sudo -u msk_jenkins mkdir -p build/install
-    echo ============================================
-    ls
-    echo ============================================
     if [ -d artefacts ]; then
       for a in artefacts/install-*-${label}-${buildType}.tgz ; do
         echo === \$a
         tar zxf \"\${a}\" -C /
       done
     fi
-    echo ============================================
     cd build/build
     sudo -u msk_jenkins cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     sudo -u msk_jenkins make $MAKEOPTS
@@ -182,10 +178,6 @@ def doInstall(String label, String buildType) {
     cd build/build
     sudo -u msk_jenkins make install DESTDIR=../install
     cd ../install
-    echo ==================================================
-    ls /workspace
-    mount
-    echo ==================================================
     sudo -u msk_jenkins tar zcf ../../install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
