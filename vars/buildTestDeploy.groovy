@@ -108,9 +108,10 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   }
   echo("doBuild ${label} 3")
   sh """
+    useradd -u 30996 -m msk_jenkins
     rm -rf build
-    mkdir -p build/build
-    mkdir -p build/install
+    sudo -u msk_jenkins mkdir -p build/build
+    sudo -u msk_jenkins mkdir -p build/install
     echo ============================================
     ls
     echo ============================================
@@ -122,8 +123,8 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     fi
     echo ============================================
     cd build/build
-    cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
-    make $MAKEOPTS
+    sudo -u msk_jenkins cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
+    sudo -u msk_jenkins make $MAKEOPTS
   """
   echo("doBuild END ${label}")
 }
@@ -131,7 +132,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
 def doStaticAnalysis(String label, String buildType) {
   echo("doStaticAnalysis ${label}")
   sh """
-    cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
+    sudo -u msk_jenkins cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
   """
   echo("doStaticAnalysis END ${label}")
 }
@@ -140,7 +141,7 @@ def doTest(String label, String buildType) {
   echo("doTest ${label}")
   sh """
     cd build/build
-    ctest --no-compress-output -T Test
+    sudo -u msk_jenkins ctest --no-compress-output -T Test
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
          tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
@@ -151,8 +152,8 @@ def doCoverage(String label, String buildType) {
   echo("doCoverage ${label}")
   sh """
     cd build/build
-    make coverage
-    /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
+    sudo -u msk_jenkins make coverage
+    sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
   """
   cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "build/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   publishHTML (target: [
@@ -170,13 +171,13 @@ def doInstall(String label, String buildType) {
   echo("doInstall ${label}")
   sh """
     cd build/build
-    make install DESTDIR=../install
+    sudo -u msk_jenkins make install DESTDIR=../install
     cd ../install
     echo ==================================================
     ls /workspace
     mount
     echo ==================================================
-    tar zcf ../../install-${JOB_NAME}-${label}-${buildType}.tgz .
+    sudo -u msk_jenkins tar zcf ../../install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   echo("doInstall END ${label}")
