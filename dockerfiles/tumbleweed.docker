@@ -31,5 +31,6 @@ RUN zypper install -y graphviz
 RUN zypper install -y kernel-devel
 # For ApplicationCore
 RUN zypper install -y hdf5-devel
+RUN zypper install -y gzip
 # copy in lcov_cobertura
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
