@@ -147,6 +147,7 @@ def doTest(String label, String buildType) {
   sh """
     cd build/build
     sudo -u msk_jenkins ctest --no-compress-output -T Test
+    sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\(^[[:space:]]*<Name>\)\(.*\)\(</Name>\)$_\1${label}.${buildType}.\2\3_'
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
          tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
