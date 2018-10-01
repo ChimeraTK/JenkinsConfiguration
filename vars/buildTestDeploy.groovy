@@ -92,19 +92,23 @@ def call(ArrayList<String> dependencyList) {
 
 def doAllRelease(ArrayList<String> dependencyList, String label) {
   echo("doAllRelease ${label}")
-  doBuild(dependencyList, label, "Release")
-  doStaticAnalysis(label,"Release")
-  doTest(label,"Release")
-  doInstall(label, "Release")
+  timeout(activity: true, time: 10) {
+    doBuild(dependencyList, label, "Release")
+    doStaticAnalysis(label,"Release")
+    doTest(label,"Release")
+    doInstall(label, "Release")
+  }
 }
 
 def doAllDebug(ArrayList<String> dependencyList, String label) {
   echo("doAllDebug ${label}")
-  doBuild(dependencyList, label,"Debug")
-  doStaticAnalysis(label,"Debug")
-  doTest(label,"Debug")
-  doCoverage(label,"Debug")
-  doInstall(label,"Debug")
+  timeout(activity: true, time: 10) {
+    doBuild(dependencyList, label,"Debug")
+    doStaticAnalysis(label,"Debug")
+    doTest(label,"Debug")
+    doCoverage(label,"Debug")
+    doInstall(label,"Debug")
+  }
 }
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
@@ -139,6 +143,7 @@ def doStaticAnalysis(String label, String buildType) {
   sh """
     sudo -u msk_jenkins cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
   """
+  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '', excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', unstableTotalAll: '0'
   echo("doStaticAnalysis END ${label}")
 }
 
