@@ -50,4 +50,4 @@ RUN apt-get install -y openntpd ntpdate
 # subversion e.g. for the llrfCtrl_config script (checking out the backup)
 RUN apt-get install -y subversion
 # copy in lcov_cobertura
-ADD lcov_cobertura-1.6 /common/lcov_cobertura-1.6
+ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
