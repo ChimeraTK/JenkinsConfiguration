@@ -4,7 +4,7 @@ ENV https_proxy http://xfelproxy.desy.de:3128
 
 RUN zypper refresh
 RUN zypper up -y
-RUN zypper dup -y --force-resolution
+RUN zypper dup -y --force-resolution --allow-vendor-change 
 # generic build tools
 RUN zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb
 RUN zypper install -y sudo tar
