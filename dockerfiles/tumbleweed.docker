@@ -1,7 +1,6 @@
 FROM opensuse/tumbleweed:latest
 ENV http_proxy http://xfelproxy.desy.de:3128
 ENV https_proxy http://xfelproxy.desy.de:3128
-
 RUN zypper refresh
 RUN zypper up -y
 RUN zypper dup -y --force-resolution --allow-vendor-change 
@@ -33,3 +32,5 @@ RUN zypper install -y kernel-devel
 RUN zypper install -y hdf5-devel
 # copy in lcov_cobertura
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
+# add msk_jenkins user
+RUN useradd -u 30996 msk_jenkins

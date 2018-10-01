@@ -118,7 +118,6 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   }
   echo("doBuild ${label} 3")
   sh """
-    useradd -u 30996 msk_jenkins
     rm -rf build
     sudo -u msk_jenkins mkdir -p build/build
     sudo -u msk_jenkins mkdir -p build/install

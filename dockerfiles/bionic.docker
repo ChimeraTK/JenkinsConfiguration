@@ -51,3 +51,5 @@ RUN apt-get install -y openntpd ntpdate
 RUN apt-get install -y subversion
 # copy in lcov_cobertura
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
+# add msk_jenkins user
+RUN useradd -u 30996 msk_jenkins
