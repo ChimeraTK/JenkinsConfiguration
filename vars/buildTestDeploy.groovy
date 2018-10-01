@@ -60,20 +60,30 @@ def call(ArrayList<String> dependencyList) {
             }
             post { always { cleanUp() } }
           }
-/*          stage('build SUSE Tumbeweed Release') {
-            agent { label "SUSEtumbleweed" }
+          stage('build SUSE Tumbeweed Release') {
+            agent {
+              docker {
+                image "builder:tumbleweed"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0  --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
+              }
+            }
             steps {
               doAllRelease(dependencyList, "SUSEtumbleweed")
             }
             post { always { cleanUp() } }
           }
           stage('build SUSE Tumbeweed Debug') {
-            agent { label "SUSEtumbleweed" }
+            agent {
+              docker {
+                image "builder:tumbleweed"
+                args "-v \"${env.WORKSPACE}\":/workspace -u 0  --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
+              }
+            }
             steps {
               doAllDebug(dependencyList, "SUSEtumbleweed")
             }
             post { always { cleanUp() } }
-          } */
+          } 
         }
       }
     }
