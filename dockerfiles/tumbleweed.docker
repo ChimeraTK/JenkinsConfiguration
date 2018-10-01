@@ -7,7 +7,7 @@ RUN zypper up -y
 RUN zypper dup -y --force-resolution
 # generic build tools
 RUN zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb
-RUN zypper install -y chrpath
+RUN zypper install -y sudo
 # for ChimeraTK core libraries:
 RUN zypper install -y libboost_*-devel
 RUN zypper install -y libxml++26-devel
