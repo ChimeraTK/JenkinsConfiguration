@@ -5,6 +5,8 @@ def call(ArrayList<String> dependencyList) {
     agent none
     stages {
       stage('build') {
+        // Run the build stages for all labels + build types in parallel, each in a separate docker container
+        // Note: If the list of labels + build types is extended here, don't forget to update also the doPublish() function!
         parallel {
           stage('Ubuntu 16.04 Release') {
             agent {
@@ -80,13 +82,13 @@ def call(ArrayList<String> dependencyList) {
           } 
         } // end parallel
       } // end stage build
-      stage('staticAnalysis') {
+      stage('publishResults') {
         agent {
           // run on host directly
           label 'Docker'
         }
         steps {
-          doStaticAnalysis()
+          doPublish()
         }
       } // end stage analysis
     } // end stages
@@ -173,20 +175,8 @@ def doValgrind(String label, String buildType) {
       sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=helgrind --xml=yes --xml-file=valgrind.\${test}.helgrind.valgrind ctest -R \${test}
     done
   """
-  publishValgrind (
-    failBuildOnInvalidReports: false,
-    failBuildOnMissingReports: false,
-    failThresholdDefinitelyLost: '',
-    failThresholdInvalidReadWrite: '',
-    failThresholdTotal: '',
-    pattern: '*.valgrind',
-    publishResultsForAbortedBuilds: false,
-    publishResultsForFailedBuilds: false,
-    sourceSubstitutionPaths: '',
-    unstableThresholdDefinitelyLost: '',
-    unstableThresholdInvalidReadWrite: '',
-    unstableThresholdTotal: ''
-  )
+  // stash valgrind result files for later publication
+  stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
 }
 
 /**********************************************************************************************************************/
@@ -203,14 +193,58 @@ def doInstall(String label, String buildType) {
 
 /**********************************************************************************************************************/
 
-def doStaticAnalysis() {
+def doPublish() {
+
+  // unstash result files into subdirectories
+  dir('Ubuntu1604-Debug') {
+    unstash "valgrind-Ubuntu1604-Debug"
+  }
+  dir('Ubuntu1604-Release') {
+    unstash "valgrind-Ubuntu1604-Release"
+  }
+  dir('Ubuntu1804-Debug') {
+    unstash "valgrind-Ubuntu1804-Debug"
+  }
+  dir('Ubuntu1804-Release') {
+    unstash "valgrind-Ubuntu1804-Release"
+  }
+  dir('Tumbleweed-Debug') {
+    unstash "valgrind-Tumbleweed-Debug"
+  }
+  dir('Tumbleweed-Release') {
+    unstash "valgrind-Tumbleweed-Release"
+  }
+
+  // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
   sh """
     pwd
     mkdir -p build
     cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
   """
-  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '', excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', unstableTotalAll: '0'
   publishCppcheck pattern: 'build/cppcheck.xml'
+
+  // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
+  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '',
+           consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '',
+           excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '',
+           unHealthy: '', unstableTotalAll: '0'
+  
+  // unstash valgrind result files and publish
+  publishValgrind (
+    failBuildOnInvalidReports: false,
+    failBuildOnMissingReports: false,
+    failThresholdDefinitelyLost: '',
+    failThresholdInvalidReadWrite: '',
+    failThresholdTotal: '',
+    pattern: '*/*.valgrind',
+    publishResultsForAbortedBuilds: false,
+    publishResultsForFailedBuilds: false,
+    sourceSubstitutionPaths: '',
+    unstableThresholdDefinitelyLost: '',
+    unstableThresholdInvalidReadWrite: '',
+    unstableThresholdTotal: ''
+  )
+  
 }
 
 /**********************************************************************************************************************/
