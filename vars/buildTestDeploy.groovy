@@ -279,7 +279,7 @@ def doPublish(ArrayList<String> builds) {
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
   warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '',
            consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '',
-           excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '',
+           excludePattern: '', healthy: '', includePattern: '', messagesPattern: '.*-Wstrict-aliasing.*',
            unHealthy: '', unstableTotalAll: '0'
   
   // publish valgrind result
