@@ -241,7 +241,7 @@ def doPublish(ArrayList<String> builds) {
   // unstash result files into subdirectories
   builds.each {
     dir("${it}") {
-      def (label, buildType) = buildName.tokenize('-')
+      def (label, buildType) = it.tokenize('-')
 
       // get cobertura coverage result (only Debug)
       if(buildType == "Debug") {
