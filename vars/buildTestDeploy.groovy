@@ -262,34 +262,64 @@ def doPublish() {
 
   // unstash result files into subdirectories
   dir('Ubuntu1604-Debug') {
-    unstash "valgrind-Ubuntu1604-Debug"
-    unstash "test-Ubuntu1604-Debug"
-    unstash "cobertura-Ubuntu1604-Debug"
+    try {
+      unstash "test-Ubuntu1604-Debug"
+      unstash "cobertura-Ubuntu1604-Debug"
+      unstash "valgrind-Ubuntu1604-Debug"
+    }
+    catch(all) {
+      currentBuild.result = 'FAILURE'
+    }
   }
   dir('Ubuntu1604-Release') {
-    unstash "valgrind-Ubuntu1604-Release"
-    unstash "test-Ubuntu1604-Release"
-    unstash "cobertura-Ubuntu1604-Release"
+    try {
+      unstash "test-Ubuntu1604-Release"
+      unstash "cobertura-Ubuntu1604-Release"
+      unstash "valgrind-Ubuntu1604-Release"
+    }
+    catch(all) {
+      currentBuild.result = 'FAILURE'
+    }
   }
   dir('Ubuntu1804-Debug') {
-    unstash "valgrind-Ubuntu1804-Debug"
-    unstash "test-Ubuntu1804-Debug"
-    unstash "cobertura-Ubuntu1804-Debug"
+    try {
+      unstash "test-Ubuntu1804-Debug"
+      unstash "cobertura-Ubuntu1804-Debug"
+      unstash "valgrind-Ubuntu1804-Debug"
+    }
+    catch(all) {
+      currentBuild.result = 'FAILURE'
+    }
   }
   dir('Ubuntu1804-Release') {
-    unstash "valgrind-Ubuntu1804-Release"
-    unstash "test-Ubuntu1804-Release"
-    unstash "cobertura-Ubuntu1804-Release"
+    try {
+      unstash "test-Ubuntu1804-Release"
+      unstash "cobertura-Ubuntu1804-Release"
+      unstash "valgrind-Ubuntu1804-Release"
+    }
+    catch(all) {
+      currentBuild.result = 'FAILURE'
+    }
   }
   dir('Tumbleweed-Debug') {
-    unstash "valgrind-Tumbleweed-Debug"
-    unstash "test-Tumbleweed-Debug"
-    unstash "cobertura-Tumbleweed-Debug"
+    try {
+      unstash "test-Tumbleweed-Debug"
+      unstash "cobertura-Tumbleweed-Debug"
+      unstash "valgrind-Tumbleweed-Debug"
+    }
+    catch(all) {
+      currentBuild.result = 'FAILURE'
+    }
   }
   dir('Tumbleweed-Release') {
-    unstash "valgrind-Tumbleweed-Release"
-    unstash "test-Tumbleweed-Release"
-    unstash "cobertura-Tumbleweed-Release"
+    try {
+      unstash "test-Tumbleweed-Release"
+      unstash "cobertura-Tumbleweed-Release"
+      unstash "valgrind-Tumbleweed-Release"
+    }
+    catch(all) {
+      currentBuild.result = 'FAILURE'
+    }
   }
 
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
