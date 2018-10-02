@@ -1,0 +1,49 @@
+FROM base/archlinux:latest
+ENV http_proxy http://xfelproxy.desy.de:3128
+ENV https_proxy http://xfelproxy.desy.de:3128
+RUN pacman -Syu
+RUN pacman -Ss --noconfirm g++ valgrind cppcheck lcov doxygen procmail make git gdb
+RUN pacman -Ss --noconfirm cmake
+RUN pacman -Ss --noconfirm sudo
+# for ChimeraTK core libraries:
+RUN pacman -Ss --noconfirm boost libxml++2.6
+# for DOOCS:
+RUN pacman -Ss --noconfirm libldap2 libzmq3 rpcbind
+# for EPICS:
+RUN pacman -Ss --noconfirm libreadline
+# for QtHardMon:
+RUN pacman -Ss --noconfirm libqt4 qtbase5
+# for Python bindings:
+RUN pacman -Ss --noconfirm python2.7 python-numpy python3 python3-numpy
+# for python testing
+RUN pacman -Ss --noconfirm python-pytest
+# for Matlab:
+RUN pacman -Ss --noconfirm libxmu6 csh libxrandr2
+# for the FirmwareProgrammer
+RUN pacman -Ss --noconfirm libncurses5
+# for projects which use dot graphs in doxygen
+RUN pacman -Ss --noconfirm graphviz
+# clang
+RUN pacman -Ss --noconfirm clang
+# for ApplicationCore
+RUN pacman -Ss --noconfirm libhdf5
+# for llrfctrlsrf/llrfctrlnrf
+RUN pacman -Ss --noconfirm liblua5.2
+# Python Sphinx for documentation of python bindings
+RUN pacman -Ss --noconfirm python-sphinx
+# for doocs-bam-server:
+RUN pacman -Ss --noconfirm libgsl
+# for the doocs-psm-ctrl-server
+RUN pacman -Ss --noconfirm libssl
+# for the amtfdbaccess library
+RUN pacman -Ss --noconfirm libpqxx
+# for the amtf_piezoacscan server
+RUN pacman -Ss --noconfirm libfftw3
+# NTP demon to prevent clock drifts
+RUN pacman -Ss --noconfirm openntpd ntpdate
+# subversion e.g. for the llrfCtrl_config script (checking out the backup)
+RUN pacman -Ss --noconfirm subversion
+# copy in lcov_cobertura
+ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
+# add msk_jenkins user
+RUN useradd -u 30996 msk_jenkins
