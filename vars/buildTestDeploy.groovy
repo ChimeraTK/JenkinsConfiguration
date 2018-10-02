@@ -32,6 +32,17 @@
 
 ***********************************************************************************************************************/
 
+def builds = [ 'xenial-Debug',
+               'xenial-Release',
+               'bionic-Debug',
+               'bionic-Release',
+               'tumbleweed-Debug',
+               'tumbleweed-Release' ]
+
+
+/**********************************************************************************************************************/
+
+// This is the function called from the .jenkinsfile
 def call(ArrayList<String> dependencyList) {
 
   pipeline {
@@ -40,80 +51,7 @@ def call(ArrayList<String> dependencyList) {
       stage('build') {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
         // Note: If the list of labels + build types is extended here, don't forget to update also the doPublish() function!
-        parallel {
-          stage('Ubuntu 16.04 Release') {
-            agent {
-              docker {
-                image "builder:xenial"
-                // we need root access inside the container and access to the dummy pcie devices of the host
-                args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
-              }
-            }
-            steps {
-              doAll(dependencyList, "Ubuntu1604", "Release")
-            }
-          }
-          stage('Ubuntu 16.04 Debug') {
-            agent {
-              docker {
-                image "builder:xenial"
-                // we need root access inside the container and access to the dummy pcie devices of the host
-                args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
-              }
-            }
-            steps {
-              doAll(dependencyList, "Ubuntu1604", "Debug")
-            }
-          }
-          stage('Ubuntu 18.04 Release') {
-            agent {
-              docker {
-                image "builder:bionic"
-                // we need root access inside the container and access to the dummy pcie devices of the host
-                args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
-              }
-            }
-            steps {
-              doAll(dependencyList, "Ubuntu1804", "Release")
-            }
-          }
-          stage('Ubuntu 18.04 Debug') {
-            agent {
-              docker {
-                image "builder:bionic"
-                // we need root access inside the container and access to the dummy pcie devices of the host
-                args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
-              }
-            }
-            steps {
-              doAll(dependencyList, "Ubuntu1804", "Debug")
-            }
-          }
-          stage('SUSE Tumbeweed Release') {
-            agent {
-              docker {
-                image "builder:tumbleweed"
-                // we need root access inside the container and access to the dummy pcie devices of the host
-                args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
-              }
-            }
-            steps {
-              doAll(dependencyList, "SUSEtumbleweed", "Release")
-            }
-          }
-          stage('SUSE Tumbeweed Debug') {
-            agent {
-              docker {
-                image "builder:tumbleweed"
-                // we need root access inside the container and access to the dummy pcie devices of the host
-                args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
-              }
-            }
-            steps {
-              doAll(dependencyList, "SUSEtumbleweed", "Debug")
-            }
-          } 
-        } // end parallel
+        parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it)] }
       } // end stage build
     } // end stages
     post {
@@ -124,6 +62,26 @@ def call(ArrayList<String> dependencyList) {
       } // end always
     } // end post
   } // end pipeline
+}
+
+/**********************************************************************************************************************/
+
+def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
+  // split the build name at the '-'
+  def (label, buildType) = buildName.tokenize('-')
+  // we need to return a closure here, which is then passed to parallel() for execution
+  return {
+    agent {
+      docker {
+        image "builder:${label}"
+        // we need root access inside the container and access to the dummy pcie devices of the host
+        args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
+      }
+    }
+    steps {
+      doAll(dependencyList, label, buildType)
+    }
+  }
 }
 
 /**********************************************************************************************************************/
