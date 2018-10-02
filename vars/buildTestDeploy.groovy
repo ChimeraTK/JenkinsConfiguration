@@ -4,115 +4,96 @@ def call(ArrayList<String> dependencyList) {
     stages {
       stage('build') {
         parallel {
-          stage('build Ubuntu 16.04 Release') {
+          stage('Ubuntu 16.04 Release') {
             agent {
               docker {
                 image "builder:xenial"
+                // we need root access inside the container and access to the dummy pcie devices of the host
                 args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
               }
             }
             steps {
-              echo("Running for Ubuntu 16.04 Release")
-              doAllRelease(dependencyList, "Ubuntu1604")
-              echo("Done with Ubuntu 16.04 Release")
+              doAll(dependencyList, "Ubuntu1604", "Release")
             }
-            post { always { cleanUp() } }
           }
-          stage('build Ubuntu 16.04 Debug') {
+          stage('Ubuntu 16.04 Debug') {
             agent {
               docker {
                 image "builder:xenial"
+                // we need root access inside the container and access to the dummy pcie devices of the host
                 args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
               }
             }
             steps {
-              echo("Running for Ubuntu 16.04 Debug")
-              doAllDebug(dependencyList, "Ubuntu1604")
-              echo("Done with Ubuntu 16.04 Debug")
+              doAll(dependencyList, "Ubuntu1604", "Debug")
             }
-            post { always { cleanUp() } }
           }
-          stage('build Ubuntu 18.04 Release') {
+          stage('Ubuntu 18.04 Release') {
             agent {
               docker {
                 image "builder:bionic"
+                // we need root access inside the container and access to the dummy pcie devices of the host
                 args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
               }
             }
             steps {
-              echo("Running for Ubuntu 18.04 Release")
-              doAllRelease(dependencyList, "Ubuntu1804")
-              echo("Done with Ubuntu 18.04 Release")
+              doAll(dependencyList, "Ubuntu1804", "Release")
             }
-            post { always { cleanUp() } }
           }
-          stage('build Ubuntu 18.04 Debug') {
+          stage('Ubuntu 18.04 Debug') {
             agent {
               docker {
                 image "builder:bionic"
+                // we need root access inside the container and access to the dummy pcie devices of the host
                 args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
               }
             }
             steps {
-              echo("Running for Ubuntu 18.04 Debug")
-              doAllDebug(dependencyList, "Ubuntu1804")
-              echo("Done with Ubuntu 18.04 Debug")
+              doAll(dependencyList, "Ubuntu1804", "Debug")
             }
-            post { always { cleanUp() } }
           }
-          stage('build SUSE Tumbeweed Release') {
+          stage('SUSE Tumbeweed Release') {
             agent {
               docker {
                 image "builder:tumbleweed"
+                // we need root access inside the container and access to the dummy pcie devices of the host
                 args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
               }
             }
             steps {
-              doAllRelease(dependencyList, "SUSEtumbleweed")
+              doAll(dependencyList, "SUSEtumbleweed", "Release")
             }
-            post { always { cleanUp() } }
           }
-          stage('build SUSE Tumbeweed Debug') {
+          stage('SUSE Tumbeweed Debug') {
             agent {
               docker {
                 image "builder:tumbleweed"
+                // we need root access inside the container and access to the dummy pcie devices of the host
                 args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
               }
             }
             steps {
-              doAllDebug(dependencyList, "SUSEtumbleweed")
+              doAll(dependencyList, "SUSEtumbleweed", "Debug")
             }
-            post { always { cleanUp() } }
           } 
-        }
-      }
+        } // end parallel
+      } // end stage build
+    } // end stages
+  } // end pipeline
+}
+
+/**********************************************************************************************************************/
+
+def doAll(ArrayList<String> dependencyList, String label, String buildType) {
+  timeout(activity: true, time: 10) {
+    doBuild(dependencyList, label, buildType)
+    doTest(label, buildType)
+    if(buildType == "Debug") {
+      doCoverage(label, buildType)
+      doValgrind(label, buildType)
     }
-  }
-}
-
-/**********************************************************************************************************************/
-
-def doAllRelease(ArrayList<String> dependencyList, String label) {
-  echo("doAllRelease ${label}")
-  timeout(activity: true, time: 10) {
-    doBuild(dependencyList, label, "Release")
-    doStaticAnalysis(label,"Release")
-    doTest(label,"Release")
-    doInstall(label, "Release")
-  }
-}
-
-/**********************************************************************************************************************/
-
-def doAllDebug(ArrayList<String> dependencyList, String label) {
-  echo("doAllDebug ${label}")
-  timeout(activity: true, time: 10) {
-    doBuild(dependencyList, label,"Debug")
-    doStaticAnalysis(label,"Debug")
-    doTest(label,"Debug")
-    doCoverage(label,"Debug")
-    doValgrind(label,"Debug")
-    doInstall(label,"Debug")
+    doInstall(label, buildType)
+    doStaticAnalysis(label, buildType)
   }
 }
 
@@ -233,8 +214,3 @@ def doInstall(String label, String buildType) {
   echo("doInstall END ${label}")
 }
 
-/**********************************************************************************************************************/
-
-def cleanUp() {
-  echo("cleanUp...")
-}
