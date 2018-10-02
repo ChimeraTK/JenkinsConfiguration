@@ -2,6 +2,19 @@
 
  Pipeline script for Jenkins CI tests of ChimeraTK libraries and DESY MSK projects
 
+
+ Usage:
+ 
+ - In the git repository of the project source create a file named ".jenkinsfile"
+ - Place the following content into that file (no indentation):
+    @Library('ChimeraTK') _
+    buildTestDeploy(['dependency1', 'dependency2']) 
+  - Beware the underscore at the end of the first line!
+  - The list of dependencies is optional, just call buildTestDeploy() if there are no dependencies
+  - The dependencies specify the Jenkins project names of which the artefacts should be obtained and unpacked into
+    the root directory of the Docker environment before starting the build.
+ 
+
  General comments:
  
  - Builds and tests are run inside a Docker container to have different test environments
