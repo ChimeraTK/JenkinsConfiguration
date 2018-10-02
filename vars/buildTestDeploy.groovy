@@ -163,7 +163,7 @@ def doTest(String label, String buildType) {
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: "*/build/build/Testing/*/*.xml") ])
+         tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
 }
 
 /**********************************************************************************************************************/
