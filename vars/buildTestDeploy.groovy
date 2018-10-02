@@ -82,16 +82,20 @@ def call(ArrayList<String> dependencyList) {
           } 
         } // end parallel
       } // end stage build
-      stage('publishResults') {
-        agent {
-          // run on host directly
-          label 'Docker'
-        }
-        steps {
-          doPublish()
-        }
-      } // end stage analysis
     } // end stages
+    post {
+      always {
+        stage('publish') {
+          agent {
+            // run on host directly
+            label 'Docker'
+          }
+          steps {
+            doPublish()
+          }
+        } // end stage publish
+      } // end always
+    } // end post
   } // end pipeline
 }
 
