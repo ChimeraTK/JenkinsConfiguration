@@ -1,4 +1,17 @@
-/**********************************************************************************************************************/
+/***********************************************************************************************************************
+
+ Pipeline script for Jenkins CI tests of ChimeraTK libraries and DESY MSK projects
+
+ General comments:
+ 
+ - Builds and tests are run inside a Docker container to have different test environments
+ - We execute all builds/tests twice per test environment - once for Debug and once for Release. Each execution is
+   called a "branch".
+ - Docker only virtualises the system without the kernel - the PCIe dummy driver is therefore shared!
+ - Most Jenkins plugins do not support their result publication executed once per branch, thus we stash the result files
+   and execute the publication later for all branches together.
+
+***********************************************************************************************************************/
 
 def call(ArrayList<String> dependencyList) {
   pipeline {
