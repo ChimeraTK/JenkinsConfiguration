@@ -210,6 +210,7 @@ def doStaticAnalysis() {
     cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
   """
   warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '', excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', unstableTotalAll: '0'
+  publishCppcheck pattern: 'build/cppcheck.xml'
 }
 
 /**********************************************************************************************************************/
