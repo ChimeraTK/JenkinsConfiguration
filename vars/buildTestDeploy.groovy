@@ -148,8 +148,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   sh """
     if [ -d artefacts ]; then
       for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-        echo === \$a
-        tar zxf \"\${a}\" -C /
+        tar zxvf \"\${a}\" -C /
       done
     fi
   """
@@ -218,8 +217,8 @@ def doValgrind(String label, String buildType) {
   // occurred. TODO: Check if --child-silent-after-fork=yes is a good choice in this context!
   sh """
     cd build/build
-    TESTS=`ctest -N | grep "Test *\\#" | sed -e 's/^ *Test *\\#.*: //'`
-    for test in \$TEST; do
+    for test in `ctest -N | grep "Test *\\#" | sed -e 's/^ *Test *\\#.*: //'` ; do
+      echo === \${test}
       sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.\${test}.memcheck.valgrind ctest -R \${test}
       sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=helgrind --xml=yes --xml-file=valgrind.\${test}.helgrind.valgrind ctest -R \${test}
     done
