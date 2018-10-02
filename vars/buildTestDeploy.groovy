@@ -94,7 +94,7 @@ def doAll(ArrayList<String> dependencyList, String label, String buildType) {
     doBuild(dependencyList, label, buildType)
     doTest(label, buildType)
 
-    if(buildType == "Debug DISABLED") {
+    if(buildType == "Debug") {
     
       // Coverage report only works well in Debug mode, since optimisation might lead to underestimated coverage
       doCoverage(label, buildType)
