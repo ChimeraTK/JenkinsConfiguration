@@ -33,6 +33,7 @@
 ***********************************************************************************************************************/
 
 def call(ArrayList<String> dependencyList) {
+
   pipeline {
     agent none
     stages {
@@ -129,8 +130,8 @@ def call(ArrayList<String> dependencyList) {
 
 def doAll(ArrayList<String> dependencyList, String label, String buildType) {
 
-  // Add inactivity timeout of 10 minutes (build will be interrupted if 10 minutes no log output has been produced)
-  timeout(activity: true, time: 10) {
+  // Add inactivity timeout of 10 minutes (build will be interrupted if 30 minutes no log output has been produced)
+  timeout(activity: true, time: 30) {
 
     doBuild(dependencyList, label, buildType)
     doTest(label, buildType)
@@ -242,8 +243,8 @@ def doValgrind(String label, String buildType) {
   sh """
     cd build/build
     for test in `ctest -N | grep "Test *\\#" | sed -e 's/^ *Test *\\#.*: //'` ; do
-      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.\${test}.memcheck.valgrind ctest -R \${test} &
-      # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=helgrind --xml=yes --xml-file=valgrind.\${test}.helgrind.valgrind ctest -R \${test}
+      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.\${test}.memcheck.valgrind ctest -V -R \${test} &
+      # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=helgrind --xml=yes --xml-file=valgrind.\${test}.helgrind.valgrind ctest -V -R \${test}
     done
     wait
   """
