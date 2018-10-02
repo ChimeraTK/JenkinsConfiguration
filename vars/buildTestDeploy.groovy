@@ -146,9 +146,11 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     dependencyList.each {
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
+    echo("Done getting artefacts.")
   }
 
   // unpack artefacts of dependencies into the Docker system root
+  echo("Unpacking artefacts...")
   sh """
     if [ -d artefacts ]; then
       for a in artefacts/install-*-${label}-${buildType}.tgz ; do
@@ -158,6 +160,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   """
     
   // start the build
+  echo("Starting actual build...")
   sh """
     sudo -u msk_jenkins mkdir -p build/build
     sudo -u msk_jenkins mkdir -p build/install
@@ -165,6 +168,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     sudo -u msk_jenkins cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     sudo -u msk_jenkins make $MAKEOPTS
   """
+  echo("Done with the build.")
 }
 
 /**********************************************************************************************************************/
