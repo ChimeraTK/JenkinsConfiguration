@@ -104,7 +104,6 @@ def doAll(ArrayList<String> dependencyList, String label, String buildType) {
       doValgrind(label, buildType)
     }
     doInstall(label, buildType)
-    doStaticAnalysis(label, buildType)
   }
 }
 
