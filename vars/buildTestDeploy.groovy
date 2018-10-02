@@ -205,7 +205,9 @@ def doInstall(String label, String buildType) {
 
 def doStaticAnalysis() {
   sh """
-    sudo -u msk_jenkins cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
+    pwd
+    mkdir -p build
+    cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
   """
   warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '', excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', unstableTotalAll: '0'
 }
