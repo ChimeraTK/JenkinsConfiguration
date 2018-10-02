@@ -72,6 +72,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
   return {
     stage(buildName) {
       node('Docker') {
+        checkout scm
         // we need root access inside the container and access to the dummy pcie devices of the host
         def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
         docker.image("builder:${label}").inside(dockerArgs) {
@@ -92,7 +93,7 @@ def doAll(ArrayList<String> dependencyList, String label, String buildType) {
     doBuild(dependencyList, label, buildType)
     doTest(label, buildType)
 
-    if(buildType == "Debug") {
+    if(buildType == "Debug DISABLED") {
     
       // Coverage report only works well in Debug mode, since optimisation might lead to underestimated coverage
       doCoverage(label, buildType)
