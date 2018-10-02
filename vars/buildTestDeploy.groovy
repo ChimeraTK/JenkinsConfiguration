@@ -136,9 +136,11 @@ def doAll(ArrayList<String> dependencyList, String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
+  echo("Starting build for ${label}-${buildType}")
 
   // obtain artefacts of dependencies
   script {
+    echo("Getting artefacts...")
     dependencyList.each {
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
@@ -166,6 +168,7 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doTest(String label, String buildType) {
+  echo("Starting tests for ${label}-${buildType}")
 
   // Run the tests via ctest
   sh """
@@ -186,6 +189,7 @@ def doTest(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doCoverage(String label, String buildType) {
+  echo("Generating coverage report for ${label}-${buildType}")
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
@@ -211,6 +215,7 @@ def doCoverage(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doValgrind(String label, String buildType) {
+  echo("Running valgrind for ${label}-${buildType}")
 
   // Run valgrind twice in memcheck and helgrind mode
   // Note: valgrind is run on ctest but for each test individually. This helps to distinguish later where errors
@@ -230,6 +235,7 @@ def doValgrind(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doInstall(String label, String buildType) {
+  echo("Generating artefacts for ${label}-${buildType}")
 
   // Install, but redirect files into the install directory (instead of installing into the system)
   sh """
