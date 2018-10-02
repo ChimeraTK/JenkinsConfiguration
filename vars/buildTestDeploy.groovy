@@ -10,6 +10,12 @@
  - Docker only virtualises the system without the kernel - the PCIe dummy driver is therefore shared!
  - Most Jenkins plugins do not support their result publication executed once per branch, thus we stash the result files
    and execute the publication later for all branches together.
+   
+ - Important: It seems that some echo() are necessary, since otherwise the build is failing without error message. The
+   impression might be wrong and the reasons are not understood. A potential explanation might be that sometimes empty
+   scripts (e.g. the part downloading the artefacts when no artefacts are present) lead to failure and an echo() makes
+   it not empty. The explanation is certainly not complete, as only one of the branches fails in these cases. This
+   should be investigated further.
 
 ***********************************************************************************************************************/
 
