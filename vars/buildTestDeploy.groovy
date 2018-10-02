@@ -90,6 +90,8 @@ def call(ArrayList<String> dependencyList) {
   }
 }
 
+/**********************************************************************************************************************/
+
 def doAllRelease(ArrayList<String> dependencyList, String label) {
   echo("doAllRelease ${label}")
   timeout(activity: true, time: 10) {
@@ -99,6 +101,8 @@ def doAllRelease(ArrayList<String> dependencyList, String label) {
     doInstall(label, "Release")
   }
 }
+
+/**********************************************************************************************************************/
 
 def doAllDebug(ArrayList<String> dependencyList, String label) {
   echo("doAllDebug ${label}")
@@ -111,6 +115,8 @@ def doAllDebug(ArrayList<String> dependencyList, String label) {
     doInstall(label,"Debug")
   }
 }
+
+/**********************************************************************************************************************/
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   echo("doBuild ${label}")
@@ -139,6 +145,8 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   echo("doBuild END ${label}")
 }
 
+/**********************************************************************************************************************/
+
 def doStaticAnalysis(String label, String buildType) {
   echo("doStaticAnalysis ${label}")
   sh """
@@ -147,6 +155,8 @@ def doStaticAnalysis(String label, String buildType) {
   warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '', excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', unstableTotalAll: '0'
   echo("doStaticAnalysis END ${label}")
 }
+
+/**********************************************************************************************************************/
 
 def doTest(String label, String buildType) {
   echo("doTest ${label}")
@@ -159,6 +169,8 @@ def doTest(String label, String buildType) {
          tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
   echo("doTest END ${label}")
 }
+
+/**********************************************************************************************************************/
 
 def doCoverage(String label, String buildType) {
   echo("doCoverage ${label}")
@@ -178,6 +190,8 @@ def doCoverage(String label, String buildType) {
   ])  
   echo("doCoverage END ${label}")
 }
+
+/**********************************************************************************************************************/
 
 def doValgrind(String label, String buildType) {
   echo("doValgrind ${label}")
@@ -205,6 +219,7 @@ def doValgrind(String label, String buildType) {
   )
 }
 
+/**********************************************************************************************************************/
 
 def doInstall(String label, String buildType) {
   echo("doInstall ${label}")
@@ -217,6 +232,8 @@ def doInstall(String label, String buildType) {
   archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   echo("doInstall END ${label}")
 }
+
+/**********************************************************************************************************************/
 
 def cleanUp() {
   echo("cleanUp...")
