@@ -158,9 +158,10 @@ def doTest(String label, String buildType) {
     cd build/build
     sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
   """
-  
-  // stash test result file for later publication
-  stash includes: 'build/build/Testing/*/*.xml', name: "tests-${label}-${buildType}"
+
+  // Publish test result directly (works properly even with multiple publications from parallel branches)  
+  xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+         tools: [ CTest(pattern: "*/build/build/Testing/*/*.xml") ])
 }
 
 /**********************************************************************************************************************/
@@ -238,7 +239,6 @@ def doPublish() {
   // unstash result files into subdirectories
   dir('Ubuntu1604-Debug') {
     try {
-      unstash "test-Ubuntu1604-Debug"
       unstash "cobertura-Ubuntu1604-Debug"
       unstash "valgrind-Ubuntu1604-Debug"
     }
@@ -248,7 +248,6 @@ def doPublish() {
   }
   dir('Ubuntu1604-Release') {
     try {
-      unstash "test-Ubuntu1604-Release"
       unstash "cobertura-Ubuntu1604-Release"
       unstash "valgrind-Ubuntu1604-Release"
     }
@@ -258,7 +257,6 @@ def doPublish() {
   }
   dir('Ubuntu1804-Debug') {
     try {
-      unstash "test-Ubuntu1804-Debug"
       unstash "cobertura-Ubuntu1804-Debug"
       unstash "valgrind-Ubuntu1804-Debug"
     }
@@ -268,7 +266,6 @@ def doPublish() {
   }
   dir('Ubuntu1804-Release') {
     try {
-      unstash "test-Ubuntu1804-Release"
       unstash "cobertura-Ubuntu1804-Release"
       unstash "valgrind-Ubuntu1804-Release"
     }
@@ -278,7 +275,6 @@ def doPublish() {
   }
   dir('Tumbleweed-Debug') {
     try {
-      unstash "test-Tumbleweed-Debug"
       unstash "cobertura-Tumbleweed-Debug"
       unstash "valgrind-Tumbleweed-Debug"
     }
@@ -288,7 +284,6 @@ def doPublish() {
   }
   dir('Tumbleweed-Release') {
     try {
-      unstash "test-Tumbleweed-Release"
       unstash "cobertura-Tumbleweed-Release"
       unstash "valgrind-Tumbleweed-Release"
     }
@@ -310,10 +305,6 @@ def doPublish() {
            consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '',
            excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '',
            unHealthy: '', unstableTotalAll: '0'
-
-  // publish test result
-  xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: "*/build/build/Testing/*/*.xml") ])
   
   // publish valgrind result
   publishValgrind (
