@@ -104,11 +104,7 @@ def call(ArrayList<String> dependencyList) {
     } // end stages
     post {
       always {
-        agent {
-          // run on host directly
-          label 'Docker'
-        }
-        steps {
+        node('Docker') {
           doPublish()
         }
       } // end always
