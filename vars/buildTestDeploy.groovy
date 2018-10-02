@@ -1,3 +1,5 @@
+/**********************************************************************************************************************/
+
 def call(ArrayList<String> dependencyList) {
   pipeline {
     agent none
@@ -78,6 +80,15 @@ def call(ArrayList<String> dependencyList) {
           } 
         } // end parallel
       } // end stage build
+      stage('staticAnalysis') {
+        agent {
+          // run on host directly
+          label 'Docker'
+        }
+        steps {
+          doStaticAnalysis()
+        }
+      } // end stage analysis
     } // end stages
   } // end pipeline
 }
@@ -100,15 +111,11 @@ def doAll(ArrayList<String> dependencyList, String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
-  echo("doBuild ${label}")
   script {
-    echo("doBuild ${label} 1")
     dependencyList.each {
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
-    echo("doBuild ${label} 2")
   }
-  echo("doBuild ${label} 3")
   sh """
     rm -rf build
     sudo -u msk_jenkins mkdir -p build/build
@@ -123,24 +130,11 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     sudo -u msk_jenkins cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     sudo -u msk_jenkins make $MAKEOPTS
   """
-  echo("doBuild END ${label}")
-}
-
-/**********************************************************************************************************************/
-
-def doStaticAnalysis(String label, String buildType) {
-  echo("doStaticAnalysis ${label}")
-  sh """
-    sudo -u msk_jenkins cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
-  """
-  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '', excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', unstableTotalAll: '0'
-  echo("doStaticAnalysis END ${label}")
 }
 
 /**********************************************************************************************************************/
 
 def doTest(String label, String buildType) {
-  echo("doTest ${label}")
   sh """
     cd build/build
     sudo -u msk_jenkins ctest --no-compress-output -T Test
@@ -148,13 +142,11 @@ def doTest(String label, String buildType) {
   """
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
          tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
-  echo("doTest END ${label}")
 }
 
 /**********************************************************************************************************************/
 
 def doCoverage(String label, String buildType) {
-  echo("doCoverage ${label}")
   sh """
     cd build/build
     sudo -u msk_jenkins make coverage
@@ -169,13 +161,11 @@ def doCoverage(String label, String buildType) {
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
-  echo("doCoverage END ${label}")
 }
 
 /**********************************************************************************************************************/
 
 def doValgrind(String label, String buildType) {
-  echo("doValgrind ${label}")
   sh """
     cd build/build
     TESTS=`ctest -N | grep "Test *\\#" | sed -e 's/^ *Test *\\#.*: //'`
@@ -203,7 +193,6 @@ def doValgrind(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doInstall(String label, String buildType) {
-  echo("doInstall ${label}")
   sh """
     cd build/build
     sudo -u msk_jenkins make install DESTDIR=../install
@@ -211,6 +200,16 @@ def doInstall(String label, String buildType) {
     sudo -u msk_jenkins tar zcf ../../install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
-  echo("doInstall END ${label}")
 }
+
+/**********************************************************************************************************************/
+
+def doStaticAnalysis() {
+  sh """
+    sudo -u msk_jenkins cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
+  """
+  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '', excludePattern: '.*-Wstrict-aliasing.*', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', unstableTotalAll: '0'
+}
+
+/**********************************************************************************************************************/
 
