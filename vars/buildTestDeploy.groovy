@@ -179,7 +179,7 @@ def doTest(String label, String buildType) {
   // Run the tests via ctest
   sh """
     cd build/build
-    sudo -u msk_jenkins ctest --no-compress-output -T Test
+    sudo -u msk_jenkins ctest --no-compress-output $MAKEOPTS -T Test
   """
     
   // Prefix test names with label and buildType, so we can distinguish them later
@@ -229,9 +229,10 @@ def doValgrind(String label, String buildType) {
   sh """
     cd build/build
     for test in `ctest -N | grep "Test *\\#" | sed -e 's/^ *Test *\\#.*: //'` ; do
-      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.\${test}.memcheck.valgrind ctest -R \${test}
+      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.\${test}.memcheck.valgrind ctest -R \${test} &
       # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=helgrind --xml=yes --xml-file=valgrind.\${test}.helgrind.valgrind ctest -R \${test}
     done
+    wait
   """
 
   // stash valgrind result files for later publication
