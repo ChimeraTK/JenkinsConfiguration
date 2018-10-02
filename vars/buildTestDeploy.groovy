@@ -32,16 +32,6 @@
 
 ***********************************************************************************************************************/
 
-def builds = [ 'xenial-Debug',
-               'xenial-Release',
-               'bionic-Debug',
-               'bionic-Release',
-               'tumbleweed-Debug',
-               'tumbleweed-Release' ]
-
-
-/**********************************************************************************************************************/
-
 // This is the function called from the .jenkinsfile
 def call(ArrayList<String> dependencyList) {
 
@@ -50,8 +40,17 @@ def call(ArrayList<String> dependencyList) {
     stages {
       stage('build') {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
-        // Note: If the list of labels + build types is extended here, don't forget to update also the doPublish() function!
-        parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it)] }
+        steps {
+          script {
+            def builds = [ 'xenial-Debug',
+                           'xenial-Release',
+                           'bionic-Debug',
+                           'bionic-Release',
+                           'tumbleweed-Debug',
+                           'tumbleweed-Release' ]
+            parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it)] }
+          }
+        }
       } // end stage build
     } // end stages
     post {
@@ -71,15 +70,14 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
   def (label, buildType) = buildName.tokenize('-')
   // we need to return a closure here, which is then passed to parallel() for execution
   return {
-    agent {
-      docker {
-        image "builder:${label}"
+    stage(buildName) {
+      node('Docker') {
         // we need root access inside the container and access to the dummy pcie devices of the host
-        args "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
+        def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
+        docker.image("builder:${label}").inside(dockerArgs) {
+          doAll(dependencyList, label, buildType)
+        }
       }
-    }
-    steps {
-      doAll(dependencyList, label, buildType)
     }
   }
 }
