@@ -35,6 +35,7 @@
 // This is the function called from the .jenkinsfile
 def call(ArrayList<String> dependencyList) {
 
+  // List of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
   def builds = [ 'xenial-Debug',
                  'xenial-Release',
                  'bionic-Debug',
@@ -240,23 +241,28 @@ def doPublish(ArrayList<String> builds) {
   // unstash result files into subdirectories
   builds.each {
     dir("${it}") {
+      def (label, buildType) = buildName.tokenize('-')
 
-      // get cobertura result    
-      try {
-        unstash "cobertura-${it}"
-      }
-      catch(all) {
-        echo("Could not retreive stashed cobertura results for ${it}")
-        currentBuild.result = 'FAILURE'
+      // get cobertura coverage result (only Debug)
+      if(buildType == "Debug") {
+        try {
+          unstash "cobertura-${it}"
+        }
+        catch(all) {
+          echo("Could not retreive stashed cobertura results for ${it}")
+          currentBuild.result = 'FAILURE'
+        }
       }
       
-      // get valgrind result
-      try {
-        unstash "valgrind-${it}"
-      }
-      catch(all) {
-        echo("Could not retreive stashed valgrind results for ${it}")
-        currentBuild.result = 'FAILURE'
+      // get valgrind result (only Debug)
+      if(buildType == "Debug") {
+        try {
+          unstash "valgrind-${it}"
+        }
+        catch(all) {
+          echo("Could not retreive stashed valgrind results for ${it}")
+          currentBuild.result = 'FAILURE'
+        }
       }
 
     }
