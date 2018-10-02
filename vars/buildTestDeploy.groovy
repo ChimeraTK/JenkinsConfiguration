@@ -211,7 +211,7 @@ def doValgrind(String label, String buildType) {
   """
 
   // stash valgrind result files for later publication
-  stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
+  stash includes: 'build/build/*.valgrind', name: "valgrind-${label}-${buildType}"
 }
 
 /**********************************************************************************************************************/
