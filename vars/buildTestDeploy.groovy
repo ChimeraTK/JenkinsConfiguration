@@ -35,6 +35,13 @@
 // This is the function called from the .jenkinsfile
 def call(ArrayList<String> dependencyList) {
 
+  def builds = [ 'xenial-Debug',
+                 'xenial-Release',
+                 'bionic-Debug',
+                 'bionic-Release',
+                 'tumbleweed-Debug',
+                 'tumbleweed-Release' ]
+
   pipeline {
     agent none
     stages {
@@ -42,12 +49,6 @@ def call(ArrayList<String> dependencyList) {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
         steps {
           script {
-            def builds = [ 'xenial-Debug',
-                           'xenial-Release',
-                           'bionic-Debug',
-                           'bionic-Release',
-                           'tumbleweed-Debug',
-                           'tumbleweed-Release' ]
             parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it)] }
           }
         }
@@ -56,7 +57,7 @@ def call(ArrayList<String> dependencyList) {
     post {
       always {
         node('Docker') {
-          doPublish()
+          doPublish(builds)
         }
       } // end always
     } // end post
@@ -234,61 +235,30 @@ def doInstall(String label, String buildType) {
 
 /**********************************************************************************************************************/
 
-def doPublish() {
+def doPublish(ArrayList<String> builds) {
 
   // unstash result files into subdirectories
-  dir('Ubuntu1604-Debug') {
-    try {
-      unstash "cobertura-Ubuntu1604-Debug"
-      unstash "valgrind-Ubuntu1604-Debug"
-    }
-    catch(all) {
-      currentBuild.result = 'FAILURE'
-    }
-  }
-  dir('Ubuntu1604-Release') {
-    try {
-      unstash "cobertura-Ubuntu1604-Release"
-      unstash "valgrind-Ubuntu1604-Release"
-    }
-    catch(all) {
-      currentBuild.result = 'FAILURE'
-    }
-  }
-  dir('Ubuntu1804-Debug') {
-    try {
-      unstash "cobertura-Ubuntu1804-Debug"
-      unstash "valgrind-Ubuntu1804-Debug"
-    }
-    catch(all) {
-      currentBuild.result = 'FAILURE'
-    }
-  }
-  dir('Ubuntu1804-Release') {
-    try {
-      unstash "cobertura-Ubuntu1804-Release"
-      unstash "valgrind-Ubuntu1804-Release"
-    }
-    catch(all) {
-      currentBuild.result = 'FAILURE'
-    }
-  }
-  dir('Tumbleweed-Debug') {
-    try {
-      unstash "cobertura-Tumbleweed-Debug"
-      unstash "valgrind-Tumbleweed-Debug"
-    }
-    catch(all) {
-      currentBuild.result = 'FAILURE'
-    }
-  }
-  dir('Tumbleweed-Release') {
-    try {
-      unstash "cobertura-Tumbleweed-Release"
-      unstash "valgrind-Tumbleweed-Release"
-    }
-    catch(all) {
-      currentBuild.result = 'FAILURE'
+  builds.each {
+    dir("${it}") {
+
+      // get cobertura result    
+      try {
+        unstash "cobertura-${it}"
+      }
+      catch(all) {
+        echo("Could not retreive stashed cobertura results for ${it}")
+        currentBuild.result = 'FAILURE'
+      }
+      
+      // get valgrind result
+      try {
+        unstash "valgrind-${it}"
+      }
+      catch(all) {
+        echo("Could not retreive stashed valgrind results for ${it}")
+        currentBuild.result = 'FAILURE'
+      }
+
     }
   }
 
