@@ -87,7 +87,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
       node('Docker') {
         checkout scm
         // we need root access inside the container and access to the dummy pcie devices of the host
-        def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6"
+        def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
         docker.image("builder:${label}").inside(dockerArgs) {
           doAll(dependencyList, label, buildType)
         }
