@@ -198,16 +198,35 @@ def doValgrind(String label, String buildType) {
   echo("Running valgrind for ${label}-${buildType}")
 
   // Run valgrind twice in memcheck and helgrind mode
-  // Note: valgrind is run on ctest but for each test individually. This helps to distinguish later where errors
-  // occurred. TODO: Check if --child-silent-after-fork=yes is a good choice in this context!
-  sh """
+  // 
+  // First, find the test executables. Search for all CTestTestfile.cmake and look for add_test() inside. Resolve the
+  // given names relative to the location of the CTestTestfile.cmake file.
+  //
+  // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
+  sh '''
     cd build/build
-    for test in `ctest -N | grep "Test *\\#" | sed -e 's/^ *Test *\\#.*: //'` ; do
-      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.\${test}.memcheck.valgrind ctest -V -R \${test} &
-      # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --child-silent-after-fork=yes --tool=helgrind --xml=yes --xml-file=valgrind.\${test}.helgrind.valgrind ctest -V -R \${test}
+    
+    EXECLIST=""
+    for testlist in `find -name CTestTestfile.cmake` ; do
+      dir=`dirname $testlist`
+      for test in `grep add_test "${testlist}" | sed -e 's_^[^"]*"__' -e 's/")$//'` ; do
+        # $test is just the name of the test executable, without add_test etc.
+        # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
+        if [ -f "${test}" ]; then
+          EXECLIST="${EXECLIST} ${test}"
+        elif [ -f "${dir}${test}" ]; then
+          EXECLIST="${EXECLIST} ${dir}${test}"
+        fi
+      done
+    done
+    
+    for test in ${EXECLIST} ; do
+      testname=`basename ${test}`
+      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test} &
+      # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=valgrind.${testname}.helgrind.valgrind ${test}
     done
     wait
-  """
+  '''
 
   // stash valgrind result files for later publication
   stash includes: 'build/build/*.valgrind', name: "valgrind-${label}-${buildType}"
