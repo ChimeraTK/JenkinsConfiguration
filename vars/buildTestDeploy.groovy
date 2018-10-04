@@ -13,6 +13,17 @@
   - The list of dependencies is optional, just call buildTestDeploy() if there are no dependencies
   - The dependencies specify the Jenkins project names of which the artefacts should be obtained and unpacked into
     the root directory of the Docker environment before starting the build.
+
+    
+ Important:
+ 
+  - Tests will be executed concurrently via "ctest -j" etc. inside the same docker environment. It is expected that the
+    tests are either designed to not interfere with each other or to internally use locks to exclude concurrent access
+    to the same ressource (e.g. network port, shared memory)
+  - The mtcadummy devices are available inside the docker environments, but they are even shared across the different
+    containers (since all containers run under the same kernel). It is expected that tests using these dummies use
+    file locks on /var/run/lock/mtcadummy/<devicenode> via flock() to ensure exclusive access. /var/run/lock/mtcadummy
+    will be a shared directory between all containers sharing the same kernel.
  
 
  General comments:
