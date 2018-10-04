@@ -123,6 +123,11 @@ def doAll(ArrayList<String> dependencyList, String label, String buildType) {
 
 def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
   echo("Starting build for ${label}-${buildType}")
+  
+  // Clean build directory. This removes any files which are not in the source code repository
+  sh '''
+    git clean -f -d -x
+  '''
 
   // obtain artefacts of dependencies
   script {
