@@ -224,9 +224,9 @@ def doValgrind(String label, String buildType) {
         # $test is just the name of the test executable, without add_test etc.
         # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
         if [ -f "${test}" ]; then
-          EXECLIST="${EXECLIST} ${test}"
+          EXECLIST="${EXECLIST} `realpath ${test}`"
         elif [ -f "${dir}${test}" ]; then
-          EXECLIST="${EXECLIST} ${dir}${test}"
+          EXECLIST="${EXECLIST} `realpath ${dir}${test}`"
         fi
       done
     done
