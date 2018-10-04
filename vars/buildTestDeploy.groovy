@@ -334,7 +334,7 @@ def doPublish(ArrayList<String> builds) {
     sourceSubstitutionPaths: '',
     unstableThresholdDefinitelyLost: '',
     unstableThresholdInvalidReadWrite: '',
-    unstableThresholdTotal: ''
+    unstableThresholdTotal: '0'
   )
   
   // publish cobertura result
