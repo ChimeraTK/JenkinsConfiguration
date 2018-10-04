@@ -328,7 +328,7 @@ def doPublish(ArrayList<String> builds) {
     failThresholdDefinitelyLost: '',
     failThresholdInvalidReadWrite: '',
     failThresholdTotal: '',
-    pattern: '*/*.valgrind',
+    pattern: '*/build/build/*.valgrind',
     publishResultsForAbortedBuilds: false,
     publishResultsForFailedBuilds: false,
     sourceSubstitutionPaths: '',
@@ -338,7 +338,7 @@ def doPublish(ArrayList<String> builds) {
   )
   
   // publish cobertura result
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "build/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/build/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
 }
 
