@@ -297,6 +297,10 @@ def doPublish(ArrayList<String> builds) {
 
     }
   }
+  
+  sh '''
+    find -name *.valgrind
+  '''
 
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
   sh """
@@ -314,8 +318,8 @@ def doPublish(ArrayList<String> builds) {
   
   // publish valgrind result
   publishValgrind (
-    failBuildOnInvalidReports: false,
-    failBuildOnMissingReports: false,
+    failBuildOnInvalidReports: true,
+    failBuildOnMissingReports: true,
     failThresholdDefinitelyLost: '',
     failThresholdInvalidReadWrite: '',
     failThresholdTotal: '',
