@@ -152,7 +152,7 @@ def doTest(String label, String buildType) {
   // Run the tests via ctest
   sh """
     cd build/build
-    sudo -u msk_jenkins ctest --no-compress-output $MAKEOPTS -T Test
+    sudo -u msk_jenkins ctest --no-compress-output $MAKEOPTS -T Test || true
   """
     
   // Prefix test names with label and buildType, so we can distinguish them later
@@ -174,7 +174,7 @@ def doCoverage(String label, String buildType) {
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
     cd build/build
-    sudo -u msk_jenkins make coverage
+    sudo -u msk_jenkins make coverage || true
     sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
   """
   
