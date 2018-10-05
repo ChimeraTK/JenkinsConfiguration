@@ -6,6 +6,9 @@
 
 def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType) {
 
+  doPrepare(dependencyList, label, buildType)
+  doDependencyArtefacts(dependencyList, label, buildType)
+
   // Add inactivity timeout of 10 minutes (build will be interrupted if 10 minutes no log output has been produced)
   timeout(activity: true, time: 10) {
   
@@ -19,34 +22,50 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
 /**********************************************************************************************************************/
 
 def doAnalysis(ArrayList<String> dependencyList, String label, String buildType) {
+  if(buildType == "Debug") {
+    doPrepare(dependencyList, label, buildType)
+    doDependencyArtefacts(dependencyList, label, buildType)
 
-  // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
-  timeout(activity: true, time: 60) {
-    if(buildType == "Debug") {
-    
+    // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
+    timeout(activity: true, time: 60) {
+
       // Coverage report only works well in Debug mode, since optimisation might lead to underestimated coverage
       doCoverage(label, buildType)
       
       // Run valgrind only in Debug mode, since Release mode often leads to no-longer-matching suppressions
       doValgrind(label, buildType)
+
     }
   }
 }
 
 /**********************************************************************************************************************/
 
-def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
-  echo("Starting build for ${label}-${buildType}")
+def doPrepare(ArrayList<String> dependencyList, String label, String buildType) {
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins
   sh '''
     chmod ugo+rwX /var/run/lock/mtcadummy
   '''
   
-  // Clean build directory. This removes any files which are not in the source code repository
+  // Clean source directory. This removes any files which are not in the source code repository
   sh '''
     sudo -u msk_jenkins git clean -f -d -x
   '''
+  
+  // Create scratch directory. Keep the absolute path fixed, so we can copy the build directory as an artefact for the
+  // analysis job
+  sh '''
+    mkdir /scratch
+    chown msk_jenkins /scratch
+  '''
+
+}
+
+/**********************************************************************************************************************/
+
+def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String buildType) {
+  echo("Obtaining dependency artefacts for ${label}-${buildType}")
   
   // obtain artefacts of dependencies
   script {
@@ -66,14 +85,21 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
       done
     fi
   """
-    
+
+}
+
+/**********************************************************************************************************************/
+
+def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
+  echo("Starting build for ${label}-${buildType}")
+  
   // start the build
   echo("Starting actual build...")
   sh """
-    sudo -u msk_jenkins mkdir -p build/build
-    sudo -u msk_jenkins mkdir -p build/install
-    cd build/build
-    sudo -u msk_jenkins cmake ../.. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
+    sudo -u msk_jenkins mkdir -p /scratch/build
+    sudo -u msk_jenkins mkdir -p /scratch/install
+    cd /scratch/build
+    sudo -u msk_jenkins cmake ${WORKSPACE} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     sudo -u msk_jenkins make $MAKEOPTS
   """
   echo("Done with the build.")
@@ -86,19 +112,19 @@ def doTest(String label, String buildType) {
 
   // Run the tests via ctest
   sh """
-    cd build/build
+    cd /scratch/build
     sudo -u msk_jenkins ctest --no-compress-output $MAKEOPTS -T Test || true
   """
     
   // Prefix test names with label and buildType, so we can distinguish them later
   sh """
-    cd build/build
+    cd /scratch/build
     sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
   """
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: "build/build/Testing/*/*.xml") ])
+         tools: [ CTest(pattern: "/scratch/build/Testing/*/*.xml") ])
 }
 
 /**********************************************************************************************************************/
@@ -108,20 +134,20 @@ def doCoverage(String label, String buildType) {
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
-    cd build/build
+    cd /scratch/build
     sudo -u msk_jenkins make coverage || true
     sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
   """
   
   // stash cobertura coverage report result for later publication
-  stash includes: "build/build/coverage.xml", name: "cobertura-${label}-${buildType}"
+  stash includes: "/scratch/build/coverage.xml", name: "cobertura-${label}-${buildType}"
   
   // publish HTML coverage report now, since it already allows publication of multiple distinguised reports
   publishHTML (target: [
       allowMissing: false,
       alwaysLinkToLastBuild: false,
       keepAll: false,
-      reportDir: "build/build/coverage_html",
+      reportDir: "/scratch/build/coverage_html",
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
@@ -139,7 +165,7 @@ def doValgrind(String label, String buildType) {
   //
   // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
   sh '''
-    cd build/build
+    cd /scratch/build
     
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
@@ -157,14 +183,14 @@ def doValgrind(String label, String buildType) {
     
     for test in ${EXECLIST} ; do
       testname=`basename ${test}`
-      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test} &
+      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test}
       # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=valgrind.${testname}.helgrind.valgrind ${test}
     done
     wait
   '''
 
   // stash valgrind result files for later publication
-  stash includes: 'build/build/*.valgrind', name: "valgrind-${label}-${buildType}"
+  stash includes: '/scratch/build/*.valgrind', name: "valgrind-${label}-${buildType}"
 }
 
 /**********************************************************************************************************************/
@@ -174,23 +200,43 @@ def doInstall(String label, String buildType) {
 
   // Install, but redirect files into the install directory (instead of installing into the system)
   sh """
-    cd build/build
+    cd /scratch/build
     sudo -u msk_jenkins make install DESTDIR=../install
   """
   
   // Generate tar ball of install directory - this will be the artefact used by our dependents
   sh """
-    cd build/install
-    sudo -u msk_jenkins tar zcf ../../install-${JOB_NAME}-${label}-${buildType}.tgz .
+    cd /scratch/install
+    sudo -u msk_jenkins tar zcf /scratch/install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   
   // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
-  archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+  archiveArtifacts artifacts: "/scratch/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
 }
 
 /**********************************************************************************************************************/
 
 def doPublishBuildTestDeploy(ArrayList<String> builds) {
+
+  // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
+  sh """
+    pwd
+    mkdir -p build
+    cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
+  """
+  publishCppcheck pattern: 'build/cppcheck.xml'
+
+  // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
+  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '',
+           consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '',
+           excludePattern: '', healthy: '', includePattern: '', messagesPattern: '.*-Wstrict-aliasing.*',
+           unHealthy: '', unstableTotalAll: '0'
+  
+}
+
+/**********************************************************************************************************************/
+
+def doPublishAnalysis(ArrayList<String> builds) {
 
   // unstash result files into subdirectories
   builds.each {
@@ -225,20 +271,6 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
   sh '''
     find -name *.valgrind
   '''
-
-  // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
-  sh """
-    pwd
-    mkdir -p build
-    cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
-  """
-  publishCppcheck pattern: 'build/cppcheck.xml'
-
-  // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
-  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '',
-           consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '',
-           excludePattern: '', healthy: '', includePattern: '', messagesPattern: '.*-Wstrict-aliasing.*',
-           unHealthy: '', unstableTotalAll: '0'
   
   // publish valgrind result
   publishValgrind (
