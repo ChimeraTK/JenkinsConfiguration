@@ -85,7 +85,7 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
   // unpack artefacts of dependencies into the Docker system root
   echo("Unpacking artefacts...")
   sh """
-    if [ -d artefacts ]; then
+    if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
       for a in artefacts/install-*-${label}-${buildType}.tgz ; do
         tar zxvf \"\${a}\" -C /
       done
