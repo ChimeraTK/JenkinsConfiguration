@@ -123,8 +123,8 @@ def doBuilddirArtefact(String label, String buildType) {
     sh """
       cp /scratch/artefact.list ${WORKSPACE}/artefacts.list
     """
-    myFile = new File(env.WORKSPACE+"/artefact.list")
-    myFile.readLines().each {
+    myFile = readFile(env.WORKSPACE+"/artefact.list")
+    myFile.split("\n").each {
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
     echo("Done dependency getting artefacts.")
