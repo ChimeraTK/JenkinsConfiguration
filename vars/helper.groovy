@@ -121,7 +121,7 @@ def doBuilddirArtefact(String label, String buildType) {
   script {
     echo("Getting dependency artefacts...")
     sh """
-      cp /scratch/artefact.list ${WORKSPACE}/artefacts.list
+      cp /scratch/artefact.list ${WORKSPACE}/artefact.list
     """
     myFile = readFile(env.WORKSPACE+"/artefact.list")
     myFile.split("\n").each {
