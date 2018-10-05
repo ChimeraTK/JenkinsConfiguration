@@ -1,6 +1,8 @@
 /***********************************************************************************************************************
 
   buildTestDeploy() is called from the .jenkinsfile of each project
+  
+  Note: set "env.valgrindExcludes" to a space-separated list of test names to be excluded from valgrind before calling!
 
 ***********************************************************************************************************************/
 
