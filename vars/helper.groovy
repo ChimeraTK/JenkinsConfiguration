@@ -6,7 +6,7 @@
 
 def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType) {
 
-  doPrepare()
+  doPrepare(true)
   doDependencyArtefacts(dependencyList, label, buildType)
 
   // Add inactivity timeout of 10 minutes (build will be interrupted if 10 minutes no log output has been produced)
@@ -23,7 +23,7 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
 
 def doAnalysis(ArrayList<String> dependencyList, String label, String buildType) {
   if(buildType == "Debug") {
-    doPrepare()
+    doPrepare(false)
     doDependencyArtefacts(dependencyList, label, buildType)
     doBuilddirArtefact(label, buildType)
 
@@ -42,7 +42,7 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 
 /**********************************************************************************************************************/
 
-def doPrepare() {
+def doPrepare(boolean hasSource) {
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins
   sh '''
@@ -50,9 +50,11 @@ def doPrepare() {
   '''
   
   // Clean source directory. This removes any files which are not in the source code repository
-  sh '''
-    sudo -u msk_jenkins git clean -f -d -x
-  '''
+  if(hasSource) {
+    sh '''
+      sudo -u msk_jenkins git clean -f -d -x
+    '''
+  }
   
   // Create scratch directory. Keep the absolute path fixed, so we can copy the build directory as an artefact for the
   // analysis job
