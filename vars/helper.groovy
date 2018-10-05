@@ -61,7 +61,7 @@ def doPrepare(boolean checkoutScm) {
     checkout scm
     sh '''
       sudo -u msk_jenkins git clean -f -d -x
-      sudo -u msk_jenkins rsync -av * /scratch/source
+      sudo -u msk_jenkins cp -r * /scratch/source
     '''
   }
 
