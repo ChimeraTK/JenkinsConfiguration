@@ -241,11 +241,11 @@ def doInstall(String label, String buildType) {
   // Generate tar ball of install directory - this will be the artefact used by our dependents
   sh """
     cd /scratch/install
-    sudo -u msk_jenkins tar zcf /scratch/install-${JOB_NAME}-${label}-${buildType}.tgz .
+    sudo -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   
   // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
-  archiveArtifacts artifacts: "/scratch/install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+  archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
 }
 
 /**********************************************************************************************************************/
