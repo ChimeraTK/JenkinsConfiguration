@@ -98,7 +98,7 @@ def doBuilddirArtefact(String label, String buildType) {
   
   // obtain artefacts of dependencies
   script {
-    def parentJob = ${env.JOB_NAME}[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+    def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
     copyArtifacts filter: "build-${parentJob}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${parentJob}", selector: lastSuccessful(), target: "artefacts"
   }
 
