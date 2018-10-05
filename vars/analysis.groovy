@@ -9,11 +9,8 @@ def call(ArrayList<String> dependencyList) {
 
   // List of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
   def builds = [ 'xenial-Debug',
-                 'xenial-Release',
                  'bionic-Debug',
-                 'bionic-Release',
-                 'tumbleweed-Debug',
-                 'tumbleweed-Release' ]
+                 'tumbleweed-Debug' ]
 
   pipeline {
     agent none
