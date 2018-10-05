@@ -31,7 +31,7 @@ def call(ArrayList<String> dependencyList) {
       always {
         node('Docker') {
           script {
-            doPublishBuildTestDeploy(builds)
+            helper.doPublishBuildTestDeploy(builds)
           }
         }
       } // end always
@@ -53,7 +53,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
         def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
-            doBuildTestDeploy(dependencyList, label, buildType)
+            helper.doBuildTestDeploy(dependencyList, label, buildType)
           }
         }
       }
