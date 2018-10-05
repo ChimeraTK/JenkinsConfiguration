@@ -6,13 +6,13 @@
 
 def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType) {
 
-  doPrepare(dependencyList, label, buildType)
+  doPrepare()
   doDependencyArtefacts(dependencyList, label, buildType)
 
   // Add inactivity timeout of 10 minutes (build will be interrupted if 10 minutes no log output has been produced)
   timeout(activity: true, time: 10) {
   
-    doBuild(dependencyList, label, buildType)
+    doBuild(label, buildType)
     doTest(label, buildType)
     doInstall(label, buildType)
 
@@ -23,8 +23,9 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
 
 def doAnalysis(ArrayList<String> dependencyList, String label, String buildType) {
   if(buildType == "Debug") {
-    doPrepare(dependencyList, label, buildType)
+    doPrepare()
     doDependencyArtefacts(dependencyList, label, buildType)
+    doBuilddirArtefact(label, buildType)
 
     // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
     timeout(activity: true, time: 60) {
@@ -41,7 +42,7 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 
 /**********************************************************************************************************************/
 
-def doPrepare(ArrayList<String> dependencyList, String label, String buildType) {
+def doPrepare() {
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins
   sh '''
@@ -90,7 +91,28 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
 
 /**********************************************************************************************************************/
 
-def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
+def doBuilddirArtefact(String label, String buildType) {
+  echo("Obtaining build directory artefact for ${label}-${buildType}")
+  
+  // obtain artefacts of dependencies
+  script {
+    def parentJob = ${env.JOB_NAME}[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+    copyArtifacts filter: "build-${parentJob}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${parentJob}", selector: lastSuccessful(), target: "artefacts"
+  }
+
+  // unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins)
+  echo("Unpacking artefacts...")
+  sh """
+    for a in artefacts/build-*-${label}-${buildType}.tgz ; do
+      sudo -u msk_jenkins tar zxvf \"\${a}\" -C /
+    done
+  """
+
+}
+
+/**********************************************************************************************************************/
+
+def doBuild(String label, String buildType) {
   echo("Starting build for ${label}-${buildType}")
   
   // start the build
@@ -131,7 +153,6 @@ def doTest(String label, String buildType) {
     
   // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
   sh """
-    cd /scratch/build
     sudo -u msk_jenkins cp -r /scratch/build/Testing .
   """
 
