@@ -257,7 +257,7 @@ def doValgrind(String label, String buildType) {
       cd "${dir}"
       for test in ${EXECLIST} ; do
         testname=`basename ${test}`
-        sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test}
+        sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test}
         # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=valgrind.${testname}.helgrind.valgrind ${test}
       done
       cd /scratch/build
