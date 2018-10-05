@@ -24,7 +24,6 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
 def doAnalysis(ArrayList<String> dependencyList, String label, String buildType) {
   if(buildType == "Debug") {
     doPrepare(false)
-    doDependencyArtefacts(dependencyList, label, buildType)
     doBuilddirArtefact(label, buildType)
 
     // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
@@ -72,11 +71,17 @@ def doPrepare(boolean checkoutScm) {
 
 def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String buildType) {
   echo("Obtaining dependency artefacts for ${label}-${buildType}")
-  
+
   // obtain artefacts of dependencies
   script {
+    sh """
+      touch /scratch/artefact.list
+    """
     echo("Getting artefacts...")
     dependencyList.each {
+      sh """
+        echo "${it}" >> /scratch/artefact.list
+      """
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
     echo("Done getting artefacts.")
@@ -106,11 +111,32 @@ def doBuilddirArtefact(String label, String buildType) {
   }
 
   // unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins)
-  echo("Unpacking artefacts...")
   sh """
     for a in artefacts/build-*-${label}-${buildType}.tgz ; do
       sudo -u msk_jenkins tar zxvf \"\${a}\" -C /
     done
+  """
+
+  // obtain artefacts of dependencies (from /scratch/artefact.list)
+  script {
+    echo("Getting dependency artefacts...")
+    sh """
+      cp /scratch/artefact.list .
+    """
+    myFile = new File("artefact.list")
+    myFile.readLines().each {
+      copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+    }
+    echo("Done dependency getting artefacts.")
+  }
+
+  // unpack artefacts of dependencies into the Docker system root
+  sh """
+    if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
+      for a in artefacts/install-*-${label}-${buildType}.tgz ; do
+        tar zxvf \"\${a}\" -C /
+      done
+    fi
   """
 
 }
