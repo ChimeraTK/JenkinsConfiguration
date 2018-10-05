@@ -125,7 +125,9 @@ def doBuilddirArtefact(String label, String buildType) {
     """
     myFile = readFile(env.WORKSPACE+"/artefact.list")
     myFile.split("\n").each {
-      copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+      if( it != "" ) {
+        copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+      }
     }
     echo("Done dependency getting artefacts.")
   }
