@@ -54,14 +54,15 @@ def doPrepare(boolean checkoutScm) {
   sh '''
     mkdir /scratch
     chown msk_jenkins /scratch
-    sudo -u msk_jenkins mkdir /scratch/source
   '''
   
   // Check out source code
   if(checkoutScm) {
-    dir("/scratch/source") {
-      checkout scm
-    }
+    checkout scm
+    sh '''
+      sudo -u msk_jenkins git clean -f -d -x
+      sudo -u msk_jenkins rsync -av * /scratch/source
+    '''
   }
 
 }
