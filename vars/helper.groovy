@@ -233,6 +233,8 @@ def doValgrind(String label, String buildType) {
   // First, find the test executables. Search for all CTestTestfile.cmake and look for add_test() inside. Resolve the
   // given names relative to the location of the CTestTestfile.cmake file.
   //
+  // We execute the tests in the directory where CTestTestfile.cmake is which lists them.
+  //
   // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
   sh '''
     cd /scratch/build
@@ -245,19 +247,22 @@ def doValgrind(String label, String buildType) {
         # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
         if [ -f "${test}" ]; then
           EXECLIST="${EXECLIST} `realpath ${test}`"
+          TESTDIR="${dir}"
         elif [ -f "${dir}${test}" ]; then
           EXECLIST="${EXECLIST} `realpath ${dir}${test}`"
+          TESTDIR="${dir}"
         fi
       done
-    done
     
-    for test in ${EXECLIST} ; do
-      testname=`basename ${test}`
-      cd `dirname ${test}`
-      sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test}
-      # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=valgrind.${testname}.helgrind.valgrind ${test}
+      cd "${dir}"
+      for test in ${EXECLIST} ; do
+        testname=`basename ${test}`
+        sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test}
+        # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=valgrind.${testname}.helgrind.valgrind ${test}
+      done
+      cd /scratch/build
+
     done
-    wait
   '''
   
   // stash valgrind result files for later publication
