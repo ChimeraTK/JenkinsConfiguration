@@ -123,8 +123,7 @@ def doBuilddirArtefact(String label, String buildType) {
     sh """
       cp /scratch/artefact.list .
     """
-    def workspace = manager.build.getEnvVars()["WORKSPACE"]
-    myFile = new File(workspace+"/artefact.list")
+    myFile = new File(env.WORKSPACE+"/artefact.list")
     myFile.readLines().each {
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
     }
