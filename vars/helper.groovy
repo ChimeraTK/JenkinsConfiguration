@@ -103,6 +103,13 @@ def doBuild(ArrayList<String> dependencyList, String label, String buildType) {
     sudo -u msk_jenkins make $MAKEOPTS
   """
   echo("Done with the build.")
+  
+  // generate and archive artefact from build directory (used for the analysis job)
+  sh """
+    sudo -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch/build
+  """
+  archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+
 }
 
 /**********************************************************************************************************************/
@@ -121,10 +128,16 @@ def doTest(String label, String buildType) {
     cd /scratch/build
     sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
   """
+    
+  // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
+  sh """
+    cd /scratch/build
+    sudo -u msk_jenkins cp -r /scratch/build/Testing .
+  """
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-         tools: [ CTest(pattern: "/scratch/build/Testing/*/*.xml") ])
+         tools: [ CTest(pattern: "Testing/*/*.xml") ])
 }
 
 /**********************************************************************************************************************/
@@ -218,6 +231,8 @@ def doInstall(String label, String buildType) {
 
 def doPublishBuildTestDeploy(ArrayList<String> builds) {
 
+  // Note: this part runs only once per project, not for each branch!
+
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
   sh """
     pwd
@@ -237,6 +252,8 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
 /**********************************************************************************************************************/
 
 def doPublishAnalysis(ArrayList<String> builds) {
+
+  // Note: this part runs only once per project, not for each branch!
 
   // unstash result files into subdirectories
   builds.each {
