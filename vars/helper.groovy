@@ -202,17 +202,20 @@ def doCoverage(String label, String buildType) {
     cd /scratch/build
     sudo -u msk_jenkins make coverage || true
     sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
+    
+    sudo -u msk_jenkins cp -r coverage_html ${WORKSPACE}
+    sudo -u msk_jenkins cp -r coverage.xml ${WORKSPACE}
   """
   
   // stash cobertura coverage report result for later publication
-  stash includes: "/scratch/build/coverage.xml", name: "cobertura-${label}-${buildType}"
+  stash includes: "coverage.xml", name: "cobertura-${label}-${buildType}"
   
   // publish HTML coverage report now, since it already allows publication of multiple distinguised reports
   publishHTML (target: [
       allowMissing: false,
       alwaysLinkToLastBuild: false,
       keepAll: false,
-      reportDir: "/scratch/build/coverage_html",
+      reportDir: "coverage_html",
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
@@ -253,9 +256,12 @@ def doValgrind(String label, String buildType) {
     done
     wait
   '''
-
+  
   // stash valgrind result files for later publication
-  stash includes: '/scratch/build/*.valgrind', name: "valgrind-${label}-${buildType}"
+  sh """
+    sudo -u msk_jenkins cp /scratch/build/*.valgrind .
+  """
+  stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
 }
 
 /**********************************************************************************************************************/
@@ -348,7 +354,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
     failThresholdDefinitelyLost: '',
     failThresholdInvalidReadWrite: '',
     failThresholdTotal: '',
-    pattern: '*/build/build/*.valgrind',
+    pattern: '*/*.valgrind',
     publishResultsForAbortedBuilds: false,
     publishResultsForFailedBuilds: false,
     sourceSubstitutionPaths: '',
@@ -358,7 +364,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
   )
   
   // publish cobertura result
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/build/build/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
 }
 
