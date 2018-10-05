@@ -345,10 +345,6 @@ def doPublishAnalysis(ArrayList<String> builds) {
     }
   }
   
-  sh '''
-    find -name *.valgrind
-  '''
-  
   // publish valgrind result
   publishValgrind (
     failBuildOnInvalidReports: true,
