@@ -30,7 +30,9 @@ def call(ArrayList<String> dependencyList) {
     post {
       always {
         node('Docker') {
-          steps.doPublishBuildTestDeploy(builds)
+          script {
+            steps.doPublishBuildTestDeploy(builds)
+          }
         }
       } // end always
     } // end post
@@ -50,7 +52,9 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
         // we need root access inside the container and access to the dummy pcie devices of the host
         def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
         docker.image("builder:${label}").inside(dockerArgs) {
-          steps.doBuildTestDeploy(dependencyList, label, buildType)
+          script {
+            steps.doBuildTestDeploy(dependencyList, label, buildType)
+          }
         }
       }
     }
