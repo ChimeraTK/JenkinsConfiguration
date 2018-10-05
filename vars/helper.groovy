@@ -42,26 +42,27 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 
 /**********************************************************************************************************************/
 
-def doPrepare(boolean hasSource) {
+def doPrepare(boolean checkoutScm) {
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins
   sh '''
     chmod ugo+rwX /var/run/lock/mtcadummy
   '''
   
-  // Clean source directory. This removes any files which are not in the source code repository
-  if(hasSource) {
-    sh '''
-      sudo -u msk_jenkins git clean -f -d -x
-    '''
-  }
-  
   // Create scratch directory. Keep the absolute path fixed, so we can copy the build directory as an artefact for the
   // analysis job
   sh '''
     mkdir /scratch
     chown msk_jenkins /scratch
+    sudo -u msk_jenkins mkdir /scratch/source
   '''
+  
+  // Check out source code
+  if(checkoutScm) {
+    dir("/scratch/source") {
+      checkout scm
+    }
+  }
 
 }
 
@@ -123,14 +124,14 @@ def doBuild(String label, String buildType) {
     sudo -u msk_jenkins mkdir -p /scratch/build
     sudo -u msk_jenkins mkdir -p /scratch/install
     cd /scratch/build
-    sudo -u msk_jenkins cmake ${WORKSPACE} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
+    sudo -u msk_jenkins cmake /scratch/source -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     sudo -u msk_jenkins make $MAKEOPTS
   """
   echo("Done with the build.")
   
   // generate and archive artefact from build directory (used for the analysis job)
   sh """
-    sudo -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch/build
+    sudo -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
   """
   archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
 
