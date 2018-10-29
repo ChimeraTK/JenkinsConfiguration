@@ -1,0 +1,13 @@
+{
+   ServerAddress
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   ...
+   fun:_ZN5D_fct9constructEPKc
+   fun:_ZN5D_fctC1EPKcP5EqFct
+   fun:_ZN8D_stringC1EPKcP5EqFct
+   fun:D_svraddr
+   fun:_ZN5EqFctC1EPKcPSs
+   ...
+}

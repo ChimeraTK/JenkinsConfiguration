@@ -32,5 +32,6 @@ RUN zypper install -y kernel-devel
 RUN zypper install -y hdf5-devel
 # copy in lcov_cobertura
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
+ADD valgrind.suppressions /common/valgrind.suppressions
 # add msk_jenkins user
 RUN useradd -u 30996 msk_jenkins

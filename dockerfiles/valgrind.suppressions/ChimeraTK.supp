@@ -1,0 +1,210 @@
+{
+   BOOST_lockfree_queue_1
+   Memcheck:Cond
+   fun:_ZNV5boost7atomics6detail11base_atomicINS_8lockfree6detail10tagged_ptrINS3_5queue*parameter5void*node*compare_exchange_strong*memory_order*
+   fun:_ZNV5boost7atomics6detail11base_atomicINS_8lockfree6detail10tagged_ptrINS3_5queue*parameter5void*node*compare_exchange_weak*memory_order*
+   fun:_ZNV5boost7atomics6detail11base_atomicINS_8lockfree6detail10tagged_ptrINS3_5queue*parameter5void*node*compare_exchange_weak*memory_order*
+   ...
+}
+{
+   BOOST_lockfree_queue_1_tubleweed
+   Memcheck:Cond
+   fun:_ZNSt6atomicIN5boost8lockfree6detail10tagged_ptrINS1_5queue*E4nodeEEEE21compare_exchange_weak*St12memory_order*_
+   fun:_ZNSt6atomicIN5boost8lockfree6detail10tagged_ptrINS1_5queue*E4nodeEEEE21compare_exchange_weak*St12memory_order
+   ...
+}
+{
+   BOOST_lockfree_queue_2
+   Memcheck:Cond
+   ...
+   fun:_ZN5boost8lockfree5queue*parameter5void*do_push*
+   ...
+}
+{
+   BOOST_lockfree_queue_3
+   Memcheck:Cond
+   ...
+   fun:_ZN5boost8lockfree5queueImJEE7do_pushILb0EEEbRKm
+   fun:_ZN5boost8lockfree5queueImJEE4pushERKm
+   ...
+}
+{
+   BOOST_lockfree_queue_3_tumbleweed
+   
+   Memcheck:Cond
+   fun:_ZN5boost8lockfree5queue*E7do_pushILb0EEEbRKS5_
+   fun:_ZN5boost8lockfree5queue*E4pushERKS5_
+   ...
+}
+{
+   BOOST_promise
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   ...
+   fun:_ZN5boost7promiseIvE9lazy_initEv
+   fun:_ZN5boost7promiseIvE10get_futureEv
+   ...
+}
+{
+   BOOST_promise_destructor
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   ...
+   fun:_ZN5boost7promiseIvED1Ev
+   ...
+}
+{
+   libz_inflate
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   obj:/lib/x86_64-linux-gnu/libz.so.1.2.3.4
+   obj:/usr/lib/x86_64-linux-gnu/libxml2.so.2.7.8
+   fun:__xmlParserInputBufferCreateFilename
+   ...
+}
+{
+   glib_uft8_collate
+   Memcheck:Addr8
+   fun:wcscmp
+   fun:wcscoll_l
+   fun:g_utf8_collate
+   ...
+}
+{
+   glib-dl_init
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so.0.4002.0
+   ...
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/lib/x86_64-linux-gnu/ld-2.19.so
+}
+{
+   glib-dl_init_u16
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so.0.4800.2
+   ...
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/lib/x86_64-linux-gnu/ld-2.23.so
+}
+{
+   glib-dl_init_suse422
+   Memcheck:Leak
+   ...
+   obj:/usr/lib64/libgobject-2.0.so.0.4800.2
+   ...
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib64/ld-2.22.so
+}
+{
+   glib-dl_init_suseTubleweed
+   Memcheck:Leak	
+   match-leak-kinds: possible
+   ...
+   fun:gobject_init
+   fun:gobject_init_ctor
+   fun:call_init.part.0
+   ...
+   fun:_dl_init
+   ...
+}
+{
+   glib-dl_init_suseTubleweed
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:g_type_register_fundamental
+   ...
+   fun:call_init.part.0
+   fun:_dl_init
+}
+{
+   pthread-1
+   Memcheck:Leak
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   ...
+}
+{
+   pthread-2
+   Memcheck:Leak
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:pthread_create@@GLIBC_2.2.5
+   ...
+}
+{
+   BOOST_SHARED_PTR_SUSE422
+   Memcheck:Leak
+   ...
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   ...
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN6mtca4u*EC1EN5boost10shared_ptrINS_*
+   ...
+}
+{
+   std_string_iterator_trusty
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPcEES0_T_S1_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1ERKSsmm
+   fun:_ZNKSs6substrEmm
+   ...
+}
+{
+   alloc_dl_init_tumbleweed
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:*alloc
+   fun:g_*alloc*
+   ...
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib64/ld-*.so
+}
+{
+   alloc_dl_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/lib/x86_64-linux-gnu/ld-*.so
+}
+{
+   boost_interprocess_semaphore_open_or_create
+   Memcheck:Param			
+   write(buf)			
+   fun:*write*	
+   fun:sem_open
+   fun:_ZN5boost12interprocess9ipcdetail14semaphore_openERP5sem_tNS1_13create_enum_tEPKcjRKNS0_11permissionsE
+   fun:_ZN5boost12interprocess9ipcdetail21posix_named_semaphoreC1ENS0_16open_or_create_tEPKcjRKNS0_11permissionsE
+   fun:_ZN5boost12interprocess9ipcdetail17posix_named_mutexC1ENS0_16open_or_create_tEPKcRKNS0_11permissionsE
+   fun:_ZN5boost12interprocess11named_mutexC1ENS0_16open_or_create_tEPKcRKNS0_11permissionsE
+   ...
+}		     
+{
+   bash
+   ...
+   obj:/bin/bash
+   ...
+}
