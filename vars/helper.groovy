@@ -260,8 +260,8 @@ def doValgrind(String label, String buildType) {
       for test in ${EXECLIST} ; do
         testname=`basename ${test}`
         if [ -z "`echo " ${valgrindExcludes} " | grep " ${testname} "`" ]; then
-          sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=valgrind.${testname}.memcheck.valgrind ${test}
-          # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=valgrind.${testname}.helgrind.valgrind ${test}
+          sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build/valgrind.${testname}.memcheck.valgrind ${test}
+          # sudo -u msk_jenkins valgrind --gen-suppressions=all --trace-children=yes --tool=helgrind --xml=yes --xml-file=/scratch/build/valgrind.${testname}.helgrind.valgrind ${test}
         fi
       done
       cd /scratch/build
