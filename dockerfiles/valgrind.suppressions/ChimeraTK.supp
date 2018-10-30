@@ -201,12 +201,5 @@
    fun:_ZN5boost12interprocess9ipcdetail17posix_named_mutexC1ENS0_16open_or_create_tEPKcRKNS0_11permissionsE
    fun:_ZN5boost12interprocess11named_mutexC1ENS0_16open_or_create_tEPKcRKNS0_11permissionsE
    ...
-}		     
-{
-   bash
-   Memcheck:Leak
-   ...
-   obj:/bin/bash
-   ...
 }
 
