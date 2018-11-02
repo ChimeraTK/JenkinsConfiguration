@@ -203,7 +203,7 @@ def doCoverage(String label, String buildType) {
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
-    cd /scratch/build-${JOB_NAME}
+    cd /scratch/build-*
     sudo -u msk_jenkins make coverage || true
     sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
     
@@ -239,7 +239,7 @@ def doValgrind(String label, String buildType) {
   //
   // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
   sh '''
-    cd /scratch/build-${JOB_NAME}
+    cd /scratch/build-*
     
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
@@ -264,14 +264,14 @@ def doValgrind(String label, String buildType) {
           # sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --trace-children=yes --tool=helgrind --xml=yes --xml-file=/scratch/build/valgrind.${testname}.helgrind.valgrind ${test}
         fi
       done
-      cd /scratch/build-${JOB_NAME}
+      cd /scratch/build-*
 
     done
   '''
   
   // stash valgrind result files for later publication
   sh """
-    sudo -u msk_jenkins cp /scratch/build-${JOB_NAME}/*.valgrind .
+    sudo -u msk_jenkins cp /scratch/build-*/*.valgrind .
   """
   stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
 }
