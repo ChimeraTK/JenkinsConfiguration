@@ -153,9 +153,9 @@ def doBuild(String label, String buildType) {
   // start the build
   echo("Starting actual build...")
   sh """
-    sudo -u msk_jenkins mkdir -p /scratch/build
+    sudo -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins mkdir -p /scratch/install
-    cd /scratch/build
+    cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins cmake /scratch/source -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
     sudo -u msk_jenkins make $MAKEOPTS
   """
@@ -176,19 +176,19 @@ def doTest(String label, String buildType) {
 
   // Run the tests via ctest
   sh """
-    cd /scratch/build
+    cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins ctest --no-compress-output $MAKEOPTS -T Test || true
   """
     
   // Prefix test names with label and buildType, so we can distinguish them later
   sh """
-    cd /scratch/build
+    cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
   """
     
   // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
   sh """
-    sudo -u msk_jenkins cp -r /scratch/build/Testing .
+    sudo -u msk_jenkins cp -r /scratch/build-${JOB_NAME}/Testing .
   """
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
@@ -203,7 +203,7 @@ def doCoverage(String label, String buildType) {
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
-    cd /scratch/build
+    cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins make coverage || true
     sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
     
@@ -239,7 +239,7 @@ def doValgrind(String label, String buildType) {
   //
   // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
   sh '''
-    cd /scratch/build
+    cd /scratch/build-${JOB_NAME}
     
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
@@ -260,18 +260,18 @@ def doValgrind(String label, String buildType) {
       for test in ${EXECLIST} ; do
         testname=`basename ${test}`
         if [ -z "`echo " ${valgrindExcludes} " | grep " ${testname} "`" ]; then
-          sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build/valgrind.${testname}.memcheck.valgrind ${test}
+          sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build-${JOB_NAME}/valgrind.${testname}.memcheck.valgrind ${test}
           # sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --trace-children=yes --tool=helgrind --xml=yes --xml-file=/scratch/build/valgrind.${testname}.helgrind.valgrind ${test}
         fi
       done
-      cd /scratch/build
+      cd /scratch/build-${JOB_NAME}
 
     done
   '''
   
   // stash valgrind result files for later publication
   sh """
-    sudo -u msk_jenkins cp /scratch/build/*.valgrind .
+    sudo -u msk_jenkins cp /scratch/build-${JOB_NAME}/*.valgrind .
   """
   stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
 }
@@ -283,7 +283,7 @@ def doInstall(String label, String buildType) {
 
   // Install, but redirect files into the install directory (instead of installing into the system)
   sh """
-    cd /scratch/build
+    cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins make install DESTDIR=../install
   """
   
