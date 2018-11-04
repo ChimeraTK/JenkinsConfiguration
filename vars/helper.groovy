@@ -240,6 +240,7 @@ def doValgrind(String label, String buildType) {
   // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
   sh '''
     cd /scratch/build-*
+    DIR=`pwd`
     
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
@@ -260,8 +261,8 @@ def doValgrind(String label, String buildType) {
       for test in ${EXECLIST} ; do
         testname=`basename ${test}`
         if [ -z "`echo " ${valgrindExcludes} " | grep " ${testname} "`" ]; then
-          sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build-*/valgrind.${testname}.memcheck.valgrind ${test}
-          # sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --trace-children=yes --tool=helgrind --xml=yes --xml-file=/scratch/build-*/valgrind.${testname}.helgrind.valgrind ${test}
+          sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=$DIR/valgrind.${testname}.memcheck.valgrind ${test}
+          # sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --trace-children=yes --tool=helgrind --xml=yes --xml-file=$DIR/valgrind.${testname}.helgrind.valgrind ${test}
         fi
       done
       cd /scratch/build-*
