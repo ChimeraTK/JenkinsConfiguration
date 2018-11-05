@@ -200,10 +200,11 @@ def doTest(String label, String buildType) {
 
 def doCoverage(String label, String buildType) {
   echo("Generating coverage report for ${label}-${buildType}")
+  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
-    cd /scratch/build-*
+    cd /scratch/build-${parentJob}
     sudo -u msk_jenkins make coverage || true
     sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
     
@@ -229,6 +230,7 @@ def doCoverage(String label, String buildType) {
 
 def doValgrind(String label, String buildType) {
   echo("Running valgrind for ${label}-${buildType}")
+  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Run valgrind twice in memcheck and helgrind mode
   // 
@@ -239,7 +241,7 @@ def doValgrind(String label, String buildType) {
   //
   // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
   sh '''
-    cd /scratch/build-*
+    cd /scratch/build-${parentJob}
     DIR=`pwd`
     
     EXECLIST=""
