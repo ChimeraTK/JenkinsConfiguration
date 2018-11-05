@@ -1,37 +1,26 @@
 FROM opensuse/tumbleweed:latest
 ENV http_proxy http://xfelproxy.desy.de:3128
 ENV https_proxy http://xfelproxy.desy.de:3128
-RUN zypper refresh
-RUN zypper up -y
-RUN zypper dup -y --force-resolution --allow-vendor-change 
-# generic build tools
-RUN zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb
-RUN zypper install -y sudo tar gzip
-# for ChimeraTK core libraries:
-RUN zypper install -y libboost_*-devel
-RUN zypper install -y libxml++26-devel
-# for QtHardMon:
-RUN zypper install -y libqt4-devel libqt5-qtbase-devel
-# for Python bindings:
-RUN zypper install -y python-devel python-numpy-devel python-numpy python3-devel python3-numpy-devel
-# for the FirmwareProgrammer
-RUN zypper install -y ncurses-devel
-# clang
-RUN zypper install -y clang clang-checker llvm-clang
-# Python Sphinx for documentation of python bindings
-RUN zypper install -y python-Sphinx
-# java for Jenkins CLI
-RUN zypper install -y java-1_8_0-openjdk
-# NTP demon to prevent clock drifts
-RUN zypper install -y ntp
-# for projects which use dot graphs in doxygen
-RUN zypper install -y graphviz
-# For building kernel modules (mtcadummy)
-RUN zypper install -y kernel-devel
-# For ApplicationCore
-RUN zypper install -y hdf5-devel
-# copy in lcov_cobertura
+
+RUN zypper refresh \
+    zypper up -y\
+    zypper dup -y --force-resolution --allow-vendor-change \
+    zypper install -y lsb-release \
+    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb \
+    zypper install -y sudo tar gzip \
+    zypper install -y libboost_*-devel \
+    zypper install -y libxml++26-devel \
+    zypper install -y libqt4-devel libqt5-qtbase-devel \
+    zypper install -y python-devel python-numpy-devel python-numpy python3-devel python3-numpy-devel \
+    zypper install -y ncurses-devel \
+    zypper install -y clang clang-checker llvm-clang \
+    zypper install -y python-Sphinx \
+    zypper install -y java-1_8_0-openjdk \
+    zypper install -y graphviz \
+    zypper install -y kernel-devel \
+    zypper install -y hdf5-devel \
+    useradd -u 30996 msk_jenkins
+
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 ADD valgrind.suppressions /common/valgrind.suppressions
-# add msk_jenkins user
-RUN useradd -u 30996 msk_jenkins
+

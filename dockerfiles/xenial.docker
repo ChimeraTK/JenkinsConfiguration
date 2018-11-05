@@ -2,56 +2,37 @@ FROM ubuntu:xenial
 ENV http_proxy http://xfelproxy.desy.de:3128
 ENV https_proxy http://xfelproxy.desy.de:3128
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update
-RUN apt-get install -y software-properties-common apt-utils
-RUN add-apt-repository -y universe
-RUN add-apt-repository -y ppa:hola-launchpad/valgrind
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get dist-upgrade -y
-RUN apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb
-RUN apt-get install -y cmake
-RUN apt-get install -y sudo
-# for ChimeraTK core libraries:
-RUN apt-get install -y libboost-all-dev libxml++2.6-dev
-# for DOOCS:
-RUN apt-get install -y libldap2-dev libzmq3-dev rpcbind
-# for EPICS:
-RUN apt-get install -y libreadline-dev
-# for QtHardMon:
-RUN apt-get install -y libqt4-dev qtbase5-dev
-# for Python bindings:
-RUN apt-get install -y python2.7-dev python-numpy python3-dev python3-numpy
-# for python testing
-RUN  apt-get install -y python-pytest
-# for Matlab:
-RUN apt-get install -y libxmu6 csh libxrandr2
-# for the FirmwareProgrammer
-RUN apt-get install -y libncurses5-dev
-# for projects which use dot graphs in doxygen
-RUN apt-get install -y graphviz
-# clang
-RUN apt-get install -y clang
-# for ApplicationCore
-RUN apt-get install -y libhdf5-dev
-# for llrfctrlsrf/llrfctrlnrf
-RUN apt-get install -y liblua5.2-dev
-# Python Sphinx for documentation of python bindings
-RUN apt-get install -y python-sphinx
-# for doocs-bam-server:
-RUN apt-get install -y libgsl-dev
-# for the doocs-psm-ctrl-server
-RUN apt-get install -y libssl-dev
-# for the amtfdbaccess library
-RUN apt-get install -y libpqxx-dev
-# for the amtf_piezoacscan server
-RUN apt-get install -y libfftw3-dev
-# NTP demon to prevent clock drifts
-RUN apt-get install -y openntpd ntpdate
-# subversion e.g. for the llrfCtrl_config script (checking out the backup)
-RUN apt-get install -y subversion
-# copy in lcov_cobertura
+
+RUN apt-get update \
+   apt-get install -y software-properties-common apt-utils \
+   add-apt-repository -y universe \
+   add-apt-repository -y ppa:hola-launchpad/valgrind \
+   apt-get update \
+   apt-get upgrade -y \
+   apt-get dist-upgrade -y \
+   apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb \
+   apt-get install -y cmake \
+   apt-get install -y sudo \
+   apt-get install -y libboost-all-dev libxml++2.6-dev \
+   apt-get install -y libldap2-dev libzmq3-dev rpcbind \
+   apt-get install -y libreadline-dev \
+   apt-get install -y libqt4-dev qtbase5-dev \
+   apt-get install -y python2.7-dev python-numpy python3-dev python3-numpy \
+   apt-get install -y python-pytest \
+   apt-get install -y libxmu6 csh libxrandr2 \
+   apt-get install -y libncurses5-dev \
+   apt-get install -y graphviz \
+   apt-get install -y clang \
+   apt-get install -y libhdf5-dev \
+   apt-get install -y liblua5.2-dev \
+   apt-get install -y python-sphinx \
+   apt-get install -y libgsl-dev \
+   apt-get install -y libssl-dev \
+   apt-get install -y libpqxx-dev \
+   apt-get install -y libfftw3-dev \
+   apt-get install -y subversion \
+   useradd -u 30996 msk_jenkins
+
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 ADD valgrind.suppressions /common/valgrind.suppressions
-# add msk_jenkins user
-RUN useradd -u 30996 msk_jenkins
+
