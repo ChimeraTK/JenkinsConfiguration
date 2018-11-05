@@ -245,7 +245,7 @@ def doValgrind(String label, String buildType) {
     for testlist in `find -name CTestTestfile.cmake` ; do
       dir=`dirname "\${testlist}"`
       for test in `grep add_test "\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\$//'` ; do
-        # $test is just the name of the test executable, without add_test etc.
+        # \${test} is just the name of the test executable, without add_test etc.
         # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
         if [ -f "\${test}" ]; then
           EXECLIST="\${EXECLIST} `realpath \${test}`"
