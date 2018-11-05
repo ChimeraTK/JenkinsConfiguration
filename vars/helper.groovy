@@ -156,7 +156,7 @@ def doBuild(String label, String buildType) {
     sudo -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins mkdir -p /scratch/install
     cd /scratch/build-${JOB_NAME}
-    sudo -u msk_jenkins cmake /scratch/source -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType}
+    sudo -u msk_jenkins cmake /scratch/source -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true
     sudo -u msk_jenkins make $MAKEOPTS
   """
   echo("Done with the build.")
