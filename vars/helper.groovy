@@ -206,10 +206,10 @@ def doCoverage(String label, String buildType) {
   sh """
     cd /scratch/build-${parentJob}
     sudo -u msk_jenkins make coverage || true
-    sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info
+    sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
     
-    sudo -u msk_jenkins cp -r coverage_html ${WORKSPACE}
-    sudo -u msk_jenkins cp -r coverage.xml ${WORKSPACE}
+    sudo -u msk_jenkins cp -r coverage_html ${WORKSPACE} || true
+    sudo -u msk_jenkins cp -r coverage.xml ${WORKSPACE} || true
   """
   
   // stash cobertura coverage report result for later publication
@@ -217,7 +217,7 @@ def doCoverage(String label, String buildType) {
   
   // publish HTML coverage report now, since it already allows publication of multiple distinguised reports
   publishHTML (target: [
-      allowMissing: false,
+      allowMissing: true,
       alwaysLinkToLastBuild: false,
       keepAll: false,
       reportDir: "coverage_html",
