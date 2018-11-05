@@ -240,8 +240,9 @@ def doValgrind(String label, String buildType) {
   // We execute the tests in the directory where CTestTestfile.cmake is which lists them.
   //
   // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
-  sh '''
+  sh """
     cd /scratch/build-${parentJob}
+  """'''
     
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
