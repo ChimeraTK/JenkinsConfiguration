@@ -238,33 +238,30 @@ def doValgrind(String label, String buildType) {
   // given names relative to the location of the CTestTestfile.cmake file.
   //
   // We execute the tests in the directory where CTestTestfile.cmake is which lists them.
-  //
-  // Note: we use ''' here instead of """ so we don't have to escape all the shell variables.
   sh """
     cd /scratch/build-${parentJob}
-  """'''
     
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
-      dir=`dirname $testlist`
-      for test in `grep add_test "${testlist}" | sed -e 's_^[^"]*"__' -e 's/")$//'` ; do
+      dir=`dirname "\${testlist}"`
+      for test in `grep add_test "\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\$//'` ; do
         # $test is just the name of the test executable, without add_test etc.
         # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
-        if [ -f "${test}" ]; then
-          EXECLIST="${EXECLIST} `realpath ${test}`"
-          TESTDIR="${dir}"
-        elif [ -f "${dir}${test}" ]; then
-          EXECLIST="${EXECLIST} `realpath ${dir}${test}`"
-          TESTDIR="${dir}"
+        if [ -f "\${test}" ]; then
+          EXECLIST="\${EXECLIST} `realpath \${test}`"
+          TESTDIR="\${dir}"
+        elif [ -f "\${dir}\${test}" ]; then
+          EXECLIST="\${EXECLIST} `realpath \${dir}\${test}`"
+          TESTDIR="\${dir}"
         fi
       done
     
-      cd "${dir}"
-      for test in ${EXECLIST} ; do
-        testname=`basename ${test}`
-        if [ -z "`echo " ${valgrindExcludes} " | grep " ${testname} "`" ]; then
-          sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.${testname}.memcheck.valgrind ${test}
-          # sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --trace-children=yes --tool=helgrind --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.${testname}.helgrind.valgrind ${test}
+      cd "\${dir}"
+      for test in \${EXECLIST} ; do
+        testname=`basename \${test}`
+        if [ -z "`echo " \${valgrindExcludes} " | grep " \${testname} "`" ]; then
+          sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --trace-children=yes --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.memcheck.valgrind \${test}
+          # sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --trace-children=yes --tool=helgrind --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.helgrind.valgrind \${test}
         fi
       done
       cd /scratch/build-${parentJob}
