@@ -267,7 +267,7 @@ def doValgrind(String label, String buildType) {
       cd /scratch/build-${parentJob}
 
     done
-  '''
+  """
   
   // stash valgrind result files for later publication
   sh """
