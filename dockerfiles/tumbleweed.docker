@@ -2,22 +2,22 @@ FROM opensuse/tumbleweed:latest
 ENV http_proxy http://xfelproxy.desy.de:3128
 ENV https_proxy http://xfelproxy.desy.de:3128
 
-RUN zypper refresh \
-    zypper up -y\
-    zypper dup -y --force-resolution --allow-vendor-change \
-    zypper install -y lsb-release wget sudo tar gzip \
-    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb \
-    zypper install -y libboost_*-devel \
-    zypper install -y libxml++26-devel \
-    zypper install -y libqt4-devel libqt5-qtbase-devel \
-    zypper install -y python-devel python-numpy-devel python-numpy python3-devel python3-numpy-devel \
-    zypper install -y ncurses-devel \
-    zypper install -y clang clang-checker llvm-clang \
-    zypper install -y python-Sphinx \
-    zypper install -y java-1_8_0-openjdk \
-    zypper install -y graphviz \
-    zypper install -y kernel-devel \
-    zypper install -y hdf5-devel \
+RUN zypper refresh && \
+    zypper up -y && \
+    zypper dup -y --force-resolution --allow-vendor-change && \
+    zypper install -y lsb-release wget sudo tar gzip && \
+    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb && \
+    zypper install -y libboost_*-devel && \
+    zypper install -y libxml++26-devel && \
+    zypper install -y libqt4-devel libqt5-qtbase-devel && \
+    zypper install -y python-devel python-numpy-devel python-numpy python3-devel python3-numpy-devel && \
+    zypper install -y ncurses-devel && \
+    zypper install -y clang clang-checker llvm-clang && \
+    zypper install -y python-Sphinx && \
+    zypper install -y java-1_8_0-openjdk && \
+    zypper install -y graphviz && \
+    zypper install -y kernel-devel && \
+    zypper install -y hdf5-devel && \
     useradd -u 30996 msk_jenkins
 
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
