@@ -17,7 +17,7 @@ RUN zypper refresh && \
     zypper install -y java-1_8_0-openjdk && \
     zypper install -y graphviz && \
     zypper install -y kernel-devel && \
-    zypper install -y hdf5-devel rpcbind && \
+    zypper install -y hdf5-devel rpcbind libtirpc-devel && \
     useradd -u 30996 msk_jenkins
 
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
