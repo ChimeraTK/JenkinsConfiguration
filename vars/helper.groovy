@@ -95,6 +95,9 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
       }
     }
     echo("Done getting artefacts.")
+    sh """
+      chown -R msk_jenkins /scratch
+    """
   }
 
 }
