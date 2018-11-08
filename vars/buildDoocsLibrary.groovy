@@ -59,7 +59,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               export DOOCSARCH=Ubuntu-16.04-x86_64
               make -j8
               make install
-            """}
+            """
             sh """
               sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz /export
             """
