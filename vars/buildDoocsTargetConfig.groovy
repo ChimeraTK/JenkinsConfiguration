@@ -59,10 +59,10 @@ def transformIntoStep(String buildName) {
               sudo -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/\${DOOCSARCH}.git
               cd \${DOOCSARCH}
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
-              echo "DOOCS_epics" > /export/dependencies.${JOB_NAME}.list
+              echo "DOOCS_epics" > /scratch/dependencies.${JOB_NAME}.list
             """
             sh """
-              sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz /export
+              sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz /export /scratch
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }
