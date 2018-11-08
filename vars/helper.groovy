@@ -90,7 +90,7 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
         cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
       """
       myFile = readFile(env.WORKSPACE+"/artefact.list")
-      helper.doDependencyArtefacts(myFile.split("\n"), label, buildType)
+      doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType)
     }
     echo("Done getting artefacts.")
   }
