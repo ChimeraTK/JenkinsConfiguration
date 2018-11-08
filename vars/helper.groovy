@@ -151,6 +151,7 @@ def doBuild(String label, String buildType) {
   // start the build
   echo("Starting actual build...")
   sh """
+    chown -R msk_jenkins /scratch
     sudo -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins mkdir -p /scratch/install
     cd /scratch/build-${JOB_NAME}
