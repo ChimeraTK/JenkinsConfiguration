@@ -58,10 +58,13 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               chown -R msk_jenkins /export/doocs
               sudo -E -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git .
               make -j8
-              make install
             """
             sh """
-              sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz /export
+              find /export > export.list.before
+              make install
+              find /export > export.list.after
+              diff export.list.before export.list.after | grep "^> " | sed -e 's/^> //' > export.list.installed
+              sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz --files-from export.list.installed
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }
