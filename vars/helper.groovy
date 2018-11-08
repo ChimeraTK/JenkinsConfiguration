@@ -81,16 +81,18 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
     """
     echo("Downloading and unpacking artefacts...")
     dependencyList.each {
-      sh """
-        echo "${it}" >> /scratch/artefact.list
-      """
-      copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-      sh """
-        tar zxvf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
-        cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
-      """
-      myFile = readFile(env.WORKSPACE+"/artefact.list")
-      doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType)
+      if( it != "" ) {
+        sh """
+          echo "${it}" >> /scratch/artefact.list
+        """
+        copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+        sh """
+          tar zxvf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
+          cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
+        """
+        myFile = readFile(env.WORKSPACE+"/artefact.list")
+        doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType)
+      }
     }
     echo("Done getting artefacts.")
   }
