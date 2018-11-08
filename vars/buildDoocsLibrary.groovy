@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
 
-  buildDoocsLibrary() is called from the .jenkinsfile of each project
+  buildDoocsLibrary() is called from the pipline script in each project
 
 ***********************************************************************************************************************/
 
@@ -52,11 +52,11 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
             helper.doDependencyArtefacts(dependencyList, label, buildType)
 
             sh """
+              source /export/doocs/doocsarch.env
               mkdir -p /export/doocs/library/${libraryName}
               cd /export/doocs/library/${libraryName}
               chown -R msk_jenkins /export/doocs
               sudo -E -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git .
-              export DOOCSARCH=Ubuntu-16.04-x86_64
               make -j8
               make install
             """
