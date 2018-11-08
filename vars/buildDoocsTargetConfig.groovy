@@ -59,6 +59,7 @@ def transformIntoStep(String buildName) {
               sudo -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/\${DOOCSARCH}.git
               cd \${DOOCSARCH}
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
+              mkdir -p /scratch
               echo "DOOCS_epics" > /scratch/dependencies.${JOB_NAME}.list
             """
             sh """
