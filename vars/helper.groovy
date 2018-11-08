@@ -206,6 +206,7 @@ def doCoverage(String label, String buildType) {
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
+    chown msk_jenkins -R /scratch
     cd /scratch/build-${parentJob}
     sudo -u msk_jenkins make coverage || true
     sudo -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
@@ -241,6 +242,7 @@ def doValgrind(String label, String buildType) {
   //
   // We execute the tests in the directory where CTestTestfile.cmake is which lists them.
   sh """
+    chown msk_jenkins -R /scratch
     cd /scratch/build-${parentJob}
     
     EXECLIST=""
