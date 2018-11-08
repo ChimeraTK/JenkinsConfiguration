@@ -79,37 +79,21 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
     sh """
       touch /scratch/artefact.list
     """
-    echo("Getting artefacts...")
+    echo("Downloading and unpacking artefacts...")
     dependencyList.each {
       sh """
         echo "${it}" >> /scratch/artefact.list
       """
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
       sh """
+        tar zxvf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
         cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
       """
       myFile = readFile(env.WORKSPACE+"/artefact.list")
-      myFile.split("\n").each {
-        if( it != "" ) {
-          copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-          sh """
-            echo "${it}" >> /scratch/artefact.list
-          """
-        }
-      }
+      doDependencyArtefacts(myFile.split("\n"), label, buildType)
     }
     echo("Done getting artefacts.")
   }
-
-  // unpack artefacts of dependencies into the Docker system root
-  echo("Unpacking artefacts...")
-  sh """
-    if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
-      for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-        tar zxvf \"\${a}\" -C /
-      done
-    fi
-  """
 
 }
 
