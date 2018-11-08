@@ -64,6 +64,8 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
             """
             sh """
               diff /export.list.before /export.list.after | grep "^> " | sed -e 's/^> //' > export.list.installed
+              mv /scratch/artefact.list /scratch/dependencies.${JOB_NAME}.list
+              echo /scratch/dependencies.${JOB_NAME}.list >> export.list.installed
               sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz --files-from export.list.installed
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false

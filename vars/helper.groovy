@@ -85,6 +85,18 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
         echo "${it}" >> /scratch/artefact.list
       """
       copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+      sh """
+        cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
+      """
+      myFile = readFile(env.WORKSPACE+"/artefact.list")
+      myFile.split("\n").each {
+        if( it != "" ) {
+          copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+          sh """
+            echo "${it}" >> /scratch/artefact.list
+          """
+        }
+      }
     }
     echo("Done getting artefacts.")
   }
@@ -290,6 +302,8 @@ def doInstall(String label, String buildType) {
   // Generate tar ball of install directory - this will be the artefact used by our dependents
   sh """
     cd /scratch/install
+    mkdir -p scratch
+    cp /scratch/artefact.list scratch/dependencies.${JOB_NAME}.list
     sudo -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   
