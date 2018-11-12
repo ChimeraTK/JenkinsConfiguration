@@ -216,7 +216,7 @@ def doCoverage(String label, String buildType) {
   """
   
   // stash cobertura coverage report result for later publication
-  stash includes: "coverage.xml", name: "cobertura-${label}-${buildType}"
+  stash allowEmpty: true, includes: "coverage.xml", name: "cobertura-${label}-${buildType}"
   
   // publish HTML coverage report now, since it already allows publication of multiple distinguised reports
   publishHTML (target: [
@@ -378,7 +378,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
   )
   
   // publish cobertura result
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
 }
 
