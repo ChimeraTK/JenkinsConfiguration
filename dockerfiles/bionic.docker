@@ -29,7 +29,10 @@ RUN apt-get update && \
     apt-get install -y libpqxx-dev && \
     apt-get install -y libfftw3-dev && \
     apt-get install -y subversion && \
-    useradd -u 30996 msk_jenkins
+    useradd -u 30996 msk_jenkins && \
+    ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
+   
+# NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
    
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 ADD valgrind.suppressions /common/valgrind.suppressions
