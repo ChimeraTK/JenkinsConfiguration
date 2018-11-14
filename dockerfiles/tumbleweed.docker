@@ -19,7 +19,7 @@ RUN zypper refresh && \
     zypper install -y kernel-devel && \
     zypper install -y hdf5-devel rpcbind libtirpc-devel openldap2-devel zeromq-devel libnsl-devel && \
     useradd -u 30996 msk_jenkins && \
-    ln -sfn /usr/lib64/x86_64-linux-gnu/libzmq.so.5 /usr/lib64/x86_64-linux-gnu/libzmq.so.3
+    ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3
    
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
 
