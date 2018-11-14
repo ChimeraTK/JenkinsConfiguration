@@ -6,9 +6,9 @@
 
 /**********************************************************************************************************************/
 
-def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType) {
+def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType, String gitUrl) {
 
-  doPrepare(true)
+  doPrepare(true, gitUrl)
   doDependencyArtefacts(dependencyList, label, buildType)
 
   // Add inactivity timeout of 10 minutes (build will be interrupted if 10 minutes no log output has been produced)
@@ -43,7 +43,7 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 
 /**********************************************************************************************************************/
 
-def doPrepare(boolean checkoutScm) {
+def doPrepare(boolean checkoutScm, String gitUrl='') {
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins
   sh '''
@@ -59,12 +59,23 @@ def doPrepare(boolean checkoutScm) {
   
   // Check out source code
   if(checkoutScm) {
-    checkout scm
-    sh '''
-      sudo -u msk_jenkins git clean -f -d -x
-      sudo -u msk_jenkins mkdir /scratch/source
-      sudo -u msk_jenkins cp -r * /scratch/source
-    '''
+    if(gitUrl != '') {
+      sh '''
+        mkdir /scratch/source
+      '''
+      dir("/scratch/source") { node { git gitUrl } }
+      sh '''
+        chown msk_jenkins -R /scratch/source
+      '''
+    }
+    else {
+      checkout scm
+      sh '''
+        sudo -u msk_jenkins git clean -f -d -x
+        sudo -u msk_jenkins mkdir /scratch/source
+        sudo -u msk_jenkins cp -r * /scratch/source
+      '''
+    }
   }
 
 }

@@ -5,7 +5,7 @@
 ***********************************************************************************************************************/
 
 // This is the function called from the .jenkinsfile
-def call(ArrayList<String> dependencyList) {
+def call(ArrayList<String> dependencyList, String gitUrl='') {
 
   // List of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
   def builds = [ 'xenial-Debug',
@@ -22,7 +22,7 @@ def call(ArrayList<String> dependencyList) {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
         steps {
           script {
-            parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it)] }
+            parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it, gitUrl)] }
           }
         }
       } // end stage build
@@ -41,7 +41,7 @@ def call(ArrayList<String> dependencyList) {
 
 /**********************************************************************************************************************/
 
-def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
+def transformIntoStep(ArrayList<String> dependencyList, String buildName, String gitUrl) {
   // split the build name at the '-'
   def (label, buildType) = buildName.tokenize('-')
   // we need to return a closure here, which is then passed to parallel() for execution
@@ -52,7 +52,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
         def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
-            helper.doBuildTestDeploy(dependencyList, label, buildType)
+            helper.doBuildTestDeploy(dependencyList, label, buildType, gitUrl)
           }
         }
       }
