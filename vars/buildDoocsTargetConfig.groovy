@@ -61,9 +61,7 @@ def transformIntoStep(String buildName) {
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
               mkdir -p /scratch
               echo "DOOCS_epics" > /scratch/dependencies.${JOB_NAME}.list
-            """
-            sh """
-              sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz /export /scratch
+              sudo -u msk_jenkins tar zcf "$WORKSPACE/install-${JOB_NAME}-${label}-${buildType}.tgz" /export /scratch
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }

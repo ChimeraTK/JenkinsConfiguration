@@ -61,8 +61,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               find /export > /export.list.before
               make install
               find /export > /export.list.after
-            """
-            sh """
+              cd "$WORKSPACE"
               diff /export.list.before /export.list.after | grep "^> " | sed -e 's/^> //' > export.list.installed
               mv /scratch/artefact.list /scratch/dependencies.${JOB_NAME}.list
               echo /scratch/dependencies.${JOB_NAME}.list >> export.list.installed

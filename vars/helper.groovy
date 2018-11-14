@@ -47,14 +47,11 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 
 def doPrepare(boolean checkoutScm, String gitUrl='') {
   
-  // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins
-  sh '''
-    chmod ugo+rwX /var/run/lock/mtcadummy
-  '''
-  
+  // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
   // Create scratch directory. Keep the absolute path fixed, so we can copy the build directory as an artefact for the
   // analysis job
   sh '''
+    chmod ugo+rwX /var/run/lock/mtcadummy
     mkdir /scratch
     chown msk_jenkins /scratch
   '''
@@ -79,29 +76,22 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
 /**********************************************************************************************************************/
 
 def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String buildType) {
-  echo("Obtaining dependency artefacts for ${label}-${buildType}")
 
   // obtain artefacts of dependencies
   script {
-    sh """
-      touch /scratch/artefact.list
-    """
-    echo("Downloading and unpacking artefacts...")
     dependencyList.each {
       if( it != "" ) {
-        sh """
-          echo "${it}" >> /scratch/artefact.list
-        """
         copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
         sh """
           tar zxvf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
           cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
+          touch /scratch/artefact.list
+          echo "${it}" >> /scratch/artefact.list
         """
         myFile = readFile(env.WORKSPACE+"/artefact.list")
         doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType)
       }
     }
-    echo("Done getting artefacts.")
     sh """
       chown -R msk_jenkins /scratch
     """
@@ -112,25 +102,19 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
 /**********************************************************************************************************************/
 
 def doBuilddirArtefact(String label, String buildType) {
-  echo("Obtaining build directory artefact for ${label}-${buildType}")
   
   // obtain artefacts of dependencies
   script {
     def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
     copyArtifacts filter: "build-${parentJob}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${parentJob}", selector: lastSuccessful(), target: "artefacts"
-  }
 
-  // unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins)
-  sh """
-    for a in artefacts/build-*-${label}-${buildType}.tgz ; do
-      sudo -u msk_jenkins tar zxvf \"\${a}\" -C /
-    done
-  """
-
-  // obtain artefacts of dependencies (from /scratch/artefact.list)
-  script {
-    echo("Getting dependency artefacts...")
+    // Unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins).
+    // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
+      for a in artefacts/build-*-${label}-${buildType}.tgz ; do
+        sudo -u msk_jenkins tar zxvf \"\${a}\" -C /
+      done
+
       cp /scratch/artefact.list ${WORKSPACE}/artefact.list
     """
     myFile = readFile(env.WORKSPACE+"/artefact.list")
@@ -139,7 +123,6 @@ def doBuilddirArtefact(String label, String buildType) {
         copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
       }
     }
-    echo("Done dependency getting artefacts.")
   }
 
   // unpack artefacts of dependencies into the Docker system root
@@ -179,23 +162,15 @@ def doBuild(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doTest(String label, String buildType) {
-  echo("Starting tests for ${label}-${buildType}")
 
   // Run the tests via ctest
+  // Prefix test names with label and buildType, so we can distinguish them later
+  // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
   sh """
     cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins ctest --no-compress-output $MAKEOPTS -T Test || true
-  """
-    
-  // Prefix test names with label and buildType, so we can distinguish them later
-  sh """
-    cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
-  """
-    
-  // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
-  sh """
-    sudo -u msk_jenkins cp -r /scratch/build-${JOB_NAME}/Testing .
+    sudo -u msk_jenkins cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
   """
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
@@ -206,7 +181,6 @@ def doTest(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doCoverage(String label, String buildType) {
-  echo("Generating coverage report for ${label}-${buildType}")
   def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
@@ -237,7 +211,6 @@ def doCoverage(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doValgrind(String label, String buildType) {
-  echo("Running valgrind for ${label}-${buildType}")
   def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Run valgrind twice in memcheck and helgrind mode
@@ -276,28 +249,23 @@ def doValgrind(String label, String buildType) {
       cd /scratch/build-${parentJob}
 
     done
-  """
   
-  // stash valgrind result files for later publication
-  sh """
-    sudo -u msk_jenkins cp /scratch/build-${parentJob}/*.valgrind .
+    sudo -u msk_jenkins cp /scratch/build-${parentJob}/*.valgrind "${WORKSPACE}"
   """
+  // stash valgrind result files for later publication
   stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
 }
 
 /**********************************************************************************************************************/
 
 def doInstall(String label, String buildType) {
-  echo("Generating artefacts for ${label}-${buildType}")
 
   // Install, but redirect files into the install directory (instead of installing into the system)
+  // Generate tar ball of install directory - this will be the artefact used by our dependents
   sh """
     cd /scratch/build-${JOB_NAME}
     sudo -u msk_jenkins make install DESTDIR=../install
-  """
   
-  // Generate tar ball of install directory - this will be the artefact used by our dependents
-  sh """
     cd /scratch/install
     mkdir -p scratch
     cp /scratch/artefact.list scratch/dependencies.${JOB_NAME}.list

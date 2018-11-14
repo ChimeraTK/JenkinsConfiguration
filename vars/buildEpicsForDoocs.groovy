@@ -43,11 +43,11 @@ def transformIntoStep(String buildName) {
         def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
-            sh '''
+            sh """
               VERSION=3.14.12.6
-              sudo -E -u msk_jenkins wget https://epics.anl.gov/download/base/baseR${VERSION}.tar.gz
-              sudo -u msk_jenkins tar xf baseR${VERSION}.tar.gz
-              cd base-${VERSION}
+              sudo -E -u msk_jenkins wget https://epics.anl.gov/download/base/baseR\${VERSION}.tar.gz
+              sudo -u msk_jenkins tar xf baseR\${VERSION}.tar.gz
+              cd base-\${VERSION}
               echo "INSTALL_LOCATION=/export/epics" >> configure/CONFIG_SITE
               export LC_ALL=en_US.UTF-8
               mkdir -p /export/epics
@@ -61,9 +61,7 @@ def transformIntoStep(String buildName) {
               ln -sfn linux-x86_64/* .
               mkdir -p /scratch
               touch /scratch/dependencies.${JOB_NAME}.list
-            '''
-            sh """
-              sudo -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz /export /scratch
+              sudo -u msk_jenkins tar zcf "$WORKSPACE/install-${JOB_NAME}-${label}-${buildType}.tgz" /export /scratch
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }
