@@ -156,25 +156,34 @@ def doBuilddirArtefact(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doBuild(String label, String buildType) {
-  echo("Starting build for ${label}-${buildType}")
+ 
+  stages("build for ${label}-${buildType}") {
+    stage("actual build") {
+      // start the build
+      sh """
+        chown -R msk_jenkins /scratch
+        sudo -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
+        sudo -u msk_jenkins mkdir -p /scratch/install
+        cd /scratch/build-${JOB_NAME}
+        sudo -u msk_jenkins cmake /scratch/source -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true
+        sudo -u msk_jenkins make $MAKEOPTS
+      """
+    }
+  }
+  post {
+    always {
+      node("Archive build artefact") {
+        script {
+          // generate and archive artefact from build directory (used for the analysis job)
+          sh """
+            sudo -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
+          """
+          archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+        }
+      }
+    } // end always
+  } // end post
   
-  // start the build
-  echo("Starting actual build...")
-  sh """
-    chown -R msk_jenkins /scratch
-    sudo -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
-    sudo -u msk_jenkins mkdir -p /scratch/install
-    cd /scratch/build-${JOB_NAME}
-    sudo -u msk_jenkins cmake /scratch/source -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true
-    sudo -u msk_jenkins make $MAKEOPTS
-  """
-  echo("Done with the build.")
-  
-  // generate and archive artefact from build directory (used for the analysis job)
-  sh """
-    sudo -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
-  """
-  archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
 
 }
 
