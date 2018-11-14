@@ -62,22 +62,16 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
   // Check out source code
   if(checkoutScm) {
     if(gitUrl != '') {
-      sh '''
-        mkdir /scratch/source
-      '''
-      dir("/scratch/source") { node { git gitUrl } }
-      sh '''
-        chown msk_jenkins -R /scratch/source
-      '''
+      git gitUrl
     }
     else {
       checkout scm
-      sh '''
-        sudo -u msk_jenkins git clean -f -d -x
-        sudo -u msk_jenkins mkdir /scratch/source
-        sudo -u msk_jenkins cp -r * /scratch/source
-      '''
     }
+    sh '''
+      sudo -u msk_jenkins git clean -f -d -x
+      sudo -u msk_jenkins mkdir /scratch/source
+      sudo -u msk_jenkins cp -r * /scratch/source
+    '''
   }
 
 }
