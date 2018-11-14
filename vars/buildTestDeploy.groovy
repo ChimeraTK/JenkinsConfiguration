@@ -14,9 +14,17 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
                  'bionic-Release',
                  'tumbleweed-Debug',
                  'tumbleweed-Release' ]
+  def dependencies = dependencyList.join(',')
 
   pipeline {
     agent none
+
+    // setup build trigger
+    triggers {
+      pollSCM 'H/5 * * * *'
+      upstream dependencies
+    }
+
     stages {
       stage('build') {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
