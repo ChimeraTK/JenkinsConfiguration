@@ -37,3 +37,5 @@ RUN apt-get update && \
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 ADD valgrind.suppressions /common/valgrind.suppressions
 
+# Start rpcbind at launch of the container, required for DOOCS
+ENTRYPOINT ["bash", "-c", "rpcbind -f -w ; bash"]
