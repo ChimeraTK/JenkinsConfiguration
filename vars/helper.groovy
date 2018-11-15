@@ -83,7 +83,7 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
       if( it != "" ) {
         copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
         sh """
-          tar zxvf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
+          tar zxf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
           touch /scratch/dependencies.${it}.list
           cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
           touch /scratch/artefact.list
