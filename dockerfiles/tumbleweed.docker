@@ -26,3 +26,4 @@ RUN zypper refresh && \
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 ADD valgrind.suppressions /common/valgrind.suppressions
 
+ENTRYPOINT ["bash", "-c", "rpcbind -f -w ; bash"]
