@@ -15,6 +15,9 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
                  'tumbleweed-Debug',
                  'tumbleweed-Release' ]
   def dependencies = dependencyList.join(',')
+  if(dependencies == "") {
+    dependencies = "Create Docker Images"
+  }
 
   pipeline {
     agent none
