@@ -84,6 +84,7 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
         copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
         sh """
           tar zxvf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
+          touch /scratch/dependencies.${it}.list
           cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
           touch /scratch/artefact.list
           echo "${it}" >> /scratch/artefact.list
@@ -115,6 +116,7 @@ def doBuilddirArtefact(String label, String buildType) {
         sudo -u msk_jenkins tar zxvf \"\${a}\" -C /
       done
 
+      touch /scratch/artefact.list
       cp /scratch/artefact.list ${WORKSPACE}/artefact.list
     """
     myFile = readFile(env.WORKSPACE+"/artefact.list")
@@ -268,7 +270,9 @@ def doInstall(String label, String buildType) {
   
     cd /scratch/install
     mkdir -p scratch
-    cp /scratch/artefact.list scratch/dependencies.${JOB_NAME}.list
+    if [ -e /scratch/artefact.list ]; then
+      cp /scratch/artefact.list scratch/dependencies.${JOB_NAME}.list
+    fi
     sudo -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   
