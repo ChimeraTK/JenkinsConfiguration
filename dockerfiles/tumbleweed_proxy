@@ -1,0 +1,3 @@
+PROXY_ENABLED="yes"
+HTTP_PROXY="http://xfelproxy.desy.de:3128"
+HTTPS_PROXY="http://xfelproxy.desy.de:3128"
