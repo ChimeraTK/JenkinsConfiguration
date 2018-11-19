@@ -23,7 +23,8 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
           copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
           myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
           def depBuilds = myFile.split("\n")
-          builds.each {
+          def curBuilds = builds.clone()
+          curBuilds.each {
             def build = it
             if(depBuilds.find { it == build } != it) {
               builds.removeAll { it == build }
