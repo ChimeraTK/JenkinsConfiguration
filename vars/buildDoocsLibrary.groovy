@@ -14,10 +14,22 @@ def call(String libraryName, ArrayList<String> dependencyList) {
                  'bionic-Debug',
                  'bionic-Release' ]
 
+  // publish our list of builds as artefact for our downstream builds
+  script {
+    node('Docker') {
+      writeFile file: "builds.txt", text: builds.join("\n")
+      archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
+    }
+  }
+
+  // form comma-separated list of dependencies as needed for the trigger configuration
   def dependencies = dependencyList.join(',')
   if(dependencies == "") {
     dependencies = "Create Docker Images"
   }
+
+  pipeline {
+    agent none
 
     // setup build trigger
     triggers {
@@ -25,8 +37,6 @@ def call(String libraryName, ArrayList<String> dependencyList) {
       upstream dependencies
     }
 
-  pipeline {
-    agent none
     stages {
       stage('build') {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container

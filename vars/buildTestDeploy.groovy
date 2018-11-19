@@ -17,22 +17,25 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
 
   // only keep builds which exist for all dependencies
   script {
-    dependencyList.each {
-      if( it != "" ) {
-        copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-        myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
-        def depBuilds = myFile.split("\n")
-        builds.each {
-          if(depBuilds.find { it == owner.it } != it) {
-            builds.removeAll { it == owner.it }
+    node('Docker') {
+      dependencyList.each {
+        if( it != "" ) {
+          copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+          myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+          def depBuilds = myFile.split("\n")
+          builds.each {
+            def build = it
+            if(depBuilds.find { it == build } != it) {
+              builds.removeAll { it == build }
+            }
           }
         }
       }
-    }
 
-    // publish our list of builds as artefact for our downstream builds
-    writeFile("builds.txt", builds.join("\n"))
-    archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
+      // publish our list of builds as artefact for our downstream builds
+      writeFile file: "builds.txt", text: builds.join("\n")
+      archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
+    }
   }
 
   // form comma-separated list of dependencies as needed for the trigger configuration
