@@ -11,9 +11,7 @@ def call() {
   def builds = [ 'xenial-Debug',
                  'xenial-Release',
                  'bionic-Debug',
-                 'bionic-Release',
-                 'tumbleweed-Debug',
-                 'tumbleweed-Release' ]
+                 'bionic-Release' ]
 
   pipeline {
     agent none

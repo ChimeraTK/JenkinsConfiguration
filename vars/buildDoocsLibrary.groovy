@@ -12,9 +12,18 @@ def call(String libraryName, ArrayList<String> dependencyList) {
   def builds = [ 'xenial-Debug',
                  'xenial-Release',
                  'bionic-Debug',
-                 'bionic-Release',
-                 'tumbleweed-Debug',
-                 'tumbleweed-Release' ]
+                 'bionic-Release' ]
+
+  def dependencies = dependencyList.join(',')
+  if(dependencies == "") {
+    dependencies = "Create Docker Images"
+  }
+
+    // setup build trigger
+    triggers {
+      pollSCM 'H/5 * * * *'
+      upstream dependencies
+    }
 
   pipeline {
     agent none

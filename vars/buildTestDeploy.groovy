@@ -14,6 +14,28 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
                  'bionic-Release',
                  'tumbleweed-Debug',
                  'tumbleweed-Release' ]
+
+  // only keep builds which exist for all dependencies
+  script {
+    dependencyList.each {
+      if( it != "" ) {
+        copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+        myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+        def depBuilds = myFile.split("\n")
+        builds.each {
+          if(depBuilds.find { it == owner.it } != it) {
+            builds.removeAll { it == owner.it }
+          }
+        }
+      }
+    }
+
+    // publish our list of builds as artefact for our downstream builds
+    writeFile("builds.txt", builds.join("\n"))
+    archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
+  }
+
+  // form comma-separated list of dependencies as needed for the trigger configuration
   def dependencies = dependencyList.join(',')
   if(dependencies == "") {
     dependencies = "Create Docker Images"
