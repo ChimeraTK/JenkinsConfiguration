@@ -170,7 +170,10 @@ def doTest(String label, String buildType) {
   // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
   sh """
     cd /scratch/build-${JOB_NAME}
-    sudo -u msk_jenkins ctest --no-compress-output $MAKEOPTS -T Test -V || true
+    if [ -z "${CTESTOPTS}" ]; then
+      CTESTOPTS="${MAKEOPTS}"
+    fi
+    sudo -u msk_jenkins ctest --no-compress-output ${CTESTOPTS} -T Test -V || true
     sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
     sudo -u msk_jenkins cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
   """
