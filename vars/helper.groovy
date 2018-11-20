@@ -75,22 +75,24 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
 
 /**********************************************************************************************************************/
 
-def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String buildType) {
+def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String buildType, ArrayList<String> obtainedArtefacts=[]) {
 
   // obtain artefacts of dependencies
   script {
     dependencyList.each {
-      if( it != "" ) {
-        copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+      def dependency = it
+      if( dependency != "" && obtainedArtefacts.find{it == dependency} != dependency ) {
+        copyArtifacts filter: "install-${dependency}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
+        obtainedArtefacts.add(dependency)
         sh """
-          tar zxf \"artefacts/install-${it}-${label}-${buildType}.tgz\" -C /
-          touch /scratch/dependencies.${it}.list
-          cp /scratch/dependencies.${it}.list ${WORKSPACE}/artefact.list
+          tar zxf \"artefacts/install-${dependency}-${label}-${buildType}.tgz\" -C /
+          touch /scratch/dependencies.${dependency}.list
+          cp /scratch/dependencies.${dependency}.list ${WORKSPACE}/artefact.list
           touch /scratch/artefact.list
-          echo "${it}" >> /scratch/artefact.list
+          echo "${dependency}" >> /scratch/artefact.list
         """
         myFile = readFile(env.WORKSPACE+"/artefact.list")
-        doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType)
+        doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType, obtainedArtefacts)
       }
     }
     sh """
