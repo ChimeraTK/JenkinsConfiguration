@@ -238,10 +238,8 @@ def doValgrind(String label, String buildType) {
         # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
         if [ -f "\${test}" ]; then
           EXECLIST="\${EXECLIST} `realpath \${test}`"
-          TESTDIR="\${dir}"
-        elif [ -f "\${dir}\${test}" ]; then
-          EXECLIST="\${EXECLIST} `realpath \${dir}\${test}`"
-          TESTDIR="\${dir}"
+        elif [ -f "\${dir}/\${test}" ]; then
+          EXECLIST="\${EXECLIST} `realpath \${dir}/\${test}`"
         fi
       done
     
