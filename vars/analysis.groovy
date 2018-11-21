@@ -8,11 +8,24 @@
 
 // This is the function called from the .jenkinsfile
 def call(ArrayList<String> dependencyList) {
+  def builds = []
 
-  // List of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
-  def builds = [ 'xenial-Debug',
-                 'bionic-Debug',
-                 'tumbleweed-Debug' ]
+  // Run for all -Debug builds of the main job
+  script {
+    def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+    node('Docker') {
+      copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: parentJob, selector: lastSuccessful(), target: "artefacts"
+      myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+      builds = myFile.split("\n").toList()
+      def builds_temp = builds.clone()
+      builds_temp.each {
+        if(!it.endsWith("-Debug")) {
+          def build = it
+          builds.removeAll { it == build }
+        }
+      }
+    }
+  }
 
   pipeline {
     agent none
