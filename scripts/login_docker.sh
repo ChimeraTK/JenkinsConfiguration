@@ -30,7 +30,7 @@ docker start ${ID} || exit 1
     sleep 2
     wget --no-check-certificate "https://mskllrfredminesrv.desy.de/jenkins/job/${jobName}/${buildNumber}/artifact/build-${jobName}-${label}-${buildType}.tgz" -O artefact.tgz
     tar xf artefact.tgz scratch/artefact.list
-    docker exec -u 0 -it ${ID} tar xvf /home/msk_jenkins/artefact.tgz
+    docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
     rm artefact.tgz
 
     # download and unpack dependency artefacts
@@ -38,7 +38,7 @@ docker start ${ID} || exit 1
       echo "Downloading artefact install-${dep}-${label}-${buildType}.tgz..."
       sleep 2
       wget --no-check-certificate "https://mskllrfredminesrv.desy.de/jenkins/job/${dep}/lastSuccessfulBuild/artifact/install-${dep}-${label}-${buildType}.tgz" -O artefact.tgz
-      docker exec -u 0 -it ${ID} tar xvf /home/msk_jenkins/artefact.tgz
+      docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
       rm artefact.tgz
     done
 
@@ -47,10 +47,17 @@ docker start ${ID} || exit 1
 
   fi
 
+  # fix access rights
+  docker exec -u 0 -it ${ID} bash -il -c "chown msk_jenkins -R /scratch"
+
+  # enable password-less sudo for msk_jenkins inside the container
+  docker exec -u 0 -it ${ID} bash -il -c "echo 'msk_jenkins ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers"
+
   # start interactive shell
-  echo "Starting interactive shell in the docker container for ${label} as user msk_jenkins."
-  echo "If you need root access, log into the same container in another shell as root using the following command:"
-  echo " docker exec -u 0 -it ${ID} bash -il"
+  echo "==========================================================================================================="
+  echo " Starting interactive shell in the docker container for ${label} as user msk_jenkins."
+  echo " Password-less sudo has been enabled inside this container (in contrast to the Jenkins build environment)."
+  echo "==========================================================================================================="
   docker exec -u 0 -it ${ID} bash -il -c "su -s /bin/bash - msk_jenkins"
 
 )
