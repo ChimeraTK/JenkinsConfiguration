@@ -65,6 +65,9 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
       } // end stage build
     } // end stages
     post {
+      failure {
+        emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '$DEFAULT_SUBJECT'
+      }
       always {
         node('Docker') {
           script {
