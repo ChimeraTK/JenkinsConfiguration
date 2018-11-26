@@ -152,7 +152,7 @@ def doBuild(String label, String buildType) {
       sudo -u msk_jenkins mkdir -p /scratch/install
       cd /scratch/build-${JOB_NAME}
       sudo -u msk_jenkins cmake /scratch/source -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
-      sudo -u msk_jenkins make \${MAKEOPTS}
+      sudo -u msk_jenkins make ${env.MAKEOPTS}
     """
   }
   script {
@@ -174,7 +174,7 @@ def doTest(String label, String buildType) {
   sh """
     cd /scratch/build-${JOB_NAME}
     if [ -z "\${CTESTOPTS}" ]; then
-      CTESTOPTS="\${MAKEOPTS}"
+      CTESTOPTS="${env.MAKEOPTS}"
     fi
     sudo -u msk_jenkins ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
     sudo -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
