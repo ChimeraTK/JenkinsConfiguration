@@ -256,7 +256,6 @@
 }
 {
    DOOCS-4
-   Memcheck:Param
    ...
    fun:clnttcp_call
    fun:_ZN6eq_svr8rpc_callEP7svr_conP11param_blockP9res_blockPii
