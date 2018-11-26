@@ -254,14 +254,4 @@
    fun:_Z9eq_serveriPPc
    ...
 }
-{
-   DOOCS-4
-   ...
-   fun:clnttcp_call
-   fun:_ZN6eq_svr8rpc_callEP7svr_conP11param_blockP9res_blockPii
-   fun:_ZN6eq_svr8proc_getEP5EqAdrP6EqDataS3_P6eq_moni
-   fun:server_thread
-   fun:start_thread
-   fun:clone
-}
 
