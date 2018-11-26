@@ -60,6 +60,7 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
   if(checkoutScm) {
     if(gitUrl != '') {
       git gitUrl
+      sh 'git submodule update --init --recursive'
     }
     else {
       checkout scm
