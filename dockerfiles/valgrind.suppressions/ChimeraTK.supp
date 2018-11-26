@@ -197,3 +197,72 @@
    obj:/bin/bash
    ...
 }
+{
+   ZeroMQ
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:send
+   obj:/usr/lib/x86_64-linux-gnu/libzmq.so.5.1.5
+   ...
+}
+{
+   DOOCS-1
+   Memcheck:Addr16
+   ...
+   fun:eqlibprog
+   fun:svc_getreq_common
+   fun:svc_getreq_poll
+   fun:svc_run
+   fun:rpc
+   fun:start_thread
+   fun:clone
+}
+{
+   DOOCS-1a
+   Memcheck:Addr8
+   ...
+   fun:eqlibprog
+   fun:svc_getreq_common
+   fun:svc_getreq_poll
+   fun:svc_run
+   fun:rpc
+   fun:start_thread
+   fun:clone
+}
+{
+   DOOCS-2
+   Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:gethostbyname
+   fun:dmsg_init
+   fun:_Z7eq_initv
+   fun:_Z9eq_serveriPPc
+   ...
+}
+{
+   DOOCS-3
+   Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:initFecTable
+   fun:initClient
+   fun:cycleInitTask
+   fun:SystemSetCycleTimer
+   fun:_ZN6eq_resC1EP6eq_ens
+   fun:_ZN6EqCallC1Ev
+   fun:_Z9eq_serveriPPc
+   ...
+}
+{
+   DOOCS-4
+   Memcheck:Param
+   ...
+   fun:clnttcp_call
+   fun:_ZN6eq_svr8rpc_callEP7svr_conP11param_blockP9res_blockPii
+   fun:_ZN6eq_svr8proc_getEP5EqAdrP6EqDataS3_P6eq_moni
+   fun:server_thread
+   fun:start_thread
+   fun:clone
+}
+
