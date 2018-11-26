@@ -248,8 +248,8 @@ def doValgrind(String label, String buildType) {
       for test in \${EXECLIST} ; do
         testname=`basename \${test}`
         if [ -z "`echo " \${valgrindExcludes} " | grep " \${testname} "`" ]; then
-          sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.memcheck.valgrind \${test}
-          # sudo -u msk_jenkins valgrind --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --tool=helgrind --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.helgrind.valgrind \${test}
+          sudo -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.memcheck.valgrind \${test}
+          # sudo -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --tool=helgrind --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.helgrind.valgrind \${test}
         fi
       done
       cd /scratch/build-${parentJob}
