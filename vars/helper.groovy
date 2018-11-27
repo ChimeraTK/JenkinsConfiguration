@@ -229,9 +229,12 @@ def doValgrind(String label, String buildType) {
   // We execute the tests in the directory where CTestTestfile.cmake is which lists them.
   sh """
     chown msk_jenkins -R /scratch
+
+    cd /home/msk_jenkins/JenkinsConfiguration
+    git pull || true
+    cat valgrind.suppressions/common.supp valgrind.suppressions/${label}.supp > /scratch/valgrind.supp
+
     cd /scratch/build-${parentJob}
-    
-    cat /home/msk_jenkins/JenkinsConfiguration/valgrind.suppressions/common.supp /home/msk_jenkins/JenkinsConfiguration/valgrind.suppressions/${label}.supp > /scratch/valgrind.supp
     
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
