@@ -231,6 +231,8 @@ def doValgrind(String label, String buildType) {
     chown msk_jenkins -R /scratch
     cd /scratch/build-${parentJob}
     
+    cat /home/msk_jenkins/JenkinsConfiguration/valgrind.suppressions/common.supp /home/msk_jenkins/JenkinsConfiguration/valgrind.suppressions/${label}.supp > /scratch/valgrind.supp
+    
     EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
       dir=`dirname "\${testlist}"`
@@ -248,8 +250,10 @@ def doValgrind(String label, String buildType) {
       for test in \${EXECLIST} ; do
         testname=`basename \${test}`
         if [ -z "`echo " \${valgrindExcludes} " | grep " \${testname} "`" ]; then
-          sudo -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.supp --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.memcheck.valgrind \${test}
-          # sudo -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/common/valgrind.suppressions/ChimeraTK.sup --tool=helgrind --xml=yes --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.helgrind.valgrind \${test}
+          sudo -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp   \
+                                       --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes            \
+                                       --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.memcheck.valgrind  \
+                                       \${test}
         fi
       done
       cd /scratch/build-${parentJob}

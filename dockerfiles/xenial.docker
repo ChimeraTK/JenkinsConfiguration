@@ -36,7 +36,6 @@ RUN apt-get update && \
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
 
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
-ADD valgrind.suppressions /common/valgrind.suppressions
 
 # Start rpcbind at launch of the container, required for DOOCS
 ENTRYPOINT ["bash", "-c", "rpcbind -f -w ; bash"]
