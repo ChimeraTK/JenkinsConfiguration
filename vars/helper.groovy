@@ -230,15 +230,7 @@ def doValgrind(String label, String buildType) {
   sh """
     chown msk_jenkins -R /scratch
 
-    pwd
-    cd /
-    ls
-    cd /home
-    ls
-    cd /home/msk_jenkins
-    ls
     cd /home/msk_jenkins/JenkinsConfiguration
-    sudo -u msk_jenkins git pull || true
     cat valgrind.suppressions/common.supp valgrind.suppressions/${label}.supp > /scratch/valgrind.supp
 
     cd /scratch/build-${parentJob}

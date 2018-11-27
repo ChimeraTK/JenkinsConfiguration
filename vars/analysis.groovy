@@ -24,6 +24,12 @@ def call(ArrayList<String> dependencyList) {
           builds.removeAll { it == build }
         }
       }
+
+      // Update JenkinsConfiguration to have the latest valgrind suppressions
+      sh '''
+        cd /home/msk_jenkins/JenkinsConfiguration
+        sudo -u msk_jenkins git pull || true
+      '''
     }
   }
 
