@@ -200,9 +200,19 @@
 {
    bash-free
    Memcheck:Free
-   ...
+   Memcheck:Free
+   fun:free
    obj:/bin/bash
-   ...
+   fun:run_unwind_frame
+   fun:parse_and_execute
+   fun:command_substitute
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
 }
 {
    ZeroMQ
