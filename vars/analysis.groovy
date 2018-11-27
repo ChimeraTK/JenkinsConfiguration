@@ -61,7 +61,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
     stage(buildName) {
       node('Docker') {
         // we need root access inside the container and access to the dummy pcie devices of the host
-        def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
+        def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /home/msk_jenkins/JenkinsConfiguration:/home/msk_jenkins/JenkinsConfiguration"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             helper.doAnalysis(dependencyList, label, buildType)
