@@ -191,8 +191,15 @@
    ...
 }
 {
-   bash
+   bash-leak
    Memcheck:Leak
+   ...
+   obj:/bin/bash
+   ...
+}
+{
+   bash-free
+   Memcheck:Free
    ...
    obj:/bin/bash
    ...
