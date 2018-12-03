@@ -47,10 +47,9 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 
 def doPrepare(boolean checkoutScm, String gitUrl='') {
   
-  // clean workspace
+  // make sure all files in workspace can be written by msk_jenkins
   sh '''
     chown -R msk_jenkins .
-    find -mindepth 1 -maxdepth 1 -exec rm -rf \\{\\} \\;
   '''
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
