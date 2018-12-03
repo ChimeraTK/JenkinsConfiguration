@@ -1,7 +1,7 @@
 # JenkinsConfiguration
 Shared libraries for Jenkins CI tests of ChimeraTK libraries and DESY MSK projects
 
- Usage:
+Usage:
  
   - Create a pipline job on Jenkins with the following pipeline script:
 ```
@@ -21,9 +21,8 @@ buildTestDeploy(['dependency1', 'dependency2'], 'https://path/to/git/repository'
 analysis()
 ```
   - Execute this job once after the main job is finished for the first time, to also fill in the project triggers etc. for the analysis job.
-  
-    
- Important:
+
+# Important
  
   - Tests will be executed concurrently via "ctest -j" etc. inside the same docker environment. It is expected that the
     tests are either designed to not interfere with each other or to internally use locks to exclude concurrent access
@@ -32,9 +31,24 @@ analysis()
     containers (since all containers run under the same kernel). It is expected that tests using these dummies use
     file locks on /var/run/lock/mtcadummy/<devicenode> via flock() to ensure exclusive access. /var/run/lock/mtcadummy
     will be a shared directory between all containers sharing the same kernel.
- 
 
- General comments:
+# Optional configuration
+
+It is possible to add some per-project exceptions to the configuration. This can be done by setting variables before the call to `buildTestDeploy()` resp. `analysis()` in the pipeline script as explained in the followin.
+
+## Main jobs
+- Prevent tests from being run in parallel:
+```
+env.CTESTOPTS="-j1"
+```
+
+## Analysis jobs
+- Exclude tests from being run in valgrind (currently only possible with a single test):
+```
+env.valgrindExcludes="nameOfTestToExclude"
+```
+
+# Background information
  
  - Builds and tests are run inside a Docker container to have different test environments
  - We execute all builds/tests twice per test environment - once for Debug and once for Release. Each execution is
