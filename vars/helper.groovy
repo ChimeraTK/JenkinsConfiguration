@@ -50,7 +50,7 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
   // clean workspace
   sh '''
     chown -R msk_jenkins .
-    find -mindepth 1 -maxdepth 1 -exec rm -rf \{\} \;
+    find -mindepth 1 -maxdepth 1 -exec rm -rf \\{\\} \\;
   '''
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
