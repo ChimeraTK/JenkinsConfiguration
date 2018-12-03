@@ -50,7 +50,7 @@ env.valgrindExcludes="nameOfTestToExclude"
 
 # Background information
  
- - Builds and tests are run inside a Docker container to have different test environments
+ - Builds and tests are run inside several Docker containers to have different test environments (e.g. Ubuntu 16.04 and SuSE Tumbleweed)
  - We execute all builds/tests twice per test environment - once for Debug and once for Release. Each execution is
    called a "branch".
  - Docker only virtualises the system without the kernel - the PCIe dummy driver is therefore shared!
