@@ -3,15 +3,21 @@ Shared libraries for Jenkins CI tests of ChimeraTK libraries and DESY MSK projec
 
  Usage:
  
- - In the git repository of the project source create a file named ".jenkinsfile"
- - Place the following content into that file (no indentation):
+  - Create a pipline job on Jenkins with the following pipeline script:
     @Library('ChimeraTK') _
-    buildTestDeploy(['dependency1', 'dependency2']) 
+    buildTestDeploy(['dependency1', 'dependency2'], 'https://path/to/git/repository') 
   - Beware the underscore at the end of the first line!
-  - The list of dependencies is optional, just call buildTestDeploy() if there are no dependencies
+  - The list of dependencies can be empty, if there are no dependencies
   - The dependencies specify the Jenkins project names of which the artefacts should be obtained and unpacked into
     the root directory of the Docker environment before starting the build.
+  - Execute the job once, this will fill in the project triggers etc. properly
 
+  - Create a second pipeline job on Jenkins with the name of the main job appended by '-analysis' (e.g. 'ChimeraTK-DeviceAccess-analysis' if the first job is called 'ChimeraTK-DeviceAccess').
+  - Put in the following pipeline script:
+    @Library('ChimeraTK') _
+    analysis()
+  - Execute this job once after the main job is finished for the first time, to also fill in the project triggers etc. for the analysis job.
+  
     
  Important:
  
@@ -32,10 +38,3 @@ Shared libraries for Jenkins CI tests of ChimeraTK libraries and DESY MSK projec
  - Docker only virtualises the system without the kernel - the PCIe dummy driver is therefore shared!
  - Most Jenkins plugins do not support their result publication executed once per branch, thus we stash the result files
    and execute the publication later for all branches together.
-   
- - Important: It seems that some echo() are necessary, since otherwise the build is failing without error message. The
-   impression might be wrong and the reasons are not understood. A potential explanation might be that sometimes empty
-   scripts (e.g. the part downloading the artefacts when no artefacts are present) lead to failure and an echo() makes
-   it not empty. The explanation is certainly not complete, as only one of the branches fails in these cases. This
-   should be investigated further.
-
