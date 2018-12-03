@@ -47,6 +47,9 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 
 def doPrepare(boolean checkoutScm, String gitUrl='') {
   
+  // clean workspace
+  deleteDir()
+  
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
   // Create scratch directory. Keep the absolute path fixed, so we can copy the build directory as an artefact for the
   // analysis job
