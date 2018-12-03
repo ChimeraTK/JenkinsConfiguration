@@ -48,6 +48,9 @@ def doAnalysis(ArrayList<String> dependencyList, String label, String buildType)
 def doPrepare(boolean checkoutScm, String gitUrl='') {
   
   // clean workspace
+  sh '''
+    chown -R msk_jenkins .
+  '''
   deleteDir()
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
