@@ -50,8 +50,8 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
   // clean workspace
   sh '''
     chown -R msk_jenkins .
+    find -mindepth 1 -maxdepth 1 -exec rm -rf \{\} \;
   '''
-  deleteDir()
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
   // Create scratch directory. Keep the absolute path fixed, so we can copy the build directory as an artefact for the
