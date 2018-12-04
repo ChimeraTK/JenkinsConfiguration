@@ -240,8 +240,8 @@ def doValgrind(String label, String buildType) {
 
     cd /scratch/build-${parentJob}
     
-    EXECLIST=""
     for testlist in `find -name CTestTestfile.cmake` ; do
+      EXECLIST=""
       dir=`dirname "\${testlist}"`
       for test in `grep add_test "\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\$//'` ; do
         # \${test} is just the name of the test executable, without add_test etc.
