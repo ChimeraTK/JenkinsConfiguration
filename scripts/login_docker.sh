@@ -50,6 +50,9 @@ docker start ${ID} || exit 1
   # fix access rights
   docker exec -u 0 -it ${ID} bash -il -c "chown msk_jenkins -R /scratch"
 
+  # Pass on HTTP proxy variables during sudo
+  docker exec -u 0 -it ${ID} bash -il -c "echo 'Defaults env_keep += \"http_proxy https_proxy\"' >> /etc/sudoers"
+
   # enable password-less sudo for msk_jenkins inside the container
   docker exec -u 0 -it ${ID} bash -il -c "echo 'msk_jenkins ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers"
 
