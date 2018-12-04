@@ -64,7 +64,7 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
   // Check out source code
   if(checkoutScm) {
     if(gitUrl != '') {
-      if (env.BRANCH_NAME != '') {
+      if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
           git branch: env.BRANCH_NAME, url: gitUrl
       } else {
           git gitUrl
