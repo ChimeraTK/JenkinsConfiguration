@@ -64,8 +64,12 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
   // Check out source code
   if(checkoutScm) {
     if(gitUrl != '') {
-      git gitUrl
-      sh 'git submodule update --init --recursive'
+      if (env.BRANCH_NAME != '') {
+          git branch: env.BRANCH_NAME, url: gitUrl
+      } else {
+          git gitUrl
+      }
+      sh 'sudo -u msk_jenkins git submodule update --init --recursive'
     }
     else {
       checkout scm
