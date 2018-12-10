@@ -32,6 +32,8 @@ RUN apt-get update && \
     apt-get install -y subversion && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
+
+RUN echo "Defaults set_home" >> /etc/sudoers
    
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
 
