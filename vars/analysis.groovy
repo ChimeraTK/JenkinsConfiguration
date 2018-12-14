@@ -9,10 +9,10 @@
 // This is the function called from the .jenkinsfile
 def call() {
   def builds = []
+  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Run for all -Debug builds of the main job
   script {
-    def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
     node('Docker') {
       copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: parentJob, selector: lastSuccessful(), target: "artefacts"
       myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
