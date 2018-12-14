@@ -53,9 +53,11 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
       pollSCM 'H/5 * * * *'
       upstream dependencies
     }
-    properties([disableConcurrentBuilds()])
-    properties([copyArtifactPermission('*')])
-    options { buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10')) }
+    options {
+      disableConcurrentBuilds()
+      copyArtifactPermission('*')
+      buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
+    }
 
     stages {
       stage('build') {
