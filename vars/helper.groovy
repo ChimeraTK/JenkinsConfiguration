@@ -25,7 +25,7 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
 
 /**********************************************************************************************************************/
 
-def doAnalysis(ArrayList<String> dependencyList, String label, String buildType) {
+def doAnalysis(String label, String buildType) {
   if(buildType == "Debug") {
     doPrepare(false)
     doBuilddirArtefact(label, buildType)

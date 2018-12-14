@@ -7,7 +7,7 @@
 ***********************************************************************************************************************/
 
 // This is the function called from the .jenkinsfile
-def call(ArrayList<String> dependencyList) {
+def call() {
   def builds = []
 
   // Run for all -Debug builds of the main job
@@ -35,12 +35,21 @@ def call(ArrayList<String> dependencyList) {
 
   pipeline {
     agent none
+    
+    // setup build trigger etc.
+    triggers {
+      upstream parentJob
+    }
+    properties([disableConcurrentBuilds()])
+    properties([copyArtifactPermission('*')])
+    options { buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10')) }
+  
     stages {
       stage('build') {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
         steps {
           script {
-            parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it)] }
+            parallel builds.collectEntries { ["${it}" : transformIntoStep(it)] }
           }
         }
       } // end stage build
@@ -59,7 +68,7 @@ def call(ArrayList<String> dependencyList) {
 
 /**********************************************************************************************************************/
 
-def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
+def transformIntoStep(String buildName) {
   // split the build name at the '-'
   def (label, buildType) = buildName.tokenize('-')
   // we need to return a closure here, which is then passed to parallel() for execution
@@ -70,7 +79,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName) {
         def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /home/msk_jenkins/JenkinsConfiguration:/home/msk_jenkins/JenkinsConfiguration"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
-            helper.doAnalysis(dependencyList, label, buildType)
+            helper.doAnalysis(label, buildType)
           }
         }
       }
