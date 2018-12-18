@@ -54,12 +54,12 @@ def transformIntoStep(String buildName) {
                 DOOCSARCH=Ubuntu-18.04-x86_64
               fi
               echo "export DOOCSARCH=\${DOOCSARCH}" > /export/doocs/doocsarch.env
-              sudo -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/\${DOOCSARCH}.git
+              sudo -H -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/\${DOOCSARCH}.git
               cd \${DOOCSARCH}
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
               mkdir -p /scratch
               echo "DOOCS_epics" > /scratch/dependencies.${JOB_NAME}.list
-              sudo -u msk_jenkins tar zcf "$WORKSPACE/install-${JOB_NAME}-${label}-${buildType}.tgz" /export /scratch
+              sudo -H -u msk_jenkins tar zcf "$WORKSPACE/install-${JOB_NAME}-${label}-${buildType}.tgz" /export /scratch
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }

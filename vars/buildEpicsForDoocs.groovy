@@ -43,14 +43,14 @@ def transformIntoStep(String buildName) {
           script {
             sh """
               VERSION=3.14.12.6
-              sudo -E -u msk_jenkins wget https://epics.anl.gov/download/base/baseR\${VERSION}.tar.gz
-              sudo -u msk_jenkins tar xf baseR\${VERSION}.tar.gz
+              sudo -E -H -u msk_jenkins wget https://epics.anl.gov/download/base/baseR\${VERSION}.tar.gz
+              sudo -H -u msk_jenkins tar xf baseR\${VERSION}.tar.gz
               cd base-\${VERSION}
               echo "INSTALL_LOCATION=/export/epics" >> configure/CONFIG_SITE
               export LC_ALL=en_US.UTF-8
               mkdir -p /export/epics
               chown msk_jenkins /export/epics
-              sudo -u msk_jenkins make all
+              sudo -H -u msk_jenkins make all
               # fix include directory as expected by DOOCS
               cd /export/epics/include
               ln -sfn `pwd` epics
@@ -59,7 +59,7 @@ def transformIntoStep(String buildName) {
               ln -sfn linux-x86_64/* .
               mkdir -p /scratch
               touch /scratch/dependencies.${JOB_NAME}.list
-              sudo -u msk_jenkins tar zcf "$WORKSPACE/install-${JOB_NAME}-${label}-${buildType}.tgz" /export /scratch
+              sudo -H -u msk_jenkins tar zcf "$WORKSPACE/install-${JOB_NAME}-${label}-${buildType}.tgz" /export /scratch
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }
