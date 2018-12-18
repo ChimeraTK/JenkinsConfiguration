@@ -23,9 +23,6 @@ RUN zypper refresh && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3
 
 RUN echo "Defaults set_home" >> /etc/sudoers \
-    echo 'Acquire::http::proxy "http://xfelproxy.desy.de:3128/";' > /etc/apt/apt.conf \
-    echo 'http_proxy=http://xfelproxy.desy.de:3128' >> /etc/environment \
-    echo 'https_proxy=https://xfelproxy.desy.de:3128' >> /etc/environment \
     sudo -u msk_jenkins git config --global http.proxy http://xfelproxy.desy.de:3128 \
     sudo -u msk_jenkins git config --global https.proxy http://xfelproxy.desy.de:3128 \
 
