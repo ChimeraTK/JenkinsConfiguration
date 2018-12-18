@@ -24,7 +24,7 @@ RUN zypper refresh && \
 
 RUN echo "Defaults set_home" >> /etc/sudoers
 RUN sudo -u msk_jenkins git config --global http.proxy http://xfelproxy.desy.de:3128 \
-    sudo -u msk_jenkins git config --global https.proxy http://xfelproxy.desy.de:3128 \
+    sudo -u msk_jenkins git config --global https.proxy http://xfelproxy.desy.de:3128
 
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
 
