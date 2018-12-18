@@ -35,9 +35,7 @@ RUN apt-get update && \
 RUN echo "Defaults set_home" >> /etc/sudoers && \
     echo 'Acquire::http::proxy "http://xfelproxy.desy.de:3128/";' > /etc/apt/apt.conf && \
     echo 'http_proxy=http://xfelproxy.desy.de:3128' >> /etc/environment && \
-    echo 'https_proxy=https://xfelproxy.desy.de:3128' >> /etc/environment && \
-    sudo -H -u msk_jenkins git config --global http.proxy http://xfelproxy.desy.de:3128 && \
-    sudo -H -u msk_jenkins git config --global https.proxy http://xfelproxy.desy.de:3128
+    echo 'https_proxy=https://xfelproxy.desy.de:3128' >> /etc/environment
    
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
    
