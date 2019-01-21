@@ -6,7 +6,7 @@ RUN zypper refresh && \
     zypper up -y && \
     zypper dup -y --force-resolution --allow-vendor-change && \
     zypper install -y lsb-release wget sudo tar gzip && \
-    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb && \
+    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb meson ninja && \
     zypper install -y libboost_*-devel && \
     zypper install -y libxml++26-devel && \
     zypper install -y libqt4-devel libqt5-qtbase-devel && \
