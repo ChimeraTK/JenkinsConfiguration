@@ -81,10 +81,19 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               cd /export/doocs/library/${libraryName}
               chown -R msk_jenkins /export/doocs
               sudo -H -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git .
-              make -j8
-              find /export > /export.list.before
-              make install
-              find /export > /export.list.after
+              if [ -f meson.build ]; then
+                mkdir -p build
+                meson build --buildtype=${buildType,,} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include'
+                ninja -C build
+                find /export > /export.list.before
+                ninja -C build install
+                find /export > /export.list.after
+              else
+                make -j8
+                find /export > /export.list.before
+                make install
+                find /export > /export.list.after
+              fi
               cd "$WORKSPACE"
               diff /export.list.before /export.list.after | grep "^> " | sed -e 's/^> //' > export.list.installed
               mv /scratch/artefact.list /scratch/dependencies.${JOB_NAME}.list
