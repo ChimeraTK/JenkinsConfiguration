@@ -11,7 +11,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
     apt-get install -y sudo wget && \
-    apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake meson ninja-build && \
+    apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake meson/xenial-backports ninja-build && \
     apt-get install -y libboost-all-dev libxml++2.6-dev && \
     apt-get install -y libldap2-dev libzmq3-dev rpcbind && \
     apt-get install -y libreadline-dev && \
