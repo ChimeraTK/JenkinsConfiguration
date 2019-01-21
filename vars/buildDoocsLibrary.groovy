@@ -83,7 +83,8 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               sudo -H -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git .
               if [ -f meson.build ]; then
                 mkdir -p build
-                meson build --buildtype=${buildType,,} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include'
+                buildType=${buildType}
+                meson build --buildtype=\${buildType,,} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include'
                 ninja -C build
                 find /export > /export.list.before
                 ninja -C build install
