@@ -275,3 +275,19 @@
    fun:_dl_init
    obj:/lib64/ld-2.27.so
 }
+{
+   BOOST-UNIT-Test-Tumbleweed-2
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN9__gnu_cxx13new_allocatorIcE10deallocateEPcm
+   fun:_ZNSt16allocator_traitsISaIcEE10deallocateERS0_Pcm
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_destroyEm
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:__cxa_finalize
+   obj:/usr/lib64/libboost_unit_test_framework.so.1.68.0
+   fun:_dl_fini
+   fun:__run_exit_handlers
+   fun:exit
+   fun:(below main)
+}
