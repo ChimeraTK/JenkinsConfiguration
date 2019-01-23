@@ -263,7 +263,7 @@ def doValgrind(String label, String buildType) {
         if [ -z "`echo " \${valgrindExcludes} " | grep " \${testname} "`" ]; then
           sudo -H -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp   \
                                        --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes            \
-                                       --xml-file=/scratch/build-${parentJob}/valgrind.\${testname}.memcheck.valgrind  \
+                                       --xml-file=/scratch/build-${parentJob}/${label}.\${testname}.memcheck.valgrind  \
                                        \${test}
         fi
       done
