@@ -261,4 +261,17 @@
    fun:_Z9eq_serveriPPc
    ...
 }
-
+{
+   BOOST-UNIT-Test-Tumbleweed
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN9__gnu_cxx13new_allocatorIcE8allocateEmPKv
+   fun:_ZNSt16allocator_traitsISaIcEE8allocateERS0_m
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_createERmm
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPKcEEvT_S8_St20forward_iterator_tag
+   obj:/usr/lib64/libboost_unit_test_framework.so.1.68.0
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib64/ld-2.27.so
+}
