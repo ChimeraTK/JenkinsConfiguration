@@ -29,26 +29,27 @@ docker start ${ID} || exit 1
     echo "Downloading artefact build-${jobName}-${label}-${buildType}.tgz..."
     sleep 2
     wget --no-check-certificate "https://mskllrfredminesrv.desy.de/jenkins/job/${jobName}/${buildNumber}/artifact/build-${jobName}-${label}-${buildType}.tgz" -O artefact.tgz
-    tar xf artefact.tgz scratch/artefact.list
+    tar xf artefact.tgz scratch/artefact.list || true
     docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
     rm artefact.tgz
 
     # download and unpack dependency artefacts
-    for dep in `cat scratch/artefact.list` ; do
-      echo "Downloading artefact install-${dep}-${label}-${buildType}.tgz..."
-      sleep 2
-      wget --no-check-certificate "https://mskllrfredminesrv.desy.de/jenkins/job/${dep}/lastSuccessfulBuild/artifact/install-${dep}-${label}-${buildType}.tgz" -O artefact.tgz
-      docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
-      rm artefact.tgz
-    done
-
-    rm scratch/artefact.list
-    rmdir scratch
+    if [ -f scratch/artefact.list ]; then
+      for dep in `cat scratch/artefact.list` ; do
+        echo "Downloading artefact install-${dep}-${label}-${buildType}.tgz..."
+        sleep 2
+        wget --no-check-certificate "https://mskllrfredminesrv.desy.de/jenkins/job/${dep}/lastSuccessfulBuild/artifact/install-${dep}-${label}-${buildType}.tgz" -O artefact.tgz
+        docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
+        rm artefact.tgz
+      done
+      rm scratch/artefact.list
+      rmdir scratch
+    fi
 
   fi
 
   # fix access rights
-  docker exec -u 0 -it ${ID} bash -il -c "chown msk_jenkins -R /scratch"
+  docker exec -u 0 -it ${ID} bash -il -c "chown msk_jenkins -R /scratch || true"
 
   # Pass on HTTP proxy variables during sudo
   docker exec -u 0 -it ${ID} bash -il -c "echo 'Defaults env_keep += \"http_proxy https_proxy\"' >> /etc/sudoers"
