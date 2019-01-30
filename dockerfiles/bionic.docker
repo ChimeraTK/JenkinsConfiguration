@@ -29,6 +29,8 @@ RUN apt-get update && \
     apt-get install -y libpqxx-dev && \
     apt-get install -y libfftw3-dev && \
     apt-get install -y subversion && \
+    apt-get install -y vim-common && \
+    apt-get install -y netcat-openbsd && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
