@@ -42,6 +42,12 @@ It is possible to add some per-project exceptions to the configuration. This can
 env.CTESTOPTS="-j1"
 ```
 
+- Run only part of a repository from a sub directory:
+  (Usually used examples which come with the source code and have their own, stand-alone CMakeLists.txt to be used with the installed main library.)
+```
+env.RUN_FROM_SUBDIR="examples"
+```
+
 ## Analysis jobs
 - Exclude tests from being run in valgrind (currently only possible with a single test):
 ```
