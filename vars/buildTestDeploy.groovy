@@ -19,7 +19,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
   script {
     node('Docker') {
       sh """
-        git remote add project-template "https://github.com/ChimeraTK/project-template"
+        git remote add project-template "https://github.com/ChimeraTK/project-template" || true
         git remote update
         git merge --no-edit project-template/master && git push origin master || true
       """
