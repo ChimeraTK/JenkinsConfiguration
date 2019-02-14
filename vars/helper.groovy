@@ -161,7 +161,12 @@ def doBuild(String label, String buildType) {
       sudo -H -u msk_jenkins mkdir -p /scratch/install
       cd /scratch/build-${JOB_NAME}
       # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
-      sudo -H -u msk_jenkins cmake /scratch/source/${env.RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
+     if [ -z "\${RUN_FROM_SUBDIR}" ]; then
+      SUBDIR=""
+     else
+      SUBDIR="${env.RUN_FROM_SUBDIR}"
+     fi
+     sudo -H -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
       sudo -H -u msk_jenkins make ${env.MAKEOPTS}
     """
   }
