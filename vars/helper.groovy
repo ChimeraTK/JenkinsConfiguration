@@ -167,7 +167,7 @@ def doBuild(String label, String buildType) {
       SUBDIR="${env.RUN_FROM_SUBDIR}"
      fi
      for VAR in \${JOB_VARIABLES}; do
-       export ${VAR}
+       export \${VAR}
      done
      sudo -H -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
       sudo -H -u msk_jenkins make ${env.MAKEOPTS}
