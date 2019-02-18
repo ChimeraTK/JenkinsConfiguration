@@ -65,7 +65,13 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
         steps {
           script {
             node('Docker') {
+              if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
+                git branch: env.BRANCH_NAME, url: gitUrl
+              } else {
+                git gitUrl
+              }
               sh """
+                git config credential.helper store
                 git remote add project-template "https://github.com/ChimeraTK/project-template" || true
                 git remote update
                 git merge --no-edit project-template/master && git push origin master || true
