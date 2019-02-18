@@ -15,20 +15,6 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
                  'tumbleweed-Debug',
                  'tumbleweed-Release' ]
 
-  // apply changes from project-template
-  script {
-    node('Docker') {
-      sh """
-        git remote add project-template "https://github.com/ChimeraTK/project-template" || true
-        git remote update
-        git merge --no-edit project-template/master && git push origin master || true
-      """
-      // We could also apply the clang-format style here, but this should be discussed first.
-      //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
-      //  git commit -a -m "Automated commit: apply clang-format" && git push origin master || true
-    }
-  }
-
   // only keep builds which exist for all dependencies
   script {
     node('Docker') {
@@ -74,6 +60,23 @@ def call(ArrayList<String> dependencyList, String gitUrl='') {
     }
 
     stages {
+      // apply changes from project-template
+      stage('preprocess') {
+        steps {
+          script {
+            node('Docker') {
+              sh """
+                git remote add project-template "https://github.com/ChimeraTK/project-template" || true
+                git remote update
+                git merge --no-edit project-template/master && git push origin master || true
+              """
+              // We could also apply the clang-format style here, but this should be discussed first.
+              //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
+              //  git commit -a -m "Automated commit: apply clang-format" && git push origin master || true
+            }
+          }
+        }
+      }
       stage('build') {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
         steps {
