@@ -52,7 +52,7 @@ env.RUN_FROM_SUBDIR="examples"
 The variables are gives as space separated lists of key=values pairs. The pairs must not have spaces. JOB_VARIABLES are applied to build and tests (incl. analysis), while TEST_VARIABLES are only in tests and analysis.
 ```
 env.JOB_VARIABLES="A=aha B=bubu"
-env.TEST_VARABLES="PATH=${PATH}:/some/path/for/the/test"
+env.TEST_VARABLES='PATH=${PATH}:/some/path/for/the/test'
 ```
 
 

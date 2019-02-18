@@ -161,15 +161,16 @@ def doBuild(String label, String buildType) {
       sudo -H -u msk_jenkins mkdir -p /scratch/install
       cd /scratch/build-${JOB_NAME}
       # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
-     if [ -z "\${RUN_FROM_SUBDIR}" ]; then
-      SUBDIR=""
-     else
-      SUBDIR="${env.RUN_FROM_SUBDIR}"
-     fi
-     for VAR in \${JOB_VARIABLES}; do
-       export \${VAR}
-     done
-     sudo -H -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
+      if [ -z "\${RUN_FROM_SUBDIR}" ]; then
+        SUBDIR=""
+      else
+        SUBDIR="${env.RUN_FROM_SUBDIR}"
+      fi
+      for VAR in ${env.JOB_VARIABLES}; do
+        export `eval echo \${VAR}`
+      done
+      export
+      sudo -H -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
       sudo -H -u msk_jenkins make ${env.MAKEOPTS}
     """
   }
@@ -194,9 +195,10 @@ def doTest(String label, String buildType) {
     if [ -z "\${CTESTOPTS}" ]; then
       CTESTOPTS="${env.MAKEOPTS}"
     fi
-    for VAR in \${JOB_VARIABLES}  \${TEST_VARIABLES}; do
-       export \${VAR}
+    for VAR in ${env.JOB_VARIABLES} \${TEST_VARIABLES}; do
+       export `eval echo \${VAR}`
     done
+    export
     sudo -H -u msk_jenkins ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
     sudo -H -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
     sudo -H -u msk_jenkins cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
