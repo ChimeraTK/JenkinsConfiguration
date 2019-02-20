@@ -197,12 +197,13 @@ def doTest(String label, String buildType) {
       CTESTOPTS="${env.MAKEOPTS}"
     fi
     for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
-       export `eval echo \${VAR}`
+       export \\`eval echo \\\${VAR}\\`
     done
     ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
     sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
     cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
 EOF
+    cat /scratch/script
     chmod +x /scratch/script
     sudo -H -E -u msk_jenkins /scratch/script
   """
