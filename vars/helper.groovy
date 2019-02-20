@@ -47,6 +47,12 @@ def doAnalysis(String label, String buildType) {
 
 def doPrepare(boolean checkoutScm, String gitUrl='') {
   
+  // configure sudoers file so we can change the PATH variable
+  sh '''
+    mv /etc/sudoers /etc/sudoers-backup
+    grep -v secure_path /etc/sudoers-backup > /etc/sudoers
+  '''
+
   // make sure all files in workspace can be written by msk_jenkins
   sh '''
     chown -R msk_jenkins .
@@ -69,15 +75,15 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
       } else {
           git gitUrl
       }
-      sh 'sudo -H -u msk_jenkins git submodule update --init --recursive'
+      sh 'sudo -H -E -u msk_jenkins git submodule update --init --recursive'
     }
     else {
       checkout scm
     }
     sh '''
-      sudo -H -u msk_jenkins git clean -f -d -x
-      sudo -H -u msk_jenkins mkdir /scratch/source
-      sudo -H -u msk_jenkins cp -r * /scratch/source
+      sudo -H -E -u msk_jenkins git clean -f -d -x
+      sudo -H -E -u msk_jenkins mkdir /scratch/source
+      sudo -H -E -u msk_jenkins cp -r * /scratch/source
     '''
   }
 
@@ -125,7 +131,7 @@ def doBuilddirArtefact(String label, String buildType) {
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
       for a in artefacts/build-*-${label}-${buildType}.tgz ; do
-        sudo -H -u msk_jenkins tar zxvf \"\${a}\" -C /
+        sudo -H -E -u msk_jenkins tar zxvf \"\${a}\" -C /
       done
 
       touch /scratch/artefact.list
@@ -157,8 +163,8 @@ def doBuild(String label, String buildType) {
     // start the build
     sh """
       chown -R msk_jenkins /scratch
-      sudo -H -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
-      sudo -H -u msk_jenkins mkdir -p /scratch/install
+      sudo -H -E -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
+      sudo -H -E -u msk_jenkins mkdir -p /scratch/install
       cd /scratch/build-${JOB_NAME}
       # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
       if [ -z "\${RUN_FROM_SUBDIR}" ]; then
@@ -169,14 +175,6 @@ def doBuild(String label, String buildType) {
       for VAR in ${env.JOB_VARIABLES}; do
         export `eval echo \${VAR}`
       done
-      sudo -H -E -u msk_jenkins bash -c export
-      mkdir /scratch/matlab_prefs
-      rm -rf /home/msk_jenkins/.matlab
-      ln -sfn /scratch/matlab_prefs /home/msk_jenkins/.matlab
-      export PATH=/opt/matlab_R2016b/bin:$PATH
-      mv /etc/sudoers /etc/sudoers-backup
-      grep -v secure_path /etc/sudoers-backup > /etc/sudoers
-      sudo -H -E -u msk_jenkins matlab -nosplash -nojvm -nodesktop -nodisplay -r "version, exit"
       sudo -H -E -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
       sudo -H -E -u msk_jenkins make ${env.MAKEOPTS}
     """
@@ -184,7 +182,7 @@ def doBuild(String label, String buildType) {
   script {
     // generate and archive artefact from build directory (used for the analysis job)
     sh """
-      sudo -H -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
+      sudo -H -E -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
     """
     archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   }
@@ -206,9 +204,9 @@ def doTest(String label, String buildType) {
        export `eval echo \${VAR}`
     done
     export
-    sudo -H -u msk_jenkins ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
-    sudo -H -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
-    sudo -H -u msk_jenkins cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
+    sudo -H -E -u msk_jenkins ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
+    sudo -H -E -u msk_jenkins sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
+    sudo -H -E -u msk_jenkins cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
   """
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
@@ -225,11 +223,11 @@ def doCoverage(String label, String buildType) {
   sh """
     chown msk_jenkins -R /scratch
     cd /scratch/build-${parentJob}
-    sudo -H -u msk_jenkins make coverage || true
-    sudo -H -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
+    sudo -H -E -u msk_jenkins make coverage || true
+    sudo -H -E -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
     
-    sudo -H -u msk_jenkins cp -r coverage_html ${WORKSPACE} || true
-    sudo -H -u msk_jenkins cp -r coverage.xml ${WORKSPACE} || true
+    sudo -H -E -u msk_jenkins cp -r coverage_html ${WORKSPACE} || true
+    sudo -H -E -u msk_jenkins cp -r coverage.xml ${WORKSPACE} || true
   """
   
   // stash cobertura coverage report result for later publication
@@ -282,7 +280,7 @@ def doValgrind(String label, String buildType) {
       for test in \${EXECLIST} ; do
         testname=`basename \${test}`
         if [ -z "`echo " \${valgrindExcludes} " | grep " \${testname} "`" ]; then
-          sudo -H -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp   \
+          sudo -H -E -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp   \
                                        --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes            \
                                        --xml-file=/scratch/build-${parentJob}/${label}.\${testname}.memcheck.valgrind  \
                                        \${test}
@@ -292,7 +290,7 @@ def doValgrind(String label, String buildType) {
 
     done
   
-    sudo -H -u msk_jenkins cp /scratch/build-${parentJob}/*.valgrind "${WORKSPACE}"
+    sudo -H -E -u msk_jenkins cp /scratch/build-${parentJob}/*.valgrind "${WORKSPACE}"
   """
   // stash valgrind result files for later publication
   stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
@@ -306,14 +304,14 @@ def doInstall(String label, String buildType) {
   // Generate tar ball of install directory - this will be the artefact used by our dependents
   sh """
     cd /scratch/build-${JOB_NAME}
-    sudo -H -u msk_jenkins make install DESTDIR=../install
+    sudo -H -E -u msk_jenkins make install DESTDIR=../install
   
     cd /scratch/install
     mkdir -p scratch
     if [ -e /scratch/artefact.list ]; then
       cp /scratch/artefact.list scratch/dependencies.${JOB_NAME}.list
     fi
-    sudo -H -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOB_NAME}-${label}-${buildType}.tgz .
+    sudo -H -E -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOB_NAME}-${label}-${buildType}.tgz .
   """
   
   // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
