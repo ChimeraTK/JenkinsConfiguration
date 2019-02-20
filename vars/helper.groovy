@@ -169,8 +169,14 @@ def doBuild(String label, String buildType) {
       for VAR in ${env.JOB_VARIABLES}; do
         export `eval echo \${VAR}`
       done
-      export
-      sudo -H -E -u msk_jenkins /opt/matlab_R2016b/bin/matlab -nosplash -nojvm -nodesktop -nodisplay -r "version, exit"
+      sudo -H -E -u msk_jenkins bash -c export
+      mkdir /scratch/matlab_prefs
+      rm -rf /home/msk_jenkins/.matlab
+      ln -sfn /scratch/matlab_prefs /home/msk_jenkins/.matlab
+      export PATH=/opt/matlab_R2016b/bin:$PATH
+      mv /etc/sudoers /etc/sudoers-backup
+      grep -v secure_path /etc/sudoers-backup > /etc/sudoers
+      sudo -H -E -u msk_jenkins matlab -nosplash -nojvm -nodesktop -nodisplay -r "version, exit"
       sudo -H -E -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
       sudo -H -E -u msk_jenkins make ${env.MAKEOPTS}
     """
