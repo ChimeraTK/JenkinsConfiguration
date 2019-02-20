@@ -5,15 +5,14 @@
 ***********************************************************************************************************************/
 
 // This is the function called from the .jenkinsfile
-def call(ArrayList<String> dependencyList, String gitUrl='') {
-
-  // List of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
-  def builds = [ 'xenial-Debug',
-                 'xenial-Release',
-                 'bionic-Debug',
-                 'bionic-Release',
-                 'tumbleweed-Debug',
-                 'tumbleweed-Release' ]
+// The last optional argument is the list of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
+def call(ArrayList<String> dependencyList, String gitUrl='',
+         ArrayList<String> builds=['xenial-Debug',
+                                   'xenial-Release',
+                                   'bionic-Debug',
+                                   'bionic-Release',
+                                   'tumbleweed-Debug',
+                                   'tumbleweed-Release']) {
 
   // only keep builds which exist for all dependencies
   script {
