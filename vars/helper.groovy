@@ -170,9 +170,9 @@ def doBuild(String label, String buildType) {
         export `eval echo \${VAR}`
       done
       export
-      sudo -H -e -u msk_jenkins /opt/matlab_R2016b/bin/matlab -nosplash -nojvm -nodesktop -nodisplay -r "version, exit"
-      sudo -H -e -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
-      sudo -H -e -u msk_jenkins make ${env.MAKEOPTS}
+      sudo -H -E -u msk_jenkins /opt/matlab_R2016b/bin/matlab -nosplash -nojvm -nodesktop -nodisplay -r "version, exit"
+      sudo -H -E -u msk_jenkins cmake /scratch/source/\${SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
+      sudo -H -E -u msk_jenkins make ${env.MAKEOPTS}
     """
   }
   script {
