@@ -167,7 +167,7 @@ def doBuild(String label, String buildType) {
       sudo -H -E -u msk_jenkins mkdir -p /scratch/install
       cd /scratch/build-${JOB_NAME}
       # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
-      for VAR in ${env.JOB_VARIABLES}; do
+      for VAR in \${JOB_VARIABLES}; do
         export `eval echo \${VAR}`
       done
       sudo -H -E -u msk_jenkins cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
@@ -196,7 +196,7 @@ def doTest(String label, String buildType) {
     if [ -z "\${CTESTOPTS}" ]; then
       CTESTOPTS="${env.MAKEOPTS}"
     fi
-    for VAR in ${env.JOB_VARIABLES} \${TEST_VARIABLES}; do
+    for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
        export `eval echo \${VAR}`
     done
     ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
