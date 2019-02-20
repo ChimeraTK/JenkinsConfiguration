@@ -163,15 +163,20 @@ def doBuild(String label, String buildType) {
     // start the build
     sh """
       chown -R msk_jenkins /scratch
-      sudo -H -E -u msk_jenkins mkdir -p /scratch/build-${JOB_NAME}
-      sudo -H -E -u msk_jenkins mkdir -p /scratch/install
+      cat > /scratch/script <<EOF
+      mkdir -p /scratch/build-${JOB_NAME}
+      mkdir -p /scratch/install
       cd /scratch/build-${JOB_NAME}
       # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
       for VAR in \${JOB_VARIABLES}; do
-        export `eval echo \${VAR}`
+        export \\`eval echo \\\${VAR}\\`
       done
-      sudo -H -E -u msk_jenkins cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
-      sudo -H -E -u msk_jenkins make ${env.MAKEOPTS}
+      cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
+      make \${MAKEOPTS}
+EOF
+      cat /scratch/script
+      chmod +x /scratch/script
+      sudo -H -E -u msk_jenkins /scratch/script
     """
   }
   script {
@@ -194,7 +199,7 @@ def doTest(String label, String buildType) {
     cat > /scratch/script <<EOF
     cd /scratch/build-${JOB_NAME}
     if [ -z "\${CTESTOPTS}" ]; then
-      CTESTOPTS="${env.MAKEOPTS}"
+      CTESTOPTS="\${MAKEOPTS}"
     fi
     for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
        export \\`eval echo \\\${VAR}\\`
@@ -221,12 +226,20 @@ def doCoverage(String label, String buildType) {
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
     chown msk_jenkins -R /scratch
+    cat > /scratch/script <<EOF
     cd /scratch/build-${parentJob}
-    sudo -H -E -u msk_jenkins make coverage || true
-    sudo -H -E -u msk_jenkins /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
+    for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
+       export \\`eval echo \\\${VAR}\\`
+    done
+    make coverage || true
+    /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
     
-    sudo -H -E -u msk_jenkins cp -r coverage_html ${WORKSPACE} || true
-    sudo -H -E -u msk_jenkins cp -r coverage.xml ${WORKSPACE} || true
+    cp -r coverage_html ${WORKSPACE} || true
+    cp -r coverage.xml ${WORKSPACE} || true
+EOF
+    cat /scratch/script
+    chmod +x /scratch/script
+    sudo -H -E -u msk_jenkins /scratch/script
   """
   
   // stash cobertura coverage report result for later publication
@@ -260,35 +273,40 @@ def doValgrind(String label, String buildType) {
     cd /home/msk_jenkins/JenkinsConfiguration
     cat valgrind.suppressions/common.supp valgrind.suppressions/${label}.supp > /scratch/valgrind.supp
 
+    cat > /scratch/script <<EOF
     cd /scratch/build-${parentJob}
     
     for testlist in `find -name CTestTestfile.cmake` ; do
       EXECLIST=""
-      dir=`dirname "\${testlist}"`
-      for test in `grep add_test "\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\$//'` ; do
+      dir=\\`dirname "\\\${testlist}"\\`
+      for test in \\`grep add_test "\\\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\\\$//'\\` ; do
         # \${test} is just the name of the test executable, without add_test etc.
         # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
-        if [ -f "\${test}" ]; then
-          EXECLIST="\${EXECLIST} `realpath \${test}`"
-        elif [ -f "\${dir}/\${test}" ]; then
-          EXECLIST="\${EXECLIST} `realpath \${dir}/\${test}`"
+        if [ -f "\\\${test}" ]; then
+          EXECLIST="\\\${EXECLIST} \\`realpath \\\${test}\\`"
+        elif [ -f "\\\${dir}/\\\${test}" ]; then
+          EXECLIST="\\\${EXECLIST} \\`realpath \\\${dir}/\\\${test}\\`"
         fi
       done
     
-      cd "\${dir}"
-      for test in \${EXECLIST} ; do
+      cd "\\\${dir}"
+      for test in \\\${EXECLIST} ; do
         testname=`basename \${test}`
-        if [ -z "`echo " \${valgrindExcludes} " | grep " \${testname} "`" ]; then
-          sudo -H -E -u msk_jenkins valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp   \
+        if [ -z "\\`echo " \\\${valgrindExcludes} " | grep " \\\${testname} "\\`" ]; then
+          valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp   \
                                        --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes            \
-                                       --xml-file=/scratch/build-${parentJob}/${label}.\${testname}.memcheck.valgrind  \
-                                       \${test}
+                                       --xml-file=/scratch/build-\${parentJob}/\${label}.\\\${testname}.memcheck.valgrind  \
+                                       \\\${test}
         fi
       done
       cd /scratch/build-${parentJob}
 
     done
-  
+EOF
+    cat /scratch/script
+    chmod +x /scratch/script
+    sudo -H -E -u msk_jenkins /scratch/script
+
     sudo -H -E -u msk_jenkins cp /scratch/build-${parentJob}/*.valgrind "${WORKSPACE}"
   """
   // stash valgrind result files for later publication
