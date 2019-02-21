@@ -276,11 +276,11 @@ def doValgrind(String label, String buildType) {
     cat > /scratch/script <<EOF
     cd /scratch/build-${parentJob}
     
-    for testlist in `find -name CTestTestfile.cmake` ; do
+    for testlist in \\`find -name CTestTestfile.cmake\\` ; do
       EXECLIST=""
       dir=\\`dirname "\\\${testlist}"\\`
       for test in \\`grep add_test "\\\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\\\$//'\\` ; do
-        # \${test} is just the name of the test executable, without add_test etc.
+        # \\\${test} is just the name of the test executable, without add_test etc.
         # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
         if [ -f "\\\${test}" ]; then
           EXECLIST="\\\${EXECLIST} \\`realpath \\\${test}\\`"
@@ -291,11 +291,11 @@ def doValgrind(String label, String buildType) {
     
       cd "\\\${dir}"
       for test in \\\${EXECLIST} ; do
-        testname=`basename \${test}`
+        testname=\\`basename \\\${test}\\`
         if [ -z "\\`echo " \\\${valgrindExcludes} " | grep " \\\${testname} "\\`" ]; then
-          valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp   \
-                                       --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes            \
-                                       --xml-file=/scratch/build-\${parentJob}/\${label}.\\\${testname}.memcheck.valgrind  \
+          valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp                         \\
+                                       --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes              \\
+                                       --xml-file=/scratch/build-${parentJob}/${label}.\\\${testname}.memcheck.valgrind  \\
                                        \\\${test}
         fi
       done
