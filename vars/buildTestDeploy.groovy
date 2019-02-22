@@ -72,7 +72,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
               sh """
                 git config credential.helper store
                 git remote add project-template "https://github.com/ChimeraTK/project-template" || true
-                git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_'` -e 's_/\$__'
+                git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
                 git remote update
                 git merge --no-edit project-template/master && git push origin master || true
               """
