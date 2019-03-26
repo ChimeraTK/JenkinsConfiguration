@@ -55,6 +55,12 @@ env.JOB_VARIABLES="A=aha B=bubu"
 env.TEST_VARABLES='PATH=${PATH}:/some/path/for/the/test'
 ```
 
+- Disable cppcheck
+Normally at the end of the main job, cppcheck is run on all source files in the repository and the result is published. This can be disabled by setting:
+```
+env.DISABLE_CPPCHECK="yes"
+```
+
 
 ## Analysis jobs
 - Exclude tests from being run in valgrind (currently only possible with a single test):
