@@ -342,12 +342,14 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
   // Note: this part runs only once per project, not for each branch!
 
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
-  sh """
-    pwd
-    mkdir -p build
-    cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
-  """
-  publishCppcheck pattern: 'build/cppcheck.xml'
+  if(!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') {
+    sh """
+      pwd
+      mkdir -p build
+      cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
+    """
+    publishCppcheck pattern: 'build/cppcheck.xml'
+  }
 
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
   warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '',
