@@ -55,8 +55,8 @@ def transformIntoStep(String buildName) {
               fi
               echo "export DOOCSARCH=\${DOOCSARCH}" > /export/doocs/doocsarch.env
               sudo -H -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/\${DOOCSARCH}.git
-              mkdir -p /export/doocs/${DOOCSARCH}/lib/pkgconfig
-              touch /export/doocs/${DOOCSARCH}/lib/pkgconfig/.keep
+              mkdir -p /export/doocs/\${DOOCSARCH}/lib/pkgconfig
+              touch /export/doocs/\${DOOCSARCH}/lib/pkgconfig/.keep
               cd \${DOOCSARCH}
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
               mkdir -p /scratch
