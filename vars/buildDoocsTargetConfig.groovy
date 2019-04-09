@@ -53,12 +53,16 @@ def transformIntoStep(String buildName) {
               if [ "${label}" == "bionic" ]; then
                 DOOCSARCH=Ubuntu-18.04-x86_64
               fi
+              mkdir -p /export/doocs/${DOOCSARCH}/lib/pkgconfig
+              touch /export/doocs/${DOOCSARCH}/lib/pkgconfig/.keep
               echo "export DOOCSARCH=\${DOOCSARCH}" > /export/doocs/doocsarch.env
               sudo -H -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/\${DOOCSARCH}.git
               cd \${DOOCSARCH}
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
               mkdir -p /scratch
               echo "DOOCS_epics" > /scratch/dependencies.${JOB_NAME}.list
+              chown -R msk_jenkins /export
+              chown -R msk_jenkins /scratch
               sudo -H -u msk_jenkins tar zcf "$WORKSPACE/install-${JOB_NAME}-${label}-${buildType}.tgz" /export /scratch
             """
             archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
