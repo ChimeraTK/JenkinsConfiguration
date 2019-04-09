@@ -72,6 +72,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
             sh '''
               mkdir /scratch
               mkdir -p /export/doocs/library/common
+              mkdir -p /export/doocs/Ubuntu-16.04-x86_64/lib/pkgconfig
             '''
             helper.doDependencyArtefacts(dependencyList, label, buildType)
 
