@@ -1,4 +1,10 @@
 {
+   AtomicExchange_with_padding
+   Memcheck:Cond
+   fun:compare_exchange_weak
+   ...
+}
+{
    BOOST_lockfree_queue_1
    Memcheck:Cond
    fun:_ZNV5boost7atomics6detail11base_atomicINS_8lockfree6detail10tagged_ptrINS3_5queue*parameter5void*node*compare_exchange_strong*memory_order*
