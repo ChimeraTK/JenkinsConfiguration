@@ -65,6 +65,12 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
   return {
     stage(buildName) {
       node('Docker') {
+        def gitUrl = "http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git"
+        if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
+          git branch: env.BRANCH_NAME, url: gitUrl
+        } else {
+          git gitUrl
+        }
         // we need root access inside the container and access to the dummy pcie devices of the host
         def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
         docker.image("builder:${label}").inside(dockerArgs) {
@@ -80,7 +86,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               mkdir -p /export/doocs/library/${libraryName}
               cd /export/doocs/library/${libraryName}
               chown -R msk_jenkins /export/doocs
-              sudo -H -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git .
+              sudo -H -u msk_jenkins git clone ${gitUrl} .
               if [ -f meson.build ]; then
                 mkdir -p build
                 buildType=${buildType}
