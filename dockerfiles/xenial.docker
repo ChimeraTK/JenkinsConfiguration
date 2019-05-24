@@ -20,6 +20,7 @@ RUN apt-get update && \
     apt-get install -y python-pytest && \
     apt-get install -y libxmu6 csh libxrandr2 && \
     apt-get install -y libncurses5-dev && \
+    apt-get install -y linux-headers-generic && \
     apt-get install -y graphviz && \
     apt-get install -y clang && \
     apt-get install -y libhdf5-dev && \
