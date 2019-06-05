@@ -38,7 +38,7 @@ def call() {
     
     // setup build trigger etc.
     triggers {
-      upstream parentJob
+      upstream(upstreamProjects: parentJob, threshold: hudson.model.Result.UNSTABLE)
     }
     options {
       disableConcurrentBuilds()
