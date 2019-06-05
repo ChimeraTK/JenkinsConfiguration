@@ -74,7 +74,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                 git remote add project-template "https://github.com/ChimeraTK/project-template" || true
                 git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
                 git remote update
-                git merge --no-edit project-template/master && git push --all || true
+                git merge --squash --no-edit project-template/master && git push --all || true
               """
               // We could also apply the clang-format style here, but this should be discussed first.
               //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
