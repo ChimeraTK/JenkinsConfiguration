@@ -50,7 +50,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
     // setup build trigger
     triggers {
       pollSCM('H/5 * * * *')
-      upstream(dependencies, threshold: hudson.model.Result.UNSTABLE)
+      upstream(upstreamProjects: dependencies, threshold: hudson.model.Result.UNSTABLE)
     }
     options {
       disableConcurrentBuilds()
