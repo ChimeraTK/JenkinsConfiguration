@@ -33,6 +33,7 @@ RUN apt-get update && \
     apt-get install -y vim-common && \
     apt-get install -y netcat-openbsd && \
     apt-get install -y libxerces-c-dev && \
+    apt-get install -y libxerces-c2-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
