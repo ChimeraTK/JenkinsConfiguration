@@ -97,9 +97,9 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 find /export > /export.list.after
               else
                 if [ -z "\${MAKEOPTS}" ]; then
-                  make "\${MAKEOPTS}"
-                else
                   make -j8
+                else
+                  make "\${MAKEOPTS}"
                 fi   
                 find /export > /export.list.before
                 make install
