@@ -96,7 +96,11 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 ninja -C build install
                 find /export > /export.list.after
               else
-                make -j8
+                if [ -z "\${MAKEOPTS}" ]; then
+                  make "\${MAKEOPTS}"
+                else
+                  make -j8
+                fi   
                 find /export > /export.list.before
                 make install
                 find /export > /export.list.after
