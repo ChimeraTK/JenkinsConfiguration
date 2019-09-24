@@ -14,6 +14,8 @@ jobName=$2
 buildType=$3
 buildNumber=$4
 
+JENKINS_HOST="https://jenkins.msktools.desy.de"
+
 # should be the same as in the pipeline script (excluding the -u 0)
 DOCKER_PARAMS="--device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b"
 
@@ -28,7 +30,7 @@ docker start ${ID} || exit 1
   if [ -n "${jobName}" ]; then
     echo "Downloading artefact build-${jobName}-${label}-${buildType}.tgz..."
     sleep 2
-    wget --no-check-certificate "https://mskllrfredminesrv.desy.de/jenkins/job/${jobName}/${buildNumber}/artifact/build-${jobName}-${label}-${buildType}.tgz" -O artefact.tgz
+    wget --no-check-certificate "${JENKINS_HOST}/job/${jobName}/${buildNumber}/artifact/build-${jobName}-${label}-${buildType}.tgz" -O artefact.tgz
     tar xf artefact.tgz scratch/artefact.list || true
     docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
     rm artefact.tgz
@@ -38,7 +40,7 @@ docker start ${ID} || exit 1
       for dep in `cat scratch/artefact.list` ; do
         echo "Downloading artefact install-${dep}-${label}-${buildType}.tgz..."
         sleep 2
-        wget --no-check-certificate "https://mskllrfredminesrv.desy.de/jenkins/job/${dep}/lastSuccessfulBuild/artifact/install-${dep}-${label}-${buildType}.tgz" -O artefact.tgz
+        wget --no-check-certificate "${JENKINS_HOST}/job/${dep}/lastSuccessfulBuild/artifact/install-${dep}-${label}-${buildType}.tgz" -O artefact.tgz
         docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
         rm artefact.tgz
       done
