@@ -69,7 +69,7 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
   
   // Launch rpcbind, which is required for DOOCS
   sh '''
-    rpcbind -f -w 
+    rpcbind -w 
   '''
   
   // Check out source code
