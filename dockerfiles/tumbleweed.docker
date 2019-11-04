@@ -39,4 +39,4 @@ ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 ADD tumbleweed_proxy /etc/sysconfig/proxy
 
 # Start rpcbind at launch of the container, required for DOOCS
-#ENTRYPOINT ["bash", "-c", "rpcbind -f -w ; bash"]
+ENTRYPOINT ["bash", "-c", "rpcbind -f -w ; bash"]
