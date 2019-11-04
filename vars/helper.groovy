@@ -67,11 +67,6 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
     chown msk_jenkins /scratch
   '''
   
-  // Launch rpcbind, which is required for DOOCS
-  sh '''
-    rpcbind -i
-  '''
-  
   // Check out source code
   if(checkoutScm) {
     if(gitUrl != '') {
