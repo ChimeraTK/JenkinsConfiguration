@@ -54,7 +54,7 @@ def doAnalysis(String label, String buildType) {
     timeout(activity: true, time: 60) {
     
       // just run the tests
-      doTest(String label, String buildType)
+      doTest(label, buildType)
 
     }
   }
