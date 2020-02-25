@@ -19,7 +19,7 @@ def call() {
       builds = myFile.split("\n").toList()
       def builds_temp = builds.clone()
       builds_temp.each {
-        if(!it.endsWith("-Debug")) {
+        if(!it.endsWith("-Debug") && !it.endsWith("-asan") && !it.endsWith("-tsan")) {
           def build = it
           builds.removeAll { it == build }
         }
