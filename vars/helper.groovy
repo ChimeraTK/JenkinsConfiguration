@@ -54,7 +54,7 @@ def doAnalysis(String label, String buildType) {
     timeout(activity: true, time: 60) {
     
       // just run the tests
-      doTest(label, buildType)
+      doSanitizerAnalysis(label, buildType)
 
     }
   }
@@ -253,6 +253,30 @@ EOF
 
 /**********************************************************************************************************************/
 
+def doSanitizerAnalysis(String label, String buildType) {
+
+  // Run the tests via ctest
+  // Prefix test names with label and buildType, so we can distinguish them later
+  // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
+  sh """
+    cat > /scratch/script <<EOF
+    cd /scratch/build-${parentJob}
+    if [ -z "\${CTESTOPTS}" ]; then
+      CTESTOPTS="\${MAKEOPTS}"
+    fi
+    for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
+       export \\`eval echo \\\${VAR}\\`
+    done
+    ctest --no-compress-output \${CTESTOPTS} -T Test -V
+EOF
+    cat /scratch/script
+    chmod +x /scratch/script
+    sudo -H -E -u msk_jenkins /scratch/script
+  """
+}
+
+/**********************************************************************************************************************/
+
 def doCoverage(String label, String buildType) {
   def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
@@ -428,7 +452,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
       
     }
   }
-  
+/*  
   // publish valgrind result
   publishValgrind (
     failBuildOnInvalidReports: true,
@@ -444,7 +468,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
     unstableThresholdInvalidReadWrite: '',
     unstableThresholdTotal: '0'
   )
-  
+  */
   // publish cobertura result
   cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
