@@ -176,16 +176,15 @@ def doBuilddirArtefact(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doBuild(String label, String buildType) {
-  // set cmake build type
-  if(buildType == "Debug") {
-    def cmakeBuildType = "Debug"
-  }
-  else {
-    def cmakeBuildType = "RelWithDebug"
-  }
   catchError {
     // start the build
     sh """
+      // set cmake build type
+      if [ "${buildType}" == "Debug" ]; then
+        cmakeBuildType="Debug"
+      else
+        cmakeBuildType="RelWithDebug"
+      fi
       chown -R msk_jenkins /scratch
       cat > /scratch/script <<EOF
       mkdir -p /scratch/build-${JOB_NAME}
@@ -205,7 +204,7 @@ def doBuild(String label, String buildType) {
           CMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
         fi
       fi
-      cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="\${CMAKE_CXX_FLAGS}"
+      cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="\${CMAKE_CXX_FLAGS}"
       make \${MAKEOPTS}
 EOF
       cat /scratch/script
