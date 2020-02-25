@@ -460,7 +460,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
     failThresholdDefinitelyLost: '',
     failThresholdInvalidReadWrite: '',
     failThresholdTotal: '',
-    pattern: '*/*.valgrind',
+    pattern: '* / *.valgrind',
     publishResultsForAbortedBuilds: false,
     publishResultsForFailedBuilds: false,
     sourceSubstitutionPaths: '',
