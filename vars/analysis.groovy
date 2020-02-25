@@ -43,7 +43,7 @@ def call() {
     options {
       disableConcurrentBuilds()
       copyArtifactPermission('*')
-      buildDiscarder(logRotator(numToKeepStr: '1', artifactNumToKeepStr: '1'))
+      buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '1'))
     }
   
     stages {

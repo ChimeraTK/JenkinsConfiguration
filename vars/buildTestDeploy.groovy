@@ -9,6 +9,8 @@
 def call(ArrayList<String> dependencyList, String gitUrl='',
          ArrayList<String> builds=['xenial-Debug',
                                    'xenial-Release',
+                                   'xenial-tsan',
+                                   'xenial-asan',
                                    'bionic-Debug',
                                    'bionic-Release',
                                    'tumbleweed-Debug',

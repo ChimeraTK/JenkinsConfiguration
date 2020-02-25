@@ -17,7 +17,10 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
   
     // start build and tests, then generate artefact
     doBuild(label, buildType)
-    doTest(label, buildType)
+    if(buildType != "asan" && buildType != "tsan") {
+      // tests for asan and tsan are run in the analysis jobs
+      doTest(label, buildType)
+    }
     doInstall(label, buildType)
 
   }
@@ -37,7 +40,21 @@ def doAnalysis(String label, String buildType) {
       doCoverage(label, buildType)
       
       // Run valgrind only in Debug mode, since Release mode often leads to no-longer-matching suppressions
-      doValgrind(label, buildType)
+      // -> disable for now, doesn't work well and is probably replaced by asan
+      //doValgrind(label, buildType)
+
+    }
+  }
+  else if(buildType != "Release") {
+    // asan and tsan modes
+    doPrepare(false)
+    doBuilddirArtefact(label, buildType)
+
+    // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
+    timeout(activity: true, time: 60) {
+    
+      // just run the tests
+      doTest(String label, String buildType)
 
     }
   }
@@ -159,6 +176,13 @@ def doBuilddirArtefact(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doBuild(String label, String buildType) {
+  // set cmake build type
+  if(buildType == "Debug") {
+    def cmakeBuildType = "Debug"
+  }
+  else {
+    def cmakeBuildType = "RelWithDebug"
+  }
   catchError {
     // start the build
     sh """
@@ -171,7 +195,17 @@ def doBuild(String label, String buildType) {
       for VAR in \${JOB_VARIABLES}; do
         export \\`eval echo \\\${VAR}\\`
       done
-      cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
+      CMAKE_CXX_FLAGS=""
+      if [ "${buildType}" == "asan" -o "${buildType}" == "tsan" ] ; then
+        export CC="clang-6.0"
+        export CXX="clang++-6.0"
+        if [ "${buildType}" == "tsan" ]; then
+          CMAKE_CXX_FLAGS="-fsanitize=thread"
+        else
+          CMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
+        fi
+      fi
+      cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="\${CMAKE_CXX_FLAGS}"
       make \${MAKEOPTS}
 EOF
       cat /scratch/script
@@ -382,7 +416,8 @@ def doPublishAnalysis(ArrayList<String> builds) {
       }
       
       // get valgrind result (only Debug)
-      if(buildType == "Debug") {
+      // -> disable for now
+      /*if(buildType == "Debug") {
         try {
           unstash "valgrind-${it}"
         }
@@ -390,8 +425,8 @@ def doPublishAnalysis(ArrayList<String> builds) {
           echo("Could not retreive stashed valgrind results for ${it}")
           currentBuild.result = 'FAILURE'
         }
-      }
-
+      }*/
+      
     }
   }
   
