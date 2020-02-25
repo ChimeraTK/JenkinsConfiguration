@@ -179,7 +179,7 @@ def doBuild(String label, String buildType) {
   catchError {
     // start the build
     sh """
-      // set cmake build type
+      # set cmake build type
       if [ "${buildType}" == "Debug" ]; then
         cmakeBuildType="Debug"
       else
