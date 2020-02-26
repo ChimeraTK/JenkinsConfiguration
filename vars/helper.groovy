@@ -196,8 +196,8 @@ def doBuild(String label, String buildType) {
       done
       CMAKE_CXX_FLAGS=""
       if [ "${buildType}" == "asan" -o "${buildType}" == "tsan" ] ; then
-        export CC="clang-6.0"
-        export CXX="clang++-6.0"
+        #export CC="clang-6.0"
+        #export CXX="clang++-6.0"
         if [ "${buildType}" == "tsan" ]; then
           CMAKE_CXX_FLAGS="-fsanitize=thread"
         else
