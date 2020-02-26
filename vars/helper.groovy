@@ -254,6 +254,7 @@ EOF
 /**********************************************************************************************************************/
 
 def doSanitizerAnalysis(String label, String buildType) {
+  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Run the tests via ctest
   // Prefix test names with label and buildType, so we can distinguish them later
