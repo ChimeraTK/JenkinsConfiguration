@@ -45,6 +45,9 @@ def transformIntoStep(String buildName) {
           script {
             sh """
               env
+              pwd
+              mkdir -p /scratch/epics
+              cd /scratch/epics
               VERSION=3.14.12.6
               sudo -E -H -u msk_jenkins wget https://epics.anl.gov/download/base/baseR\${VERSION}.tar.gz
               sudo -H -u msk_jenkins tar xf baseR\${VERSION}.tar.gz
