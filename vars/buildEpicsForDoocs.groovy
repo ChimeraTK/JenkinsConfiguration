@@ -44,6 +44,7 @@ def transformIntoStep(String buildName) {
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             sh """
+              env
               VERSION=3.14.12.6
               sudo -E -H -u msk_jenkins wget https://epics.anl.gov/download/base/baseR\${VERSION}.tar.gz
               sudo -H -u msk_jenkins tar xf baseR\${VERSION}.tar.gz
