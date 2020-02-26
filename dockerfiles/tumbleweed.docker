@@ -27,8 +27,7 @@ RUN zypper refresh && \
     zypper install -y python2-pytest && \
     zypper install -y python3-pytest && \
     useradd -u 30996 msk_jenkins && \
-    ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
-    locale-gen
+    ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3
 
 RUN echo "Defaults set_home" >> /etc/sudoers && \
     git config --system http.proxy http://xfelproxy.desy.de:3128 && \

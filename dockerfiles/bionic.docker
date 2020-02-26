@@ -9,7 +9,7 @@ RUN apt-get update && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
-    apt-get install -y sudo wget python3-pip && \ 
+    apt-get install -y sudo wget python3-pip locales && \ 
     apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake ninja-build && \
     apt-get install -y libboost-all-dev libxml++2.6-dev && \
     apt-get install -y libldap2-dev libzmq3-dev rpcbind && \
@@ -34,8 +34,7 @@ RUN apt-get update && \
     apt-get install -y netcat-openbsd && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
-    pip3 install meson && \
-    locale-gen
+    pip3 install meson
 
 RUN echo "Defaults set_home" >> /etc/sudoers && \
     echo 'Acquire::http::proxy "http://xfelproxy.desy.de:3128/";' > /etc/apt/apt.conf && \
