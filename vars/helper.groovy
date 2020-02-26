@@ -205,7 +205,7 @@ def doBuild(String label, String buildType) {
         fi
       fi
       cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="\${CMAKE_CXX_FLAGS}"
-      make \${MAKEOPTS}
+      make \${MAKEOPTS} VERBOSE=1
 EOF
       cat /scratch/script
       chmod +x /scratch/script
