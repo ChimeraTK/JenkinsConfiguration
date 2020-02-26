@@ -10,6 +10,8 @@ def call() {
   // List of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
   def builds = [ 'xenial-Debug',
                  'xenial-Release',
+                 'xenial-tsan',
+                 'xenial-asan',
                  'bionic-Debug',
                  'bionic-Release' ]
 
