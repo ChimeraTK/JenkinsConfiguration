@@ -37,8 +37,8 @@ def transformIntoStep(String buildName) {
   return {
     stage(buildName) {
       node('Docker') {
-        // we need root access inside the container and access to the dummy pcie devices of the host
-        def dockerArgs = "-u 0 --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy"
+        // we need root access inside the container
+        def dockerArgs = "-u 0"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             sh """
