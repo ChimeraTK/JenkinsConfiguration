@@ -199,12 +199,13 @@ def doBuild(String label, String buildType) {
         export CC="clang-6.0"
         export CXX="clang++-6.0"
         if [ "${buildType}" == "tsan" ]; then
-          CMAKE_CXX_FLAGS="-fsanitize=thread"
+          cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=thread"
         else
-          CMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
+          cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
         fi
+      else
+        cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="\${CMAKE_CXX_FLAGS}"
       fi
-      cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="\${CMAKE_CXX_FLAGS}"
       make \${MAKEOPTS} VERBOSE=1
 EOF
       cat /scratch/script
