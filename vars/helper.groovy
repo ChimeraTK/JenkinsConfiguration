@@ -187,25 +187,26 @@ def doBuild(String label, String buildType) {
       fi
       chown -R msk_jenkins /scratch
       cat > /scratch/script <<EOF
-      mkdir -p /scratch/build-${JOB_NAME}
-      mkdir -p /scratch/install
-      cd /scratch/build-${JOB_NAME}
-      # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
-      for VAR in \${JOB_VARIABLES}; do
-        export \\`eval echo \\\${VAR}\\`
-      done
-      if [ "${buildType}" == "tsan" ]; then
-        export CC="clang-6.0"
-        export CXX="clang++-6.0"
-        cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=thread"
-      elif [ "${buildType}" == "asan" ]; then
-        export CC="clang-6.0"
-        export CXX="clang++-6.0"
-        cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
-      else
-        cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
-      fi
-      make \${MAKEOPTS} VERBOSE=1
+#!/bin/bash
+mkdir -p /scratch/build-${JOB_NAME}
+mkdir -p /scratch/install
+cd /scratch/build-${JOB_NAME}
+# We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
+for VAR in \${JOB_VARIABLES}; do
+  export \\`eval echo \\\${VAR}\\`
+done
+if [ "${buildType}" == "tsan" ]; then
+  export CC="clang-6.0"
+  export CXX="clang++-6.0"
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=thread"
+elif [ "${buildType}" == "asan" ]; then
+  export CC="clang-6.0"
+  export CXX="clang++-6.0"
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
+else
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
+fi
+make \${MAKEOPTS} VERBOSE=1
 EOF
       cat /scratch/script
       chmod +x /scratch/script
