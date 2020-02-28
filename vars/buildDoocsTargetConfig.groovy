@@ -61,6 +61,11 @@ def transformIntoStep(String buildName) {
               touch /export/doocs/\${DOOCSARCH}/lib/pkgconfig/.keep
               cd \${DOOCSARCH}
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
+              if [ "${buildType}" == "tsan" ]; then
+                sed -i CONFIG -e 's/%.o:/# OVERRIDES\n\nCC = clang-6.0\nCXX = clang++-6.0\nCFLAGS += -fsanitize=thread\nCXXFLAGS += -fsanitize=thread\n\n%.o:/'
+              elif [ "${buildType}" == "asan" ]; then
+                sed -i CONFIG -e 's/%.o:/# OVERRIDES\n\nCC = clang-6.0\nCXX = clang++-6.0\nCFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\nCXXFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\n\n%.o:/'
+              fi
               mkdir -p /scratch
               echo "DOOCS_epics" > /scratch/dependencies.${JOB_NAME}.list
               chown -R msk_jenkins /export
