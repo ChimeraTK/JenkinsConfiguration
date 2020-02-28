@@ -102,11 +102,13 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                   export CXX="clang++-6.0"
                   export CFLAGS="-fsanitize=thread"
                   export CXXFLAGS="\$CFLAGS"
+                  export LDFLAGS="\$CFLAGS"
                 elif [ "${buildType}" == "asan" ]; then
                   export CC="clang-6.0"
                   export CXX="clang++-6.0"
                   export CFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
                   export CXXFLAGS="\$CFLAGS"
+                  export LDFLAGS="\$CFLAGS"
                 fi
                 meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include'
                 ninja -C build
