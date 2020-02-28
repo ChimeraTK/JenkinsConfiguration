@@ -231,16 +231,17 @@ def doTest(String label, String buildType) {
   // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
   sh """
     cat > /scratch/script <<EOF
-    cd /scratch/build-${JOB_NAME}
-    if [ -z "\${CTESTOPTS}" ]; then
-      CTESTOPTS="\${MAKEOPTS}"
-    fi
-    for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
-       export \\`eval echo \\\${VAR}\\`
-    done
-    ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
-    sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
-    cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
+#!/bin/bash
+cd /scratch/build-${JOB_NAME}
+if [ -z "\${CTESTOPTS}" ]; then
+  CTESTOPTS="\${MAKEOPTS}"
+fi
+for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
+   export \\`eval echo \\\${VAR}\\`
+done
+ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
+sed -i Testing/*/Test.xml -e 's_\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$_\\1${label}.${buildType}.\\2\\3_'
+cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
 EOF
     cat /scratch/script
     chmod +x /scratch/script
@@ -262,14 +263,15 @@ def doSanitizerAnalysis(String label, String buildType) {
   // Copy test results files to the workspace, otherwise they are not available to the xunit plugin
   sh """
     cat > /scratch/script <<EOF
-    cd /scratch/build-${parentJob}
-    if [ -z "\${CTESTOPTS}" ]; then
-      CTESTOPTS="\${MAKEOPTS}"
-    fi
-    for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
-       export \\`eval echo \\\${VAR}\\`
-    done
-    ctest --no-compress-output \${CTESTOPTS} -T Test -V
+#!/bin/bash
+cd /scratch/build-${parentJob}
+if [ -z "\${CTESTOPTS}" ]; then
+  CTESTOPTS="\${MAKEOPTS}"
+fi
+for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
+   export \\`eval echo \\\${VAR}\\`
+done
+ctest --no-compress-output \${CTESTOPTS} -T Test -V
 EOF
     cat /scratch/script
     chmod +x /scratch/script
@@ -286,15 +288,16 @@ def doCoverage(String label, String buildType) {
   sh """
     chown msk_jenkins -R /scratch
     cat > /scratch/script <<EOF
-    cd /scratch/build-${parentJob}
-    for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
-       export \\`eval echo \\\${VAR}\\`
-    done
-    make coverage || true
-    /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
-    
-    cp -r coverage_html ${WORKSPACE} || true
-    cp -r coverage.xml ${WORKSPACE} || true
+#!/bin/bash
+cd /scratch/build-${parentJob}
+for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
+   export \\`eval echo \\\${VAR}\\`
+done
+make coverage || true
+/common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
+
+cp -r coverage_html ${WORKSPACE} || true
+cp -r coverage.xml ${WORKSPACE} || true
 EOF
     cat /scratch/script
     chmod +x /scratch/script
@@ -333,34 +336,35 @@ def doValgrind(String label, String buildType) {
     cat valgrind.suppressions/common.supp valgrind.suppressions/${label}.supp > /scratch/valgrind.supp
 
     cat > /scratch/script <<EOF
-    cd /scratch/build-${parentJob}
-    
-    for testlist in \\`find -name CTestTestfile.cmake\\` ; do
-      EXECLIST=""
-      dir=\\`dirname "\\\${testlist}"\\`
-      for test in \\`grep add_test "\\\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\\\$//'\\` ; do
-        # \\\${test} is just the name of the test executable, without add_test etc.
-        # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
-        if [ -f "\\\${test}" ]; then
-          EXECLIST="\\\${EXECLIST} \\`realpath \\\${test}\\`"
-        elif [ -f "\\\${dir}/\\\${test}" ]; then
-          EXECLIST="\\\${EXECLIST} \\`realpath \\\${dir}/\\\${test}\\`"
-        fi
-      done
-    
-      cd "\\\${dir}"
-      for test in \\\${EXECLIST} ; do
-        testname=\\`basename \\\${test}\\`
-        if [ -z "\\`echo " \\\${valgrindExcludes} " | grep " \\\${testname} "\\`" ]; then
-          valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp                         \\
-                                       --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes              \\
-                                       --xml-file=/scratch/build-${parentJob}/${label}.\\\${testname}.memcheck.valgrind  \\
-                                       \\\${test}
-        fi
-      done
-      cd /scratch/build-${parentJob}
+#!/bin/bash
+cd /scratch/build-${parentJob}
 
-    done
+for testlist in \\`find -name CTestTestfile.cmake\\` ; do
+  EXECLIST=""
+  dir=\\`dirname "\\\${testlist}"\\`
+  for test in \\`grep add_test "\\\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\\\$//'\\` ; do
+    # \\\${test} is just the name of the test executable, without add_test etc.
+    # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
+    if [ -f "\\\${test}" ]; then
+      EXECLIST="\\\${EXECLIST} \\`realpath \\\${test}\\`"
+    elif [ -f "\\\${dir}/\\\${test}" ]; then
+      EXECLIST="\\\${EXECLIST} \\`realpath \\\${dir}/\\\${test}\\`"
+    fi
+  done
+
+  cd "\\\${dir}"
+  for test in \\\${EXECLIST} ; do
+    testname=\\`basename \\\${test}\\`
+    if [ -z "\\`echo " \\\${valgrindExcludes} " | grep " \\\${testname} "\\`" ]; then
+      valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp                         \\
+                                   --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes              \\
+                                   --xml-file=/scratch/build-${parentJob}/${label}.\\\${testname}.memcheck.valgrind  \\
+                                   \\\${test}
+    fi
+  done
+  cd /scratch/build-${parentJob}
+
+done
 EOF
     cat /scratch/script
     chmod +x /scratch/script
