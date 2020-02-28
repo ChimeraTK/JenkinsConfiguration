@@ -91,6 +91,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               sudo -H -u msk_jenkins git clone ${gitUrl} .
               if [ -f meson.build ]; then
                 mkdir -p build
+                chown -R msk_jenkins /export
                 # set meson build type
                 if [ "${buildType}" == "Debug" ]; then
                   buildType="debug"
@@ -111,10 +112,10 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                   export LDFLAGS="\$CFLAGS"
                 fi
                 export LSAN_OPTIONS=verbosity=1:log_threads=1
-                meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
-                ninja -C build
+                sudo -E -H -u msk_jenkins meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
+                sudo -E -H -u msk_jenkins ninja -C build
                 find /export > /export.list.before
-                ninja -C build install
+                sudo -E -H -u msk_jenkins ninja -C build install
                 find /export > /export.list.after
               else
                 if [ -z "\${MAKEOPTS}" ]; then
