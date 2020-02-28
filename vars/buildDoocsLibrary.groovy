@@ -110,7 +110,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                   export CXXFLAGS="\$CFLAGS"
                   export LDFLAGS="\$CFLAGS"
                 fi
-                meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include'
+                meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
                 ninja -C build
                 find /export > /export.list.before
                 ninja -C build install
