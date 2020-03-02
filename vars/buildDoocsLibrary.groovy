@@ -107,17 +107,18 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 elif [ "${buildType}" == "asan" ]; then
                   export CC="clang-6.0"
                   export CXX="clang++-6.0"
-                  export CFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
+                  export CFLAGS="-fsanitize=address -fsanitize=undefined"
                   export CXXFLAGS="\$CFLAGS"
                   export LDFLAGS="\$CFLAGS"
                 fi
-                export LSAN_OPTIONS=verbosity=1:log_threads=1
+                #export LSAN_OPTIONS=verbosity=1:log_threads=1
                 sudo -E -H -u msk_jenkins meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
                 sudo -E -H -u msk_jenkins ninja -C build
                 find /export > /export.list.before
                 sudo -E -H -u msk_jenkins ninja -C build install
                 find /export > /export.list.after
               else
+                #export LSAN_OPTIONS=verbosity=1:log_threads=1
                 if [ -z "\${MAKEOPTS}" ]; then
                   make -j8
                 else
