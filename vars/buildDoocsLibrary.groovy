@@ -99,14 +99,14 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                   buildType="debugoptimized"
                 fi
                 if [ "${buildType}" == "tsan" ]; then
-                  export CC="clang-6.0"
-                  export CXX="clang++-6.0"
+                  #export CC="clang-6.0"
+                  #export CXX="clang++-6.0"
                   export CFLAGS="-fsanitize=thread"
                   export CXXFLAGS="\$CFLAGS"
                   export LDFLAGS="\$CFLAGS"
                 elif [ "${buildType}" == "asan" ]; then
-                  export CC="clang-6.0"
-                  export CXX="clang++-6.0"
+                  #export CC="clang-6.0"
+                  #export CXX="clang++-6.0"
                   export CFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
                   export CXXFLAGS="\$CFLAGS"
                   export LDFLAGS="\$CFLAGS"
