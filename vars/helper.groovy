@@ -183,7 +183,7 @@ def doBuild(String label, String buildType) {
       if [ "${buildType}" == "Debug" ]; then
         cmakeBuildType="Debug"
       else
-        cmakeBuildType="RelWithDebug"
+        cmakeBuildType="RelWithDebInfo"
       fi
       chown -R msk_jenkins /scratch
       cat > /scratch/script <<EOF
