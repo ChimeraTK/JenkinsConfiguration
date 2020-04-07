@@ -97,7 +97,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
     post {
       failure {
         emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.RECIPIENT_LIST
-        mattermostSend channel: env.JOB_NAME, color: danger, message: "Build of ${env.JOB_NAME} failed."
+        mattermostSend channel: env.JOB_NAME, color: "danger", message: "Build of ${env.JOB_NAME} failed."
       }
       always {
         node('Docker') {
@@ -108,7 +108,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
         script {
           if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
             if (currentBuild.resultIsBetterOrEqualTo(currentBuild.getPreviousBuild().result)) {
-              mattermostSend channel: env.JOB_NAME, color: good, message: "Build of ${env.JOB_NAME} is good again."
+              mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
             }
           }
         }
