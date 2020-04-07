@@ -105,9 +105,11 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
             helper.doPublishBuildTestDeploy(builds)
           }
         }
-        if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
-          if (currentBuild.resultIsBetterOrEqualTo(currentBuild.getPreviousBuild().result)) {
-        mattermostSend channel: env.JOB_NAME, color: good, message: "Build of ${env.JOB_NAME} is good again."
+        script {
+          if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
+            if (currentBuild.resultIsBetterOrEqualTo(currentBuild.getPreviousBuild().result)) {
+              mattermostSend channel: env.JOB_NAME, color: good, message: "Build of ${env.JOB_NAME} is good again."
+            }
           }
         }
       } // end always
