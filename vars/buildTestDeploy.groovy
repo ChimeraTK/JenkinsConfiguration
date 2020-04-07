@@ -97,7 +97,6 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
     post {
       failure {
         emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.RECIPIENT_LIST
-        mattermostSend
       }
       always {
         node('Docker') {
