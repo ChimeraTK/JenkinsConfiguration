@@ -108,7 +108,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
         }
         script {
           if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
-            if (currentBuild.resultIsBetterOrEqualTo(currentBuild.getPreviousBuild().result)) {
+            if (!currentBuild.resultIsWorseOrEqualTo(currentBuild.getPreviousBuild().result)) {
               mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
               mattermostSend channel: "Jenkins", color: "good", message: "Build of ${env.JOB_NAME} is good again."
             }
