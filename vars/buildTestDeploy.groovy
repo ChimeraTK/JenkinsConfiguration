@@ -16,107 +16,116 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                                    'tumbleweed-Debug',
                                    'tumbleweed-Release']) {
 
-  // only keep builds which exist for all dependencies
-  script {
-    node('Docker') {
-      dependencyList.each {
-        if( it != "" ) {
-          copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-          myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
-          def depBuilds = myFile.split("\n")
-          def curBuilds = builds.clone()
-          curBuilds.each {
-            def build = it
-            if(depBuilds.find { it == build } != it) {
-              builds.removeAll { it == build }
-            }
-          }
-        }
-      }
+  // lock against other builds depending on this build. Depdencies will only keep the lock shortly before downloading the artefact,
+  // so a dependent's build does not prevent us from starting the build but no dependent may start its build from now on.
+  lock("build-${env.JOB_NAME}") {
 
-      // publish our list of builds as artefact for our downstream builds
-      writeFile file: "builds.txt", text: builds.join("\n")
-      archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
-    }
-  }
+    // only keep builds which exist for all dependencies
+    script {
+      node('Docker') {
+        dependencyList.each {
+          if( it != "" ) {
+            // wait until dependency is no longer building (to reduce "storm" of builds after core libraries were built)
+            lock("build-${it}") {}
 
-  // form comma-separated list of dependencies as needed for the trigger configuration
-  def dependencies = dependencyList.join(',')
-  if(dependencies == "") {
-    dependencies = "Create Docker Images"
-  }
-
-  pipeline {
-    agent none
-
-    // setup build trigger
-    triggers {
-      pollSCM('H/5 * * * *')
-      upstream(upstreamProjects: dependencies, threshold: hudson.model.Result.UNSTABLE)
-    }
-    options {
-      disableConcurrentBuilds()
-      copyArtifactPermission('*')
-      buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '5'))
-    }
-
-    stages {
-      // apply changes from project-template
-      stage('preprocess') {
-        steps {
-          script {
-            node('Docker') {
-              if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
-                git branch: env.BRANCH_NAME, url: gitUrl
-              } else {
-                git gitUrl
+            copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+            myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+            def depBuilds = myFile.split("\n")
+            def curBuilds = builds.clone()
+            curBuilds.each {
+              def build = it
+              if(depBuilds.find { it == build } != it) {
+                builds.removeAll { it == build }
               }
-              sh """
-                git config credential.helper store
-                git remote add project-template "https://github.com/ChimeraTK/project-template" || true
-                git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
-                git remote update
-                git merge --squash --no-edit project-template/master && git commit -m "automatic merge of project-template" && git push --all || true
-              """
-              // We could also apply the clang-format style here, but this should be discussed first.
-              //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
-              //  git commit -a -m "Automated commit: apply clang-format" && git push --all || true
             }
           }
         }
+
+        // publish our list of builds as artefact for our downstream builds
+        writeFile file: "builds.txt", text: builds.join("\n")
+        archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
       }
-      stage('build') {
-        // Run the build stages for all labels + build types in parallel, each in a separate docker container
-        steps {
-          script {
-            parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it, gitUrl)] }
-          }
-        }
-      } // end stage build
-    } // end stages
-    post {
-      failure {
-        emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.MAILTO
-        mattermostSend channel: env.JOB_NAME, color: "danger", message: "Build of ${env.JOB_NAME} failed."
-        mattermostSend channel: "Jenkins", color: "danger", message: "Build of ${env.JOB_NAME} failed."
+    }
+
+    // form comma-separated list of dependencies as needed for the trigger configuration
+    def dependencies = dependencyList.join(',')
+    if(dependencies == "") {
+      dependencies = "Create Docker Images"
+    }
+
+    pipeline {
+      agent none
+
+      // setup build trigger
+      triggers {
+        pollSCM('H/5 * * * *')
+        upstream(upstreamProjects: dependencies, threshold: hudson.model.Result.UNSTABLE)
       }
-      always {
-        node('Docker') {
-          script {
-            helper.doPublishBuildTestDeploy(builds)
-          }
-        }
-        script {
-          if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
-            if (!currentBuild.resultIsWorseOrEqualTo(currentBuild.getPreviousBuild().result)) {
-              mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
-              mattermostSend channel: "Jenkins", color: "good", message: "Build of ${env.JOB_NAME} is good again."
+      options {
+        disableConcurrentBuilds()
+        copyArtifactPermission('*')
+        buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '5'))
+      }
+
+      stages {
+        // apply changes from project-template
+        stage('preprocess') {
+          steps {
+            script {
+              node('Docker') {
+                if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
+                  git branch: env.BRANCH_NAME, url: gitUrl
+                } else {
+                  git gitUrl
+                }
+                sh """
+                  git config credential.helper store
+                  git remote add project-template "https://github.com/ChimeraTK/project-template" || true
+                  git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
+                  git remote update
+                  git merge --squash --no-edit project-template/master && git commit -m "automatic merge of project-template" && git push --all || true
+                """
+                // We could also apply the clang-format style here, but this should be discussed first.
+                //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
+                //  git commit -a -m "Automated commit: apply clang-format" && git push --all || true
+              }
             }
           }
         }
-      } // end always
-    } // end post
-  } // end pipeline
+        stage('build') {
+          // Run the build stages for all labels + build types in parallel, each in a separate docker container
+          steps {
+            script {
+              parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it, gitUrl)] }
+            }
+          }
+        } // end stage build
+      } // end stages
+      post {
+        failure {
+          emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.MAILTO
+          mattermostSend channel: env.JOB_NAME, color: "danger", message: "Build of ${env.JOB_NAME} failed."
+          mattermostSend channel: "Jenkins", color: "danger", message: "Build of ${env.JOB_NAME} failed."
+        }
+        always {
+          node('Docker') {
+            script {
+              helper.doPublishBuildTestDeploy(builds)
+            }
+          }
+          script {
+            if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
+              if (!currentBuild.resultIsWorseOrEqualTo(currentBuild.getPreviousBuild().result)) {
+                mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
+                mattermostSend channel: "Jenkins", color: "good", message: "Build of ${env.JOB_NAME} is good again."
+              }
+            }
+          }
+        } // end always
+      } // end post
+    } // end pipeline
+    
+  } // end of lock
 }
 
 /**********************************************************************************************************************/
