@@ -8,10 +8,12 @@
 def gatherDependenciesDeep(ArrayList<String> dependencyList) {
   def deepList = dependencyList
   dependencyList.each {
-    copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-    def myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
-    def dependencyList2 = myFile.split("\n")
-    deepList.addAll(gatherDependenciesDeep(dependencyList2))
+    node('Docker') {
+      copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+      def myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
+      def dependencyList2 = myFile.split("\n")
+      deepList.addAll(gatherDependenciesDeep(dependencyList2))
+    }
   }
   return deepList.unique()
 }
