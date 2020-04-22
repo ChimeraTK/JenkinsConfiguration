@@ -8,27 +8,31 @@
 
 // helper function, recursively gather a deep list of dependencies
 def gatherDependenciesDeep(ArrayList<String> dependencyList) {
-  def deepList = dependencyList
-  dependencyList.each {
-    node('Docker') {
-      copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
-      def myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
-      def dependencyList2 = myFile.split("\n")
-      deepList.addAll(gatherDependenciesDeep(dependencyList2))
+  script {
+    def deepList = dependencyList
+    dependencyList.each {
+      node('Docker') {
+        copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+        def myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
+        def dependencyList2 = myFile.split("\n")
+        deepList.addAll(gatherDependenciesDeep(dependencyList2))
+      }
     }
+    return deepList.unique()
   }
-  return deepList.unique()
 }
 
 /**********************************************************************************************************************/
 
 // helper function, recursively wait until all dependencies are not building
 def waitForDependencies(ArrayList<String> deepDependencyList) {
-  if(deepDependencyList.size() == 0) return
-  lock("build-${deepDependencyList[0]}") {
-    def deepDependencyListTrunc = deepDependencyList
-    deepDependencyListTrunc.remove(0)
-    waitForDependencies(deepDependencyListTrunc)
+  script {
+    if(deepDependencyList.size() == 0) return
+    lock("build-${deepDependencyList[0]}") {
+      def deepDependencyListTrunc = deepDependencyList
+      deepDependencyListTrunc.remove(0)
+      waitForDependencies(deepDependencyListTrunc)
+    }
   }
 }
 
