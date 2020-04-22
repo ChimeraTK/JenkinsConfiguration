@@ -44,6 +44,10 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
         // publish our list of builds as artefact for our downstream builds
         writeFile file: "builds.txt", text: builds.join("\n")
         archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
+        
+        // publish our list of direct dependencies for our downstream builds
+        writeFile file: "dependencyList.txt", text: dependencyList.join("\n")
+        archiveArtifacts artifacts: "dependencyList.txt", onlyIfSuccessful: false
       }
     }
 
