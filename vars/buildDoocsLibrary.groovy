@@ -99,19 +99,19 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 else
                   buildType="debugoptimized"
                 fi
-                if [ "${buildType}" == "tsan" ]; then
-                  export CC="clang-6.0"
-                  export CXX="clang++-6.0"
-                  export CFLAGS="-fsanitize=thread"
-                  export CXXFLAGS="\$CFLAGS"
-                  export LDFLAGS="\$CFLAGS"
-                elif [ "${buildType}" == "asan" ]; then
-                  export CC="clang-6.0"
-                  export CXX="clang++-6.0"
-                  export CFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
-                  export CXXFLAGS="\$CFLAGS"
-                  export LDFLAGS="\$CFLAGS"
-                fi
+                #if [ "${buildType}" == "tsan" ]; then
+                #  export CC="clang-6.0"
+                #  export CXX="clang++-6.0"
+                #  export CFLAGS="-fsanitize=thread"
+                #  export CXXFLAGS="\$CFLAGS"
+                #  export LDFLAGS="\$CFLAGS"
+                #elif [ "${buildType}" == "asan" ]; then
+                #  export CC="clang-6.0"
+                #  export CXX="clang++-6.0"
+                #  export CFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
+                #  export CXXFLAGS="\$CFLAGS"
+                #  export LDFLAGS="\$CFLAGS"
+                #fi
                 export LSAN_OPTIONS=verbosity=1:log_threads=1
                 export PKG_CONFIG_PATH=/export/doocs/lib/pkgconfig
                 sudo -E -H -u msk_jenkins meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
