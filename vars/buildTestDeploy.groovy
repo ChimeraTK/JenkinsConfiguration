@@ -20,6 +20,7 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
 
 // helper function, recursively wait until all dependencies are not building
 def waitForDependencies(ArrayList<String> deepDependencyList) {
+  if(deepDependencyList.size() == 0) return
   lock("build-${deepDependencyList[0]}") {
     def deepDependencyListTrunc = deepDependencyList
     deepDependencyListTrunc.remove(0)
