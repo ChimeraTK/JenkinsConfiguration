@@ -92,6 +92,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               if [ -f meson.build ]; then
                 mkdir -p build
                 chown -R msk_jenkins /export
+                ls -alR /export
                 # set meson build type
                 if [ "${buildType}" == "Debug" ]; then
                   buildType="debug"
