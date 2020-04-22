@@ -29,7 +29,7 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
 def waitForDependencies(ArrayList<String> deepDependencyList) {
   script {
     if(deepDependencyList.size() == 0) return
-    if(it == "") return
+    if(deepDependencyList[0] == "") return
     lock("build-${deepDependencyList[0]}") {
       def deepDependencyListTrunc = deepDependencyList
       deepDependencyListTrunc.remove(0)
