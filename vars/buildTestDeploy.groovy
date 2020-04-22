@@ -4,6 +4,27 @@
 
 ***********************************************************************************************************************/
 
+// helper function, recursively gather a deep list of dependencies
+def gatherDependenciesDeep(ArrayList<String> dependencyList) {
+  def deepList = dependencyList
+  dependencyList.each {
+    copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+    def myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
+    def dependencyList2 = myFile.split("\n")
+    deepList.addAll(gatherDependenciesDeep(dependencyList2))
+  }
+  return deepList.unique()
+}
+
+// helper function, recursively wait until all dependencies are not building
+def waitForDependencies(ArrayList<String> deepDependencyList) {
+  lock("build-${deepDependencyList[0]}") {
+    def deepDependencyListTrunc = deepDependencyList
+    deepDependencyListTrunc.remove(0)
+    waitForDependencies(deepDependencyListTrunc)
+  }
+}
+
 // This is the function called from the .jenkinsfile
 // The last optional argument is the list of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
 def call(ArrayList<String> dependencyList, String gitUrl='',
@@ -16,18 +37,18 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                                    'tumbleweed-Debug',
                                    'tumbleweed-Release']) {
 
-  // lock against other builds depending on this build. Depdencies will only keep the lock shortly before downloading the artefact,
+  // lock against other builds depending on this build. Depdencies will only keep the lock shortly before starting (see next line),
   // so a dependent's build does not prevent us from starting the build but no dependent may start its build from now on.
   lock("build-${env.JOB_NAME}") {
+
+    // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
+    waitForDependencies(gatherDependenciesDeep(dependencyList))
 
     // only keep builds which exist for all dependencies
     script {
       node('Docker') {
         dependencyList.each {
           if( it != "" ) {
-            // wait until dependency is no longer building (to reduce "storm" of builds after core libraries were built)
-            lock("build-${it}") {}
-
             copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
             myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
             def depBuilds = myFile.split("\n")
