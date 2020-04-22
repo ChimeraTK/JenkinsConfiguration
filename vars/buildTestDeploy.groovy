@@ -21,7 +21,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
   lock("build-${env.JOB_NAME}") {
 
     // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
-    waitForDependencies(gatherDependenciesDeep(dependencyList))
+    helper.waitForDependencies(helper.gatherDependenciesDeep(dependencyList))
 
     // only keep builds which exist for all dependencies
     script {
