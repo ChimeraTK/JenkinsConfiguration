@@ -113,6 +113,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                   export LDFLAGS="\$CFLAGS"
                 fi
                 export LSAN_OPTIONS=verbosity=1:log_threads=1
+                export PKG_CONFIG_PATH=/export/doocs/lib/pkgconfig
                 sudo -E -H -u msk_jenkins meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
                 sudo -E -H -u msk_jenkins ninja -C build
                 find /export > /export.list.before
