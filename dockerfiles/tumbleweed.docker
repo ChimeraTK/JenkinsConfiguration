@@ -10,7 +10,7 @@ RUN zypper refresh && \
     zypper install -y libboost_*-devel && \
     zypper install -y libxml++26-devel && \
     zypper install -y libqt5-qtbase-devel && \
-    zypper install -y python2-devel python2-numpy-devel python2-numpy python3-devel python3-numpy-devel && \
+    zypper install -y python3-devel python3-numpy-devel && \
     zypper install -y ncurses-devel && \
     zypper install -y clang && \
     zypper install -y python-Sphinx && \
@@ -24,7 +24,6 @@ RUN zypper refresh && \
     zypper install -y netcat-openbsd && \
     zypper install -y nano && \
     zypper install -y vim && \
-    zypper install -y python2-pytest && \
     zypper install -y python3-pytest && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3
