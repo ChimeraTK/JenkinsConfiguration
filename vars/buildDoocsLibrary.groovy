@@ -102,13 +102,13 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 if [ "${buildType}" == "tsan" ]; then
                   export CC="clang-6.0"
                   export CXX="clang++-6.0"
-                  export CFLAGS="-fsanitize=thread --std=c++14"
+                  export CFLAGS="-fsanitize=thread -std=c++14"
                   export CXXFLAGS="\$CFLAGS"
                   export LDFLAGS="\$CFLAGS"
                 elif [ "${buildType}" == "asan" ]; then
                   export CC="clang-6.0"
                   export CXX="clang++-6.0"
-                  export CFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak --std=c++14"
+                  export CFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak -std=c++14"
                   export CXXFLAGS="\$CFLAGS"
                   export LDFLAGS="\$CFLAGS"
                 fi
