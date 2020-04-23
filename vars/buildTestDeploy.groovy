@@ -21,11 +21,8 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
   lock("build-${env.JOB_NAME}") {
 
     script {
+      
       node('Docker') {
-
-        // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
-        helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
-
         // only keep builds which exist for all dependencies
         dependencyList.each {
           if( it != "" ) {
@@ -40,7 +37,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
               }
             }
           }
-        }
+        } // dependencyList.each
 
         // publish our list of builds as artefact for our downstream builds
         writeFile file: "builds.txt", text: builds.join("\n")
@@ -49,8 +46,8 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
         // publish our list of direct dependencies for our downstream builds
         writeFile file: "dependencyList.txt", text: dependencyList.join("\n")
         archiveArtifacts artifacts: "dependencyList.txt", onlyIfSuccessful: false
-      }
-    }
+      } // docker
+    } // script
 
     // form comma-separated list of dependencies as needed for the trigger configuration
     def dependencies = dependencyList.join(',')
@@ -73,6 +70,13 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
       }
 
       stages {
+        // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
+        stage('Wait for dependencies') {
+          steps {
+            helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
+          }
+        } // stage wait for dependencies
+
         // apply changes from project-template
         stage('preprocess') {
           steps {
@@ -96,7 +100,8 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
               }
             }
           }
-        }
+        } // stage preprocess
+        
         stage('build') {
           // Run the build stages for all labels + build types in parallel, each in a separate docker container
           steps {
@@ -104,7 +109,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
               parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it, gitUrl)] }
             }
           }
-        } // end stage build
+        } // stage build
       } // end stages
       post {
         failure {
@@ -155,4 +160,5 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName, String
 }
 
 /**********************************************************************************************************************/
+
 
