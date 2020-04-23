@@ -87,7 +87,6 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
             helper.doDependencyArtefacts(dependencyList, label, buildType)
 
             sh """
-              source /export/doocs/doocsarch.env
               mkdir -p /export/doocs/library/${libraryName}
               cd /export/doocs/library/${libraryName}
               chown -R msk_jenkins /export/doocs
@@ -123,6 +122,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 sudo -E -H -u msk_jenkins ninja -C build install
                 find /export > /export.list.after
               else
+                source /export/doocs/doocsarch.env
                 export LSAN_OPTIONS=verbosity=1:log_threads=1
                 if [ -z "\${MAKEOPTS}" ]; then
                   make -j8
