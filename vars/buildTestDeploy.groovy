@@ -20,12 +20,13 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
   // so a dependent's build does not prevent us from starting the build but no dependent may start its build from now on.
   lock("build-${env.JOB_NAME}") {
 
-    // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
-    helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
-
-    // only keep builds which exist for all dependencies
     script {
       node('Docker') {
+
+        // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
+        helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
+
+        // only keep builds which exist for all dependencies
         dependencyList.each {
           if( it != "" ) {
             copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
