@@ -74,7 +74,9 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
         stage('Wait for dependencies') {
           steps {
             script {
-              helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
+              ws {
+                helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
+              }
             }
           }
         } // stage wait for dependencies
