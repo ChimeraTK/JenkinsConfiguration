@@ -73,7 +73,9 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
         // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
         stage('Wait for dependencies') {
           steps {
-            helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
+            script {
+              helper.waitForDependencies(helper.gatherDependenciesDeep(new ArrayList<String>(dependencyList)))
+            }
           }
         } // stage wait for dependencies
 
