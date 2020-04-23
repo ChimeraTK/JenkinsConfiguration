@@ -39,7 +39,8 @@ RUN apt-get update && \
     apt-get install -y libtirpc-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
-    pip3 install meson
+    pip3 install pip --upgrade && \
+    pip install meson ninja
 
 RUN echo "Defaults set_home" >> /etc/sudoers && \
     echo 'Acquire::http::proxy "http://xfelproxy.desy.de:3128/";' > /etc/apt/apt.conf && \
