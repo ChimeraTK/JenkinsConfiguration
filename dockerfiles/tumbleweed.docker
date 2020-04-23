@@ -10,7 +10,7 @@ RUN zypper refresh && \
     zypper install -y libboost_*-devel && \
     zypper install -y libxml++26-devel && \
     zypper install -y libqt5-qtbase-devel && \
-    zypper install -y python-devel python-numpy-devel python-numpy python3-devel python3-numpy-devel && \
+    zypper install -y python2-devel python2-numpy-devel python2-numpy python3-devel python3-numpy-devel && \
     zypper install -y ncurses-devel && \
     zypper install -y clang && \
     zypper install -y python-Sphinx && \
