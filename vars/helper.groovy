@@ -23,19 +23,31 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
 
 /**********************************************************************************************************************/
 
-// helper function, recursively wait until all dependencies are not building
-def waitForDependencies(ArrayList<String> deepDependencyList) {
+// internal helper function, recursively wait until all dependencies are not building
+def waitForDependencies_helper(ArrayList<String> deepDependencyList) {
   script {
-    if(deepDependencyList.size() == 0) return
-    if(deepDependencyList[0] == "") return
+    if(deepDependencyList.size() == 0 || deepDependencyList[0] == "") return true
     lock("build-${deepDependencyList[0]}") {
       def deepDependencyListTrunc = deepDependencyList
       deepDependencyListTrunc.remove(0)
-      waitForDependencies(deepDependencyListTrunc)
+      return waitForDependencies(deepDependencyListTrunc)
     }
+    return false
   }
 }
 
+/**********************************************************************************************************************/
+
+// helper function, recursively wait until all dependencies are not building
+def waitForDependencies(ArrayList<String> deepDependencyList) {
+  script {
+    while(!waitForDependencies_helper(deepDependencyList)) {
+      echo("Could not acquire lock. Retrying in 10 second...")
+      sleep(10)
+    }
+  }
+}
+  
 /**********************************************************************************************************************/
 
 def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType, String gitUrl) {
