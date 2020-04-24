@@ -71,7 +71,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
 
       stages {
         // wait until dependencies are no longer building (to reduce "storm" of builds after core libraries were built)
-        stage('Wait for dependencies') {
+        /* stage('Wait for dependencies') {
           steps {
             script {
               node("master") {
@@ -79,7 +79,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
               }
             }
           }
-        } // stage wait for dependencies
+        } */ // stage wait for dependencies
 
         // apply changes from project-template
         stage('preprocess') {
