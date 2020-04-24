@@ -117,7 +117,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 export LSAN_OPTIONS=verbosity=1:log_threads=1
                 export PKG_CONFIG_PATH=/export/doocs/lib/pkgconfig
                 # TEMPORARY FIX: remove libtirpc dependency. Somehow only SUN RPC works for us. Needs investigation.
-                find /export/doocs/lib/pkgconfig -name *.pc --exec sed -i \\{\\} -e 's/Requires.private: libtirpc//' \\;
+                find /export/doocs/lib/pkgconfig -name *.pc -exec sed -i \\{\\} -e 's/Requires.private: libtirpc//' \\;
                 sudo -E -H -u msk_jenkins meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
                 sudo -E -H -u msk_jenkins ninja -C build
                 find /export > /export.list.before
