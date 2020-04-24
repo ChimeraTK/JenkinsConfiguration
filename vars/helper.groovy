@@ -27,7 +27,7 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
 def waitForDependencies_helper(ArrayList<String> deepDependencyList) {
   script {
     if(deepDependencyList.size() == 0 || deepDependencyList[0] == "") return true
-    lock("build-${deepDependencyList[0]}") {
+    lock(resource: "build-${deepDependencyList[0]}", skipIfLocked: true) {
       def deepDependencyListTrunc = deepDependencyList
       deepDependencyListTrunc.remove(0)
       return waitForDependencies(deepDependencyListTrunc)
