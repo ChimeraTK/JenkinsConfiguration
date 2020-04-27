@@ -92,6 +92,8 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                   git gitUrl
                 }
                 sh """
+                  git reset --hard
+                  git clean -f -d -x
                   git config credential.helper store
                   git remote add project-template "https://github.com/ChimeraTK/project-template" || true
                   git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
