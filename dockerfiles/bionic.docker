@@ -35,7 +35,6 @@ RUN apt-get update && \
     apt-get install -y netcat-openbsd && \
     apt-get install -y libarmadillo-dev && \
     apt-get install -y libjsoncpp-dev && \
-    apt-get install -y libtirpc-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
     pip3 install meson
