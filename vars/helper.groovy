@@ -253,7 +253,7 @@ elif [ "${buildType}" == "asan" ]; then
 else
   cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
 fi
-make \${MAKEOPTS} VERBOSE=1
+make ${MAKEOPTS} VERBOSE=1
 EOF
       cat /scratch/script
       chmod +x /scratch/script
