@@ -235,6 +235,8 @@ def doBuild(String label, String buildType) {
 mkdir -p /scratch/build-${JOB_NAME}
 mkdir -p /scratch/install
 cd /scratch/build-${JOB_NAME}
+# Required to find DOOCS
+export PKG_CONFIG_PATH=/export/doocs/lib/pkgconfig
 # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
 for VAR in \${JOB_VARIABLES}; do
   export \\`eval echo \\\${VAR}\\`
