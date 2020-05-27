@@ -62,10 +62,10 @@ def transformIntoStep(String buildName) {
               cd \${DOOCSARCH}
               sed -i CONFIG -e 's|^EPICS[[:space:]]*=.*\$|EPICS = '/export/epics'|'
               if [ "${buildType}" == "tsan" ]; then
-                sed -i CONFIG -e 's/%.o:/# OVERRIDES\\n\\nCC = clang-6.0\\nCXX = clang++-6.0\\nCFLAGS += -fsanitize=thread\\nCXXFLAGS += -fsanitize=thread\\nLDFLAGS += -fsanitize=thread\\n\\n%.o:/'
+                sed -i CONFIG -e 's/%.o:/# OVERRIDES\\n\\nCC = clang-8\\nCXX = clang++-8\\nCFLAGS += -fsanitize=thread\\nCXXFLAGS += -fsanitize=thread\\nLDFLAGS += -fsanitize=thread\\n\\n%.o:/'
                 #sed -i CONFIG -e 's/%.o:/# OVERRIDES\\n\\nCFLAGS += -fsanitize=thread\\nCXXFLAGS += -fsanitize=thread\\nLDFLAGS += -fsanitize=thread\\n\\n%.o:/'
               elif [ "${buildType}" == "asan" ]; then
-                sed -i CONFIG -e 's/%.o:/# OVERRIDES\\n\\nCC = clang-6.0\\nCXX = clang++-6.0\\nCFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\nCXXFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\nLDFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\n\\n%.o:/'
+                sed -i CONFIG -e 's/%.o:/# OVERRIDES\\n\\nCC = clang-8\\nCXX = clang++-8\\nCFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\nCXXFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\nLDFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\n\\n%.o:/'
                 #sed -i CONFIG -e 's/%.o:/# OVERRIDES\\n\\nCFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\nCXXFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\nLDFLAGS += -fsanitize=address -fsanitize=undefined -fsanitize=leak\\n\\n%.o:/'
               fi
               mkdir -p /scratch
