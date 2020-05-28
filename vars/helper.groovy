@@ -341,7 +341,7 @@ for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
 make coverage || true
-/common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
+python3 /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
 
 cp -r coverage_html ${WORKSPACE} || true
 cp -r coverage.xml ${WORKSPACE} || true
