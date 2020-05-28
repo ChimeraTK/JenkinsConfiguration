@@ -56,8 +56,8 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
   doPrepare(true, gitUrl)
   doDependencyArtefacts(dependencyList, label, buildType)
 
-  // add inactivity timeout of 10 minutes (build will be interrupted if 10 minutes no log output has been produced)
-  timeout(activity: true, time: 10) {
+  // add inactivity timeout of 30 minutes (build will be interrupted if 30 minutes no log output has been produced)
+  timeout(activity: true, time: 30) {
   
     // start build and tests, then generate artefact
     doBuild(label, buildType)
