@@ -129,11 +129,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               else
                 source /export/doocs/doocsarch.env
                 export LSAN_OPTIONS=verbosity=1:log_threads=1
-                if [ -z "\${MAKEOPTS}" ]; then
-                  make -j8
-                else
-                  make "\${MAKEOPTS}"
-                fi   
+                make ${MAKEOPTS}
                 find /export > /export.list.before
                 make install
                 find /export > /export.list.after
