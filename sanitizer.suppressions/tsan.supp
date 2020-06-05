@@ -1,0 +1,7 @@
+# BEGIN blacklist lock-order-false-positives from doocsServerTestHelper
+deadlock:doocsServerTestHelper.cc
+# END blacklist lock-order false-positives from doocsServerTestHelper
+
+# BEGIN blacklist everything from libzmq; suggested by TSAN wiki
+called_from_lib:libzmq.so.5
+# END blacklist everything from libzmq; suggested by TSAN wiki

@@ -320,6 +320,7 @@ for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
 done
 export LSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/lsan.supp"
 export UBSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/ubsan.supp"
+export TSAN_OPTIONS="second_deadlock_stack=1,suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/tsan.supp"
 ctest --no-compress-output \${CTESTOPTS} -T Test -V
 EOF
     cat /scratch/script
