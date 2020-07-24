@@ -91,6 +91,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                 } else {
                   git gitUrl
                 }
+                /*
                 sh """
                   git reset --hard
                   git clean -f -d -x
@@ -103,6 +104,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                   git push --all || \
                   true
                 """
+                */
                 // We could also apply the clang-format style here, but this should be discussed first.
                 //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
                 //  git commit -a -m "Automated commit: apply clang-format" && git push --all || true
