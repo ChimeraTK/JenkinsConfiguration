@@ -244,12 +244,12 @@ done
 if [ "${buildType}" == "tsan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=thread"
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DUSE_TSAN="true"
 elif [ "${buildType}" == "asan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
   export LSAN_OPTIONS=verbosity=1:log_threads=1
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
 else
   cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
 fi
