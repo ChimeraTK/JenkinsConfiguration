@@ -99,7 +99,6 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                   git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
                   git remote update
                   git merge -X theirs --no-edit project-template/master && \
-                  git commit -m "automatic merge of project-template" && \
                   git push --all || \
                   true
                 """
