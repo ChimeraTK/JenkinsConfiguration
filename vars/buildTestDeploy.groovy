@@ -66,7 +66,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
       options {
         disableConcurrentBuilds()
         copyArtifactPermission('*')
-        buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '5'))
+        buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
       }
 
       stages {
