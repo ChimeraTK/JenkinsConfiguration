@@ -244,7 +244,7 @@ done
 if [ "${buildType}" == "tsan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DUSE_TSAN="true"
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DENABLE_TSAN="true"
 elif [ "${buildType}" == "asan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
