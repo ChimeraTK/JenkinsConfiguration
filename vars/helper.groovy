@@ -243,7 +243,7 @@ elif [ "${buildType}" == "asan" ]; then
   export CXX="clang++-8"
   export LSAN_OPTIONS=verbosity=1:log_threads=1
 fi
-cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
+cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
 make ${MAKEOPTS} VERBOSE=1
 EOF
       cat /scratch/script
