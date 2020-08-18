@@ -223,12 +223,6 @@ def doBuild(String label, String buildType) {
   catchError {
     // start the build
     sh """
-      # set cmake build type
-      if [ "${buildType}" == "Debug" ]; then
-        cmakeBuildType="Debug"
-      else
-        cmakeBuildType="RelWithDebInfo"
-      fi
       chown -R msk_jenkins /scratch
       cat > /scratch/script <<EOF
 #!/bin/bash
@@ -244,15 +238,12 @@ done
 if [ "${buildType}" == "tsan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DENABLE_TSAN="true"
 elif [ "${buildType}" == "asan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
   export LSAN_OPTIONS=verbosity=1:log_threads=1
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
-else
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
 fi
+cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
 make ${MAKEOPTS} VERBOSE=1
 EOF
       cat /scratch/script
