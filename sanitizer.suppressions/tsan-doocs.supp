@@ -9,3 +9,6 @@ thread:create_sys_threads
 
 # Data race in shutdown, not understood, mentioned also in doocs-rt #984864
 race:xdrrec_destroy
+
+# Unsafe call in signal handler, not understood, mentioned also in doocs-rt #984864
+signal:xdrrec_destroy
