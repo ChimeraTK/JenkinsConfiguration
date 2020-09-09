@@ -64,7 +64,7 @@ docker start ${ID} || exit 1
   echo " Starting interactive shell in the docker container for ${label} as user msk_jenkins."
   echo " Password-less sudo has been enabled inside this container (in contrast to the Jenkins build environment)."
   echo "==========================================================================================================="
-  docker exec -u 0 -it ${ID} bash -il -c "su -s /bin/bash - msk_jenkins"
+  docker exec -u msk_jenkins -it ${ID} bash -il
 
 )
 
