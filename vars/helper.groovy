@@ -192,7 +192,7 @@ def doBuilddirArtefact(String label, String buildType) {
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
       for a in artefacts/build-*-${label}-${buildType}.tgz ; do
-        sudo -H -E -u msk_jenkins tar zxvf \"\${a}\" -C /
+        sudo -H -E -u msk_jenkins tar zxf \"\${a}\" -C /
       done
 
       touch /scratch/artefact.list
@@ -210,7 +210,7 @@ def doBuilddirArtefact(String label, String buildType) {
   sh """
     if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
       for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-        tar zxvf \"\${a}\" -C /
+        tar zxf \"\${a}\" -C /
       done
     fi
   """
