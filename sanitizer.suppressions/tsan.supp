@@ -3,5 +3,7 @@ deadlock:doocsServerTestHelper.cc
 # END blacklist lock-order false-positives from doocsServerTestHelper
 
 # BEGIN blacklist everything from libzmq; suggested by TSAN wiki
-called_from_lib:libzmq.so.5
+# Note: using called_from_lib does not work, because TSAN will complain when the library is unloaded!
+#called_from_lib:libzmq.so.5
+race:zmq
 # END blacklist everything from libzmq; suggested by TSAN wiki
