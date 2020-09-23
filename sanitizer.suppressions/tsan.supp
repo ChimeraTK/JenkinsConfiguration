@@ -1,3 +1,5 @@
+### NOTE: Keep this file in sync with the lower part of tsan-doocs.supp ###
+
 # BEGIN blacklist lock-order-false-positives from doocsServerTestHelper
 deadlock:doocsServerTestHelper.cc
 # END blacklist lock-order false-positives from doocsServerTestHelper

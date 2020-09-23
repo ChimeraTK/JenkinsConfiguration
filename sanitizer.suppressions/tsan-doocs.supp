@@ -12,3 +12,15 @@ race:xdrrec_destroy
 
 # Unsafe call in signal handler, not understood, mentioned also in doocs-rt #984864
 signal:xdrrec_destroy
+
+##### BELOW AN EXACT COPY OF tsan.supp FOLLOWS, AS TSAN ACCEPTS ONLY ONE SUPPRESSIONS FILE ####
+
+# BEGIN blacklist lock-order-false-positives from doocsServerTestHelper
+deadlock:doocsServerTestHelper.cc
+# END blacklist lock-order false-positives from doocsServerTestHelper
+
+# BEGIN blacklist everything from libzmq; suggested by TSAN wiki
+# Note: using called_from_lib does not work, because TSAN will complain when the library is unloaded!
+#called_from_lib:libzmq.so.5
+race:zmq
+# END blacklist everything from libzmq; suggested by TSAN wiki
