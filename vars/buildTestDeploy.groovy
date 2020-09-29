@@ -13,6 +13,8 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                                    'xenial-asan',
                                    'bionic-Debug',
                                    'bionic-Release',
+                                   'focal-Debug',
+                                   'focal-Release',
                                    'tumbleweed-Debug',
                                    'tumbleweed-Release']) {
 
