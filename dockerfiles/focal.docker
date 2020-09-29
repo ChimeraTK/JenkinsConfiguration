@@ -24,7 +24,7 @@ RUN apt-get update && \
         graphviz \
         clang \
         libhdf5-dev \
-        liblua5.3-dev \
+        liblua5.2-dev \
         python3-sphinx \
         libgsl-dev \
         libssl-dev \
