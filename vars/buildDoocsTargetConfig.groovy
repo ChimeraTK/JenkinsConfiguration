@@ -57,7 +57,7 @@ def transformIntoStep(String buildName) {
               if [ "${label}" == "bionic" ]; then
                 DOOCSARCH=Ubuntu-18.04-x86_64
               fi
-              if [ "${label]" == "focal" ]; then
+              if [ "${label}" == "focal" ]; then
                 DOOCSARCH=Ubuntu-20.04-x86_64
               fi
               echo "export DOOCSARCH=\${DOOCSARCH}" > /export/doocs/doocsarch.env
