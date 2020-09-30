@@ -12,8 +12,6 @@ def call() {
                  'xenial-Release',
                  'xenial-tsan',
                  'xenial-asan',
-                 'bionic-Debug',
-                 'bionic-Release',
                  'focal-Debug',
                  'focal-Release']
 
@@ -54,9 +52,6 @@ def transformIntoStep(String buildName) {
               cd /export/doocs
               chown -R msk_jenkins /export
               DOOCSARCH=Ubuntu-16.04-x86_64
-              if [ "${label}" == "bionic" ]; then
-                DOOCSARCH=Ubuntu-18.04-x86_64
-              fi
               if [ "${label}" == "focal" ]; then
                 DOOCSARCH=Ubuntu-20.04-x86_64
               fi
