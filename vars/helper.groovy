@@ -457,10 +457,7 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
   }
 
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
-  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '',
-           consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '',
-           excludePattern: '', healthy: '', includePattern: '', messagesPattern: '.*-Wstrict-aliasing.*',
-           unHealthy: '', unstableTotalAll: '0'
+  recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc3()]
   
 }
 
