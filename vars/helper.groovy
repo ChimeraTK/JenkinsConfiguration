@@ -457,7 +457,7 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
   }
 
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
-  recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc3()]
+  recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc()]
   
 }
 
