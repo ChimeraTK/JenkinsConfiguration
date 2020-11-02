@@ -140,6 +140,10 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
         echo DEBUG
         pwd
         ls -l
+        whoami
+        sudo -H -E -u msk_jenkins ls -l
+        sudo -H -E -u msk_jenkins pwd
+        sudo -H -E -u msk_jenkins ls -l ~
         echo END DEBUG
      '''
       sh 'sudo -H -E -u msk_jenkins git submodule update --init --recursive'
