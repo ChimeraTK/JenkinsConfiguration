@@ -8,6 +8,7 @@ RUN apt-get update && \
     add-apt-repository -y universe && \
     add-apt-repository -y ppa:hola-launchpad/valgrind && \
     add-apt-repository -y ppa:git-core/ppa && \
+    add-apt-repository -y ppa:edd/misc && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \

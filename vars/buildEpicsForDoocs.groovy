@@ -12,8 +12,9 @@ def call() {
                  'xenial-Release',
                  'xenial-tsan',
                  'xenial-asan',
-                 'bionic-Debug',
-                 'bionic-Release' ]
+                 'focal-Debug',
+                 'focal-Release' ]
+
 
   pipeline {
     agent none

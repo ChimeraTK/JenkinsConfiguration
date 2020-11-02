@@ -12,8 +12,8 @@ def call() {
                  'xenial-Release',
                  'xenial-tsan',
                  'xenial-asan',
-                 'bionic-Debug',
-                 'bionic-Release' ]
+                 'focal-Debug',
+                 'focal-Release']
 
   pipeline {
     agent none
@@ -52,8 +52,8 @@ def transformIntoStep(String buildName) {
               cd /export/doocs
               chown -R msk_jenkins /export
               DOOCSARCH=Ubuntu-16.04-x86_64
-              if [ "${label}" == "bionic" ]; then
-                DOOCSARCH=Ubuntu-18.04-x86_64
+              if [ "${label}" == "focal" ]; then
+                DOOCSARCH=Ubuntu-20.04-x86_64
               fi
               echo "export DOOCSARCH=\${DOOCSARCH}" > /export/doocs/doocsarch.env
               sudo -H -u msk_jenkins git clone http://doocs-git.desy.de/cgit/doocs/\${DOOCSARCH}.git

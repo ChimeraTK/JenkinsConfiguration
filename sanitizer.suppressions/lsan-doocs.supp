@@ -1,0 +1,18 @@
+# Leaks caused by DOOCS and/or sunrpc - further investigation necessary! Probably related to improper shutdown mechanism in tests.
+leak:svctcp_create
+leak:xdrrec_create
+leak:svc_run
+leak:serverTestSpectrumBuffer-exception
+leak:rendezvous_request
+leak:fio_disp::t_open
+
+# DOOCS does not do proper cleanup when the server terminates due to an exception...
+leak:serverTestSpectrumBuffer-exception
+
+### REPEAT lsan.supp BELOW, multiple suppression files do not work for LSAN!
+
+# BEGIN Leaks from TINE startup due to problems with DOOCS and ASAN
+leak:initClnWorkArea
+leak:assignConTblMemory
+leak:getConTblEntry
+# END Leaks from TINE startup due to problems with DOOCS and ASAN

@@ -13,8 +13,8 @@ def call(String libraryName, ArrayList<String> dependencyList) {
                  'xenial-Release',
                  'xenial-tsan',
                  'xenial-asan',
-                 'bionic-Debug',
-                 'bionic-Release' ]
+                 'focal-Debug',
+                 'focal-Release']
 
   script {
     node('Docker') {

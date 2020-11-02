@@ -198,7 +198,7 @@ def doBuilddirArtefact(String label, String buildType) {
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
       for a in artefacts/build-*-${label}-${buildType}.tgz ; do
-        sudo -H -E -u msk_jenkins tar zxvf \"\${a}\" -C /
+        sudo -H -E -u msk_jenkins tar zxf \"\${a}\" -C /
       done
 
       touch /scratch/artefact.list
@@ -216,7 +216,7 @@ def doBuilddirArtefact(String label, String buildType) {
   sh """
     if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
       for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-        tar zxvf \"\${a}\" -C /
+        tar zxf \"\${a}\" -C /
       done
     fi
   """
@@ -229,12 +229,6 @@ def doBuild(String label, String buildType) {
   catchError {
     // start the build
     sh """
-      # set cmake build type
-      if [ "${buildType}" == "Debug" ]; then
-        cmakeBuildType="Debug"
-      else
-        cmakeBuildType="RelWithDebInfo"
-      fi
       chown -R msk_jenkins /scratch
       cat > /scratch/script <<EOF
 #!/bin/bash
@@ -250,15 +244,12 @@ done
 if [ "${buildType}" == "tsan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DENABLE_TSAN="true"
 elif [ "${buildType}" == "asan" ]; then
   export CC="clang-8"
   export CXX="clang++-8"
   export LSAN_OPTIONS=verbosity=1:log_threads=1
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Debug" -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize=leak"
-else
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=\${cmakeBuildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
 fi
+cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
 make ${MAKEOPTS} VERBOSE=1
 EOF
       cat /scratch/script
@@ -325,9 +316,9 @@ fi
 for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
-export LSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/lsan.supp"
-export UBSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/ubsan.supp"
-export TSAN_OPTIONS="second_deadlock_stack=1,suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/tsan.supp"
+export LSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/lsan.supp,\${LSAN_OPTIONS}"
+export UBSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/ubsan.supp,\${UBSAN_OPTIONS}"
+export TSAN_OPTIONS="second_deadlock_stack=1,suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/tsan.supp,\${TSAN_OPTIONS}"
 ctest --no-compress-output \${CTESTOPTS} -T Test -V
 EOF
     cat /scratch/script
@@ -472,10 +463,7 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
   }
 
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
-  warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '',
-           consoleParsers: [[parserName: 'GNU Make + GNU C Compiler (gcc)']], defaultEncoding: '',
-           excludePattern: '', healthy: '', includePattern: '', messagesPattern: '.*-Wstrict-aliasing.*',
-           unHealthy: '', unstableTotalAll: '0'
+  recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc()]
   
 }
 
