@@ -136,6 +136,12 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
       } else {
           git gitUrl
       }
+      sh '''
+        echo DEBUG
+        pwd
+        ls -l
+        echo END DEBUG
+     '''
       sh 'sudo -H -E -u msk_jenkins git submodule update --init --recursive'
     }
     else {
