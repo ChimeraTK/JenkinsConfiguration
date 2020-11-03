@@ -114,9 +114,9 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
     grep -v secure_path /etc/sudoers-backup > /etc/sudoers
   '''
 
-  // make sure all files in workspace can be written by msk_jenkins
+  // make sure all files and directories in the msk_jenkins home folder cna be accessed/written by msk_jenkins (especially the workspace)
   sh '''
-    chown -R msk_jenkins .
+    chown -R msk_jenkins /home/msk_jenkins
   '''
   
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
