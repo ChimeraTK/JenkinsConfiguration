@@ -147,6 +147,7 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
         chown -R msk_jenkins .
         sleep 10
         ls -al /home/msk_jenkins
+        ls -al /home/msk_jenkins/workspace
         sudo -H -E -u msk_jenkins git status
         sudo -H -E -u msk_jenkins git fetch
         sudo -H -E -u msk_jenkins git submodule update --init --recursive
