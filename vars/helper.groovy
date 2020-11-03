@@ -136,23 +136,6 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
       } else {
           git gitUrl
       }
-      sh '''
-        echo DEBUG
-        pwd
-        ls -l -a
-        whoami
-        sudo -H -E -u msk_jenkins ls -l
-        sudo -H -E -u msk_jenkins pwd
-        sudo -H -E -u msk_jenkins whoami
-        chown -R msk_jenkins .
-        sleep 10
-        ls -al /home/msk_jenkins
-        ls -al /home/msk_jenkins/workspace
-        sudo -H -E -u msk_jenkins git status
-        sudo -H -E -u msk_jenkins git fetch
-        sudo -H -E -u msk_jenkins git submodule update --init --recursive
-        echo END DEBUG
-     '''
       sh 'sudo -H -E -u msk_jenkins git submodule update --init --recursive'
     }
     else {
