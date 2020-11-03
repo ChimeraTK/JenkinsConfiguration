@@ -145,6 +145,7 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
         sudo -H -E -u msk_jenkins pwd
         sudo -H -E -u msk_jenkins whoami
         chown -R msk_jenkins .
+        sleep 10
         ls -al /home/msk_jenkins
         sudo -H -E -u msk_jenkins git status
         sudo -H -E -u msk_jenkins git fetch
