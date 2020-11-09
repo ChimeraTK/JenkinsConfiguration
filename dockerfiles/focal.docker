@@ -36,7 +36,8 @@ RUN apt-get update && \
         libarmadillo-dev \
         libjsoncpp-dev \
         python3-pytest \
-        libxerces-c-dev && \
+        libxerces-c-dev \
+        libmuparser-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
     pip3 install meson
