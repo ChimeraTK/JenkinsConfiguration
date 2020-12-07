@@ -72,7 +72,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
       node('Docker') {
         def gitUrl = "http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git"
         if (env.USE_GITLAB && env.USE_GITLAB != '') {
-          gitUrl = "https://mcs-gitlab.desy.de/doocs/${libraryName}.git
+          gitUrl = "https://mcs-gitlab.desy.de/doocs/${libraryName}.git"
         }
         if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
           git branch: env.BRANCH_NAME, url: gitUrl
