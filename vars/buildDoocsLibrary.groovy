@@ -71,6 +71,9 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
     stage(buildName) {
       node('Docker') {
         def gitUrl = "http://doocs-git.desy.de/cgit/doocs/library/${libraryName}.git"
+        if (env.USE_GITLAB && env.USE_GITLAB != '') {
+          gitUrl = "https://mcs-gitlab.desy.de/doocs/${libraryName}.git
+        }
         if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
           git branch: env.BRANCH_NAME, url: gitUrl
         } else {
@@ -86,6 +89,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
             '''
             helper.doDependencyArtefacts(dependencyList, label, buildType)
 
+            // We don't care that in gitlab the repository structure is different. Those project only work with meson builds anyway, and form them the path does not matter.
             sh """
               mkdir -p /export/doocs/library/${libraryName}
               cd /export/doocs/library/${libraryName}
