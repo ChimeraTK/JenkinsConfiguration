@@ -163,6 +163,11 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
         obtainedArtefacts.add(dependency)
         sh """
           tar zxf \"artefacts/install-${dependency}-${label}-${buildType}.tgz\" -C /
+          env
+          ls /usr/bin
+          ls /usr
+          ls /bin
+          mount
           touch /scratch/dependencies.${dependency}.list
           cp /scratch/dependencies.${dependency}.list ${WORKSPACE}/artefact.list
           touch /scratch/artefact.list
