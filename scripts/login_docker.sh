@@ -2,7 +2,7 @@
 
 if [ $# != 1 -a $# != 4 ]; then
   echo "Usage: ./login_docker.sh <label> [<jobName> <buildType> <buildNumber>]"
-  echo "  <label> denomiates the Linux system name, e.g. xenial, bionic, tubleweed etc."
+  echo "  <label> denomiates the Linux system name, e.g. xenial, bionic, focal, tubleweed etc."
   echo "  <jobName> denomiates a Jenkins job name whose build artefact and dependencies should be unpacked into the container."
   echo "  <buildType> denonminates the cmake build type to retreive the job and artefacts for, i.e. Debug or Releas."
   echo "  <buildNumbger> denonminates the Jenkins build number to retreive the build artefact for. Dependency artefacts are always retreived as lastSuccessfulBuild!"

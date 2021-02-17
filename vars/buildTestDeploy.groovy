@@ -7,12 +7,10 @@
 // This is the function called from the .jenkinsfile
 // The last optional argument is the list of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
 def call(ArrayList<String> dependencyList, String gitUrl='',
-         ArrayList<String> builds=['xenial-Debug',
-                                   'xenial-Release',
-                                   'xenial-tsan',
-                                   'xenial-asan',
-                                   'focal-Debug',
+         ArrayList<String> builds=['focal-Debug',
                                    'focal-Release',
+                                   'focal-tsan',
+                                   'focal-asan',
                                    'tumbleweed-Debug',
                                    'tumbleweed-Release']) {
 
