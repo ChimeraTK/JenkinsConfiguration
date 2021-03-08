@@ -4,7 +4,7 @@
 # --security-opt seccomp:unconfined flag, which is not available when building an image. So here is the work-around:
 
 # Create a container with the required flag and start it
-docker create -i --security-opt seccomp:unconfined --name tumbleweed_updater tumbleweed
+docker create -i --security-opt seccomp:unconfined --name tumbleweed_updater builder:tumbleweed
 docker start tumbleweed_updater
 
 # Execute the required commands in the container
@@ -16,7 +16,7 @@ docker exec tumbleweed_updater git config --system https.proxy http://xfelproxy.
 
 # Stop the container and commit the changes to the image
 docker stop tumbleweed_updater
-docker commit tumbleweed_updater tumbleweed
+docker commit tumbleweed_updater builder:tumbleweed
 
 # Finally remove the container
 docker container rm tumbleweed_updater
