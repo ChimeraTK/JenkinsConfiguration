@@ -9,8 +9,8 @@ docker start tumbleweed_updater
 
 # Execute the required commands in the container
 docker exec tumbleweed_updater zypper -n install git libboost_*-devel libqt5-qtbase-devel rpcbind
-docker exec tumbleweed_updater useradd -u 30996 msk_jenkins
-docker exec tumbleweed_updater echo "Defaults set_home" >> /etc/sudoers
+docker exec tumbleweed_updater useradd "-u" 30996 msk_jenkins
+docker exec tumbleweed_updater bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers"
 docker exec tumbleweed_updater git config --system http.proxy http://xfelproxy.desy.de:3128 
 docker exec tumbleweed_updater git config --system https.proxy http://xfelproxy.desy.de:3128
 
