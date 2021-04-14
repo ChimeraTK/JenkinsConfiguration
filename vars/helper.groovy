@@ -451,11 +451,7 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
     sh """
       pwd
       mkdir -p build
-      if [ -e /scratch/build-${parentJob}/compile_commands.json ]; then
-          cppcheck --inline-suppr --enable=all --xml --xml-version=2  -ibuild --project=/scratch/build-${parentJob}/compile_commands.json 2> ./build/cppcheck.xml
-      else
-          cppcheck --inline-suppr --enable=all --xml --xml-version=2  -ibuild -Iinclude -I/usr/include . 2> ./build/cppcheck.xml
-      fi
+      cppcheck --inline-suppr --enable=all --xml --xml-version=2  -ibuild -Iinclude -I/usr/include . 2> ./build/cppcheck.xml
     """
     publishCppcheck pattern: 'build/cppcheck.xml'
   }
