@@ -258,6 +258,11 @@ EOF
     """
     archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   }
+
+  // Copy the include database from Debug build for running cppcheck afterwards
+  if (buildType == "Debug") {
+    stash includes: "/scratch/*/compile_commands.json" name: "compile_commands.json"
+  }
 }
 
 /**********************************************************************************************************************/
@@ -446,12 +451,14 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
 
   // Note: this part runs only once per project, not for each branch!
 
+  unstash name: "compile_commands.json"
+
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
   if(!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') {
     sh """
       pwd
       mkdir -p build
-      cppcheck --enable=all --xml --xml-version=2  -ibuild . 2> ./build/cppcheck.xml
+      cppcheck --enable=all --xml --xml-version=2  --project=compile_commands.json 2> ./build/cppcheck.xml
     """
     publishCppcheck pattern: 'build/cppcheck.xml'
   }
