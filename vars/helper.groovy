@@ -458,7 +458,11 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
     sh """
       pwd
       mkdir -p build
-      cppcheck --enable=all --xml --xml-version=2  --project=compile_commands.json 2> ./build/cppcheck.xml
+      if [ -e compile_commands.json ]; then
+        cppcheck --enable=all --xml --xml-version=2  --project=compile_commands.json 2> ./build/cppcheck.xml
+      else
+        cppcheck --enable=all --xml --xml-version=2  -ibuild -Iinclude . 2> ./build/cppcheck.xml
+      fi
     """
     publishCppcheck pattern: 'build/cppcheck.xml'
   }
