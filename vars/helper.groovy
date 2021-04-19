@@ -252,16 +252,18 @@ EOF
     """
   }
   script {
+    // copy compile_commands.json from build directory to workspace
+    // any will do so the last one will win
+    sh """
+      cp /scratch/build-${JOB_NAME}/compile_commands.json "${WORKSPACE}" || true
+    """
+  }
+  script {
     // generate and archive artefact from build directory (used for the analysis job)
     sh """
       sudo -H -E -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
     """
     archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
-  }
-
-  // Copy the include database from Debug build for running cppcheck afterwards
-  if (buildType == "Debug") {
-    stash includes: "/scratch/build-${label}-${buildType}/compile_commands.json", name: "compile_commands.json"
   }
 }
 
@@ -450,8 +452,6 @@ def doInstall(String label, String buildType) {
 def doPublishBuildTestDeploy(ArrayList<String> builds) {
 
   // Note: this part runs only once per project, not for each branch!
-
-  unstash name: "compile_commands.json"
 
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
   if(!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') {
