@@ -261,7 +261,7 @@ EOF
 
   // Copy the include database from Debug build for running cppcheck afterwards
   if (buildType == "Debug") {
-    stash includes: "/scratch/*/compile_commands.json" name: "compile_commands.json"
+    stash includes: "/scratch/build-${label}-${buildType}/compile_commands.json", name: "compile_commands.json"
   }
 }
 
