@@ -65,6 +65,12 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
       // tests for asan and tsan are run in the analysis jobs
       doTest(label, buildType)
     }
+
+    // Run cppcheck only for focal-debug
+    if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') && buildType == "Debug") {
+        doCppcheck(label, buildType)
+    }
+
     doInstall(label, buildType)
 
   }
@@ -76,9 +82,6 @@ def doAnalysis(String label, String buildType) {
   if(buildType == "Debug") {
     doPrepare(false)
     doBuilddirArtefact(label, buildType)
-
-    // Run cppcheck only for focal-debug
-        doCppcheck(label, buildType)
 
     // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
     timeout(activity: true, time: 60) {
