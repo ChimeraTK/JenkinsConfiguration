@@ -78,9 +78,7 @@ def doAnalysis(String label, String buildType) {
     doBuilddirArtefact(label, buildType)
 
     // Run cppcheck only for focal-debug
-    if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '')) {
         doCppcheck(label, buildType)
-    }
 
     // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
     timeout(activity: true, time: 60) {
