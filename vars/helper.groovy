@@ -78,7 +78,7 @@ def doAnalysis(String label, String buildType) {
     doBuilddirArtefact(label, buildType)
 
     // Run cppcheck only for focal-debug
-    if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') && label == 'focal') {
+    if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '')) {
         doCppcheck(label, buildType)
     }
 
