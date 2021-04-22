@@ -77,6 +77,11 @@ def doAnalysis(String label, String buildType) {
     doPrepare(false)
     doBuilddirArtefact(label, buildType)
 
+    // Run cppcheck only for focal-debug
+    if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') && label == 'focal') {
+        doCppcheck(label, buildType)
+    }
+
     // Add inactivity timeout of 60 minutes (build will be interrupted if 60 minutes no log output has been produced)
     timeout(activity: true, time: 60) {
 
@@ -455,16 +460,8 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
 
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
   if(!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') {
-    sh """
-      pwd
-      mkdir -p build
-      if [ -e compile_commands.json ]; then
-        cppcheck --enable=all --xml --xml-version=2  --project=compile_commands.json 2> ./build/cppcheck.xml
-      else
-        cppcheck --enable=all --xml --xml-version=2  -ibuild -Iinclude . 2> ./build/cppcheck.xml
-      fi
-    """
-    publishCppcheck pattern: 'build/cppcheck.xml'
+    unstash "cppcheck.xml"
+    publishCppcheck pattern: 'cppcheck.xml'
   }
 
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
@@ -532,3 +529,29 @@ def doPublishAnalysis(ArrayList<String> builds) {
 
 /**********************************************************************************************************************/
 
+def doCppcheck(String label, String buildType) {
+   def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+
+  // Generate coverage report as HTML and also convert it into cobertura XML file
+  sh """
+    chown msk_jenkins -R /scratch
+    cat > /scratch/script <<EOF
+#!/bin/bash
+cd /scratch/build-${parentJob}
+for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
+   export \\`eval echo \\\${VAR}\\`
+done
+if [ -e compile_commands.json ]; then
+    cppcheck --inline-suppr --enable=all --xml --xml-version=2  --project=compile_commands.json 2>cppcheck.xml
+else
+    cppcheck --inline-suppr --enable=all --xml --xml-version=2  -ibuild -Iinclude /scratch/source 2>cppcheck.xml
+fi
+cp cppcheck.xml ${WORKSPACE} || true
+EOF
+    cat /scratch/script
+    chmod +x /scratch/script
+    sudo -H -E -u msk_jenkins /scratch/script
+  """
+
+  stash allowEmpty: true, includes: "cppcheck.xml", name: "cppcheck.xml"
+}
