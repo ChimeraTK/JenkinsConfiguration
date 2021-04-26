@@ -531,14 +531,12 @@ def doPublishAnalysis(ArrayList<String> builds) {
 /**********************************************************************************************************************/
 
 def doCppcheck(String label, String buildType) {
-   def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
-
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
     chown msk_jenkins -R /scratch
     cat > /scratch/script <<EOF
 #!/bin/bash
-cd /scratch/build-${parentJob}
+cd /scratch/build-${JOB_NAME}-${label}-${buildType}
 for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
