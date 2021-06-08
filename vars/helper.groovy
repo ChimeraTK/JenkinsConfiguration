@@ -276,6 +276,10 @@ EOF
 /**********************************************************************************************************************/
 
 def doTest(String label, String buildType) {
+  if (env.SKIP_TESTS) {
+    currentBuild.result = 'UNSTABLE'
+    return
+  }
 
   // Run the tests via ctest
   // Prefix test names with label and buildType, so we can distinguish them later
