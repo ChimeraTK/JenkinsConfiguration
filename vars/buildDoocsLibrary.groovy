@@ -124,7 +124,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
                 sudo -E -H -u msk_jenkins mkdir -p /export/doocs/lib/pkgconfig
                 find /export/doocs/lib/pkgconfig -name *.pc -exec sed -i \\{\\} -e 's/Requires.private: libtirpc//' \\;
                 
-                sudo -E -H -u msk_jenkins meson build --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
+                sudo -E -H -u msk_jenkins meson build --wrap-mode=nofallback --buildtype=\${buildType} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
                 sudo -E -H -u msk_jenkins ninja -C build
                 find /export > /export.list.before
                 sudo -E -H -u msk_jenkins ninja -C build install
