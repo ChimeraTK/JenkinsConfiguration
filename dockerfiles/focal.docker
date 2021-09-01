@@ -1,6 +1,6 @@
 FROM ubuntu:focal
-ENV http_proxy ${http_proxy} #http://xfelproxy.desy.de:3128
-ENV https_proxy ${https_proxy} #http://xfelproxy.desy.de:3128
+ENV http_proxy ${http_proxy}
+ENV https_proxy ${https_proxy}
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
@@ -10,7 +10,7 @@ RUN apt-get update && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
-    apt-get install -y sudo wget python3-pip locales pigz \ 
+    apt-get install -y sudo wget python3-pip locales pigz \
         g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake ninja-build \
         libboost-all-dev libxml++2.6-dev \
         libldap2-dev libzmq3-dev rpcbind \
@@ -43,7 +43,7 @@ RUN apt-get update && \
     pip3 install meson
 
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
-   
+
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 
 # Start rpcbind at launch of the container, required for DOOCS
