@@ -11,8 +11,8 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
                                    'focal-Release',
                                    'focal-tsan',
                                    'focal-asan']) {
-#                                   'tumbleweed-Debug',
-#                                   'tumbleweed-Release']) {
+//                                   'tumbleweed-Debug',
+//                                   'tumbleweed-Release']) {
 
   // lock against other builds depending on this build. Depdencies will only keep the lock shortly before starting (see next line),
   // so a dependent's build does not prevent us from starting the build but no dependent may start its build from now on.
