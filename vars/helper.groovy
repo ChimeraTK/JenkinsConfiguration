@@ -267,7 +267,7 @@ EOF
   script {
     // generate and archive artefact from build directory (used for the analysis job)
     sh """
-      sudo -H -E -u msk_jenkins tar zcf build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
+      sudo -H -E -u msk_jenkins tar zcf ${WORKSPACE}/build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
     """
     archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   }
