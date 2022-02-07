@@ -113,6 +113,9 @@ def doAnalysis(String label, String buildType) {
 /**********************************************************************************************************************/
 
 def doPrepare(boolean checkoutScm, String gitUrl='') {
+  // Job name without slashes, to be used as filename/directory component
+  env.JOBNAME_CLEANED=env.JOB_NAME.replace('/','_')
+
   
   // configure sudoers file so we can change the PATH variable
   sh '''
@@ -191,7 +194,7 @@ def doBuilddirArtefact(String label, String buildType) {
   
   // obtain artefacts of dependencies
   script {
-    def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+    def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
     copyArtifacts filter: "build-${parentJob}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${parentJob}", selector: lastSuccessful(), target: "artefacts"
 
     // Unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins).
@@ -232,9 +235,9 @@ def doBuild(String label, String buildType) {
       chown -R msk_jenkins /scratch
       cat > /scratch/script <<EOF
 #!/bin/bash
-mkdir -p /scratch/build-${JOB_NAME}
+mkdir -p /scratch/build-${JOBNAME_CLEANED}
 mkdir -p /scratch/install
-cd /scratch/build-${JOB_NAME}
+cd /scratch/build-${JOBNAME_CLEANED}
 # Required to find DOOCS
 export PKG_CONFIG_PATH=/export/doocs/lib/pkgconfig
 # We might run only part of the project from a sub-directory. If it is empty the trailing / does not confuse cmake
@@ -261,15 +264,15 @@ EOF
     // copy compile_commands.json from build directory to workspace
     // any will do so the last one will win
     sh """
-      cp /scratch/build-${JOB_NAME}/compile_commands.json "${WORKSPACE}" || true
+      cp /scratch/build-${JOBNAME_CLEANED}/compile_commands.json "${WORKSPACE}" || true
     """
   }
   script {
     // generate and archive artefact from build directory (used for the analysis job)
     sh """
-      sudo -H -E -u msk_jenkins tar zcf ${WORKSPACE}/build-${JOB_NAME}-${label}-${buildType}.tgz /scratch
+      sudo -H -E -u msk_jenkins tar zcf build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz /scratch
     """
-    archiveArtifacts artifacts: "build-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+    archiveArtifacts artifacts: "build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   }
 }
 
@@ -287,7 +290,7 @@ def doTest(String label, String buildType) {
   sh """
     cat > /scratch/script <<EOF
 #!/bin/bash
-cd /scratch/build-${JOB_NAME}
+cd /scratch/build-${JOBNAME_CLEANED}
 if [ -z "\${CTESTOPTS}" ]; then
   CTESTOPTS="\${MAKEOPTS}"
 fi
@@ -297,7 +300,7 @@ done
 ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
 echo sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
 sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
-cp -r /scratch/build-${JOB_NAME}/Testing "${WORKSPACE}"
+cp -r /scratch/build-${JOBNAME_CLEANED}/Testing "${WORKSPACE}"
 EOF
     cat /scratch/script
     chmod +x /scratch/script
@@ -312,7 +315,7 @@ EOF
 /**********************************************************************************************************************/
 
 def doSanitizerAnalysis(String label, String buildType) {
-  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+  def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Run the tests via ctest
   // Prefix test names with label and buildType, so we can distinguish them later
@@ -341,7 +344,7 @@ EOF
 /**********************************************************************************************************************/
 
 def doCoverage(String label, String buildType) {
-  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+  def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
@@ -380,7 +383,7 @@ EOF
 /**********************************************************************************************************************/
 
 def doValgrind(String label, String buildType) {
-  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+  def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
 
   // Run valgrind twice in memcheck and helgrind mode
   // 
@@ -442,19 +445,19 @@ def doInstall(String label, String buildType) {
   // Install, but redirect files into the install directory (instead of installing into the system)
   // Generate tar ball of install directory - this will be the artefact used by our dependents
   sh """
-    cd /scratch/build-${JOB_NAME}
+    cd /scratch/build-${JOBNAME_CLEANED}
     sudo -H -E -u msk_jenkins make install DESTDIR=../install
   
     cd /scratch/install
     mkdir -p scratch
     if [ -e /scratch/artefact.list ]; then
-      cp /scratch/artefact.list scratch/dependencies.${JOB_NAME}.list
+      cp /scratch/artefact.list scratch/dependencies.${JOBNAME_CLEANED}.list
     fi
-    sudo -H -E -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOB_NAME}-${label}-${buildType}.tgz .
+    sudo -H -E -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz .
   """
   
   // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
-  archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+  archiveArtifacts artifacts: "install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
 }
 
 /**********************************************************************************************************************/
@@ -540,7 +543,7 @@ def doCppcheck(String label, String buildType) {
     chown msk_jenkins -R /scratch
     cat > /scratch/script <<EOF
 #!/bin/bash
-cd /scratch/build-${JOB_NAME}-${label}-${buildType}
+cd /scratch/build-${JOBNAME_CLEANED}-${label}-${buildType}
 for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
