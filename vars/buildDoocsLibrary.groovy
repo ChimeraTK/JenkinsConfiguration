@@ -63,6 +63,8 @@ def call(String libraryName, ArrayList<String> dependencyList) {
 /**********************************************************************************************************************/
 
 def transformIntoStep(String libraryName, ArrayList<String> dependencyList, String buildName) {
+  def JOBNAME_CLEANED=env.JOB_NAME.replace('/','_')
+
   // split the build name at the '-'
   def (label, buildType) = buildName.tokenize('-')
   // we need to return a closure here, which is then passed to parallel() for execution
@@ -140,11 +142,11 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               cd "$WORKSPACE"
               diff /export.list.before /export.list.after | grep "^> " | sed -e 's/^> //' > export.list.installed
               touch mv /scratch/artefact.list
-              mv /scratch/artefact.list /scratch/dependencies.${JOB_NAME}.list
-              echo /scratch/dependencies.${JOB_NAME}.list >> export.list.installed
-              sudo -H -u msk_jenkins tar zcf install-${JOB_NAME}-${label}-${buildType}.tgz --files-from export.list.installed
+              mv /scratch/artefact.list /scratch/dependencies.${JOBNAME_CLEANED}.list
+              echo /scratch/dependencies.${JOBNAME_CLEANED}.list >> export.list.installed
+              sudo -H -u msk_jenkins tar zcf install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz --files-from export.list.installed
             """
-            archiveArtifacts artifacts: "install-${JOB_NAME}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+            archiveArtifacts artifacts: "install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }
         }
       }
