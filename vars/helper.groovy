@@ -179,7 +179,7 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
 
       // unpack artefact
       sh """
-        tar zxf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink
+        tar xf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
       """
 
       // keep track of dependencies to download - used when dependees need to resolve our dependencies
@@ -218,7 +218,7 @@ def doBuilddirArtefact(String label, String buildType) {
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
       for a in artefacts/build-*-${label}-${buildType}.tgz ; do
-        sudo -H -E -u msk_jenkins tar zxf \"\${a}\" -C /
+        sudo -H -E -u msk_jenkins tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
       done
 
       touch /scratch/artefact.list
@@ -236,7 +236,7 @@ def doBuilddirArtefact(String label, String buildType) {
   sh """
     if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
       for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-        tar zxf \"\${a}\" -C /
+        tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
       done
     fi
   """
@@ -287,7 +287,7 @@ EOF
   script {
     // generate and archive artefact from build directory (used for the analysis job)
     sh """
-      sudo -H -E -u msk_jenkins tar zcf build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz /scratch
+      sudo -H -E -u msk_jenkins tar cf build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz /scratch --use-compress-program="pigz -9 -p32"
     """
     archiveArtifacts artifacts: "build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   }
@@ -470,7 +470,7 @@ def doInstall(String label, String buildType) {
     if [ -e /scratch/artefact.list ]; then
       cp /scratch/artefact.list scratch/dependencies.${JOBNAME_CLEANED}.list
     fi
-    sudo -H -E -u msk_jenkins tar zcf ${WORKSPACE}/install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz .
+    sudo -H -E -u msk_jenkins tar cf ${WORKSPACE}/install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz . --use-compress-program="pigz -9 -p32"
   """
   
   // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
