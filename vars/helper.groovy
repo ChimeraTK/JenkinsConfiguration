@@ -12,7 +12,12 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
     def deepList = dependencyList
     dependencyList.each {
       if(it != "") {
-        copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+        def dependencyProjectName = it
+        if(env.JOB_TYPE != "") {
+          def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/')
+          dependencyProjectName = "${dependencyFolder}/${env.JOB_TYPE}/${dependencyProject}/master"
+        }
+        copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: dependencyProjectName, selector: lastSuccessful(), target: "artefacts"
         myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
         deepList.addAll(gatherDependenciesDeep(new ArrayList<String>(Arrays.asList(myFile.split("\n")))))
       }
@@ -23,33 +28,6 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
 
 /**********************************************************************************************************************/
 
-// internal helper function, recursively wait until all dependencies are not building
-def waitForDependencies_helper(ArrayList<String> deepDependencyList) {
-  script {
-    if(deepDependencyList.size() == 0 || deepDependencyList[0] == "") return true
-    lock(resource: "build-${deepDependencyList[0]}", skipIfLocked: true) {
-      def deepDependencyListTrunc = deepDependencyList
-      deepDependencyListTrunc.remove(0)
-      return waitForDependencies(deepDependencyListTrunc)
-    }
-    return false
-  }
-}
-
-/**********************************************************************************************************************/
-
-// helper function, recursively wait until all dependencies are not building
-def waitForDependencies(ArrayList<String> deepDependencyList) {
-  script {
-    while(!waitForDependencies_helper(deepDependencyList)) {
-      echo("Could not acquire lock. Retrying in 10 second...")
-      sleep(10)
-    }
-  }
-}
-  
-/**********************************************************************************************************************/
-
 def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType, String gitUrl) {
 
   // prepare source directory and dependencies
@@ -58,10 +36,10 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
 
   // add inactivity timeout of 30 minutes (build will be interrupted if 30 minutes no log output has been produced)
   timeout(activity: true, time: 30) {
-  
+ 
     // start build and tests, then generate artefact
     doBuild(label, buildType)
-    if(buildType != "asan" && buildType != "tsan") {
+    if(buildType != "asan" && buildType != "tsan" && !env.DISABLE_TEST) {
       // tests for asan and tsan are run in the analysis jobs
       doTest(label, buildType)
     }
@@ -165,17 +143,25 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
 
   // obtain artefacts of dependencies
   script {
+    if(dependencyList.size() == 0) return;
     dependencyList.each {
       def dependency = it
-      if( dependency != "" && obtainedArtefacts.find{it == dependency} != dependency ) {
-        copyArtifacts filter: "install-${dependency}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
+      if(dependency == '') return;
+      if(env.JOB_TYPE != "") {
+        def (dependencyFolder, dependencyProject) = dependency.split('/')
+        dependency = "${dependencyFolder}/${env.JOB_TYPE}/${dependencyProject}/master"
+      }
+      def dependency_cleaned = dependency.replace('/','_')
+      if(obtainedArtefacts.find{it == dependency} != dependency) {
+      
+        copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
         obtainedArtefacts.add(dependency)
         sh """
-          tar zxf \"artefacts/install-${dependency}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink
-          touch /scratch/dependencies.${dependency}.list
-          cp /scratch/dependencies.${dependency}.list ${WORKSPACE}/artefact.list
+          tar zxf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink
+          touch /scratch/dependencies.${dependency_cleaned}.list
+          cp /scratch/dependencies.${dependency_cleaned}.list ${WORKSPACE}/artefact.list
           touch /scratch/artefact.list
-          echo "${dependency}" >> /scratch/artefact.list
+          echo "${dependency_cleaned}" >> /scratch/artefact.list
         """
         myFile = readFile(env.WORKSPACE+"/artefact.list")
         doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType, obtainedArtefacts)
