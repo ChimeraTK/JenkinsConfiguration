@@ -14,26 +14,37 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
 //                                   'tumbleweed-Debug',
 //                                   'tumbleweed-Release']) {
 
+  def dependencyJobList = new ArrayList<String>()
+
   script {
     
     node('Docker') {
-      // only keep builds which exist for all dependencies
+      // Reduce list of builds to those builds which exist for all dependencies
       dependencyList.each {
-        if( it != "" ) {
-          def dependencyProjectName = it
-          if(env.JOB_TYPE != "") {
-            def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/')
-            dependencyProjectName = "${dependencyFolder}/${env.JOB_TYPE}/${dependencyProject}/master"
-          }
-          copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: dependencyProjectName, selector: lastSuccessful(), target: "artefacts"
-          myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
-          def depBuilds = myFile.split("\n")
-          def curBuilds = builds.clone()
-          curBuilds.each {
-            def build = it
-            if(depBuilds.find { it == build } != it) {
-              builds.removeAll { it == build }
-            }
+        // skip empty string, seems to come always at end of list
+        if(it == '') return;
+        
+        // provide sensible error message if .jenkinsfile has wrong dependency format somewhere
+        if(it.indexOf('/') == -1) {
+          currentBuild.result = 'ERROR'
+          error("ERROR: Dependency has the wrong format: '${it}'")
+        }
+        
+        // generate job name from dependency name
+        def dependencyProjectName = helper.dependencyToJenkinsProject(it)
+        dependencyJobList.add(dependencyProjectName)
+  
+        // obtain list of builds for the dependency
+        copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: dependencyProjectName, selector: lastSuccessful(), target: "artefacts"
+        myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+        def depBuilds = myFile.split("\n")
+        def curBuilds = builds.clone()
+        
+        // remove all builds from our list of builds which is not present for the dependency
+        curBuilds.each {
+          def build = it
+          if(depBuilds.find { it == build } != it) {
+            builds.removeAll { it == build }
           }
         }
       } // dependencyList.each
@@ -49,7 +60,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
   } // script
 
   // form comma-separated list of dependencies as needed for the trigger configuration
-  def dependencies = dependencyList.join(',')
+  def dependencies = dependencyJobList.join(',')
   if(dependencies == "") {
     dependencies = "Create Docker Images"
   }
@@ -63,7 +74,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
       upstream(upstreamProjects: dependencies, threshold: hudson.model.Result.UNSTABLE)
     }
     options {
-      disableConcurrentBuilds()
+      //disableConcurrentBuilds()
       copyArtifactPermission('*')
       buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
     }

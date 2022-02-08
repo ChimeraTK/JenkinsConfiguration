@@ -6,17 +6,28 @@
 
 /**********************************************************************************************************************/
 
+// helper function, convert dependency name as listed in the .jenkinsfile into a Jenkins project name
+def dependencyToJenkinsProject(String dependency) {
+  def dependencyProjectName = dependency
+  def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/')
+  if(dependencyFolder != "DOOCS") {
+    dependencyProjectName = "${dependencyFolder}/${env.JOB_TYPE}/${dependencyProject}/master"
+  }
+  else {
+    dependencyProjectName = "${dependencyFolder}/${dependencyProject}"
+  }
+  return dependencyProjectName
+}
+
+/**********************************************************************************************************************/
+
 // helper function, recursively gather a deep list of dependencies
 def gatherDependenciesDeep(ArrayList<String> dependencyList) {
   script {
     def deepList = dependencyList
     dependencyList.each {
       if(it != "") {
-        def dependencyProjectName = it
-        if(env.JOB_TYPE != "") {
-          def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/')
-          dependencyProjectName = "${dependencyFolder}/${env.JOB_TYPE}/${dependencyProject}/master"
-        }
+        def dependencyProjectName = dependencyToJenkinsProject(it)
         copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: dependencyProjectName, selector: lastSuccessful(), target: "artefacts"
         myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
         deepList.addAll(gatherDependenciesDeep(new ArrayList<String>(Arrays.asList(myFile.split("\n")))))
@@ -145,28 +156,48 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
   script {
     if(dependencyList.size() == 0) return;
     dependencyList.each {
-      def dependency = it
-      if(dependency == '') return;
-      if(env.JOB_TYPE != "") {
-        def (dependencyFolder, dependencyProject) = dependency.split('/')
-        dependency = "${dependencyFolder}/${env.JOB_TYPE}/${dependencyProject}/master"
-      }
-      def dependency_cleaned = dependency.replace('/','_')
-      if(obtainedArtefacts.find{it == dependency} != dependency) {
+      // skip empty string, seems to come always at end of list
+      if(it == '') return;
       
-        copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
-        obtainedArtefacts.add(dependency)
-        sh """
-          tar zxf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink
-          touch /scratch/dependencies.${dependency_cleaned}.list
-          cp /scratch/dependencies.${dependency_cleaned}.list ${WORKSPACE}/artefact.list
-          touch /scratch/artefact.list
-          echo "${dependency_cleaned}" >> /scratch/artefact.list
-        """
-        myFile = readFile(env.WORKSPACE+"/artefact.list")
-        doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType, obtainedArtefacts)
+      // provide sensible error message if .jenkinsfile has wrong dependency format somewhere
+      if(it.indexOf('/') == -1) {
+        currentBuild.result = 'ERROR'
+        error("ERROR: Dependency has the wrong format: '${it}'")
       }
+      
+      // generate job name from dependency name
+      def dependency = dependencyToJenkinsProject(it)
+      // cleaned version of the job name without slashes, for use in filenames etc.
+      def dependency_cleaned = dependency.replace('/','_')
+      
+      // skip if artefact is already downloaded
+      if(obtainedArtefacts.find{it == dependency} == dependency) return;
+      obtainedArtefacts.add(dependency)
+
+      // download the artefact
+      copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
+
+      // unpack artefact
+      sh """
+        tar zxf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink
+      """
+
+      // keep track of dependencies to download - used when dependees need to resolve our dependencies
+      sh """
+        touch /scratch/artefact.list
+        echo "${it}" >> /scratch/artefact.list
+      """
+
+      // process dependencies of the dependency we just downloaded
+      sh """
+        touch /scratch/dependencies.${dependency_cleaned}.list
+        cp /scratch/dependencies.${dependency_cleaned}.list ${WORKSPACE}/artefact.list
+      """
+      myFile = readFile(env.WORKSPACE+"/artefact.list")
+      doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType, obtainedArtefacts)
     }
+    
+    // fix ownership
     sh """
       chown -R msk_jenkins /scratch
     """
@@ -249,9 +280,9 @@ EOF
   script {
     // copy compile_commands.json from build directory to workspace
     // any will do so the last one will win
-    sh """
-      cp /scratch/build-${JOBNAME_CLEANED}/compile_commands.json "${WORKSPACE}" || true
-    """
+    //sh """
+    //  cp /scratch/build-${JOBNAME_CLEANED}/compile_commands.json "${WORKSPACE}" || true
+    //"""
   }
   script {
     // generate and archive artefact from build directory (used for the analysis job)
