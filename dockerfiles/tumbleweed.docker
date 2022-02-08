@@ -5,7 +5,7 @@ ENV https_proxy http://xfelproxy.desy.de:3128
 RUN zypper refresh && \
     zypper up -y && \
     zypper dup -y --force-resolution --allow-vendor-change && \
-    zypper install -y lsb-release wget sudo tar gzip && \
+    zypper install -y lsb-release wget sudo tar gzip pigz && \
     zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make  gdb meson ninja && \
     zypper install -y libxml++26-devel && \
     zypper install -y python3-devel python3-numpy-devel && \
