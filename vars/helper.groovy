@@ -45,9 +45,9 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
     }
 
     // Run cppcheck only for focal-debug
-    if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') && buildType == "Debug") {
-        doCppcheck(label, buildType)
-    }
+    //if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') && buildType == "Debug") {
+    //    doCppcheck(label, buildType)
+    //}
 
     doInstall(label, buildType)
 
@@ -453,10 +453,10 @@ def doPublishBuildTestDeploy(ArrayList<String> builds) {
   // Note: this part runs only once per project, not for each branch!
 
   // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
-  if(!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') {
-    unstash "cppcheck.xml"
-    publishCppcheck pattern: 'cppcheck.xml'
-  }
+  //if(!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') {
+  //  unstash "cppcheck.xml"
+  //  publishCppcheck pattern: 'cppcheck.xml'
+  //}
 
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
   recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc()]
