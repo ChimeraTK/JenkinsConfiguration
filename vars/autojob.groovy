@@ -14,18 +14,18 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
 //                                   'tumbleweed-Release']) {
 
 
-  def (organisation, job_type, project) = env.JOB_NAME.tokenize('/')
+  def (organisation, job_type, project, branch) = env.JOB_NAME.tokenize('/')
   env.ORGANISATION = organisation
   env.JOB_TYPE = job_type
   env.PROJECT = project
+  env.BRANCH = branch
 
   if(job_type == 'fasttrack') {
     env.DISABLE_TEST=true
-    buildTestDeploy(dependencyList, gitUrl, ['focal-Debug'])
+    buildAndDeploy(dependencyList, gitUrl, ['focal-Debug'])
   }
-  else if(job_type == 'fasttrack-test') {
-    env.DISABLE_TEST=true
-    buildTestDeploy(dependencyList, gitUrl, ['focal-Debug'])
+  else if(job_type == 'fasttrack-testing') {
+    testing()
   }
   else {
     echo("Unknown job type: ${job_type}")

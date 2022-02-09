@@ -6,13 +6,7 @@
 
 // This is the function called from the .jenkinsfile
 // The last optional argument is the list of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
-def call(ArrayList<String> dependencyList, String gitUrl='',
-         ArrayList<String> builds=['focal-Debug',
-                                   'focal-Release',
-                                   'focal-tsan',
-                                   'focal-asan']) {
-//                                   'tumbleweed-Debug',
-//                                   'tumbleweed-Release']) {
+def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> builds) {
 
   def dependencyJobList = new ArrayList<String>()
 
@@ -70,11 +64,12 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
 
     // setup build trigger
     triggers {
-      pollSCM('H/5 * * * *')
+      pollSCM('H/1 * * * *')
       upstream(upstreamProjects: dependencies, threshold: hudson.model.Result.UNSTABLE)
     }
     options {
       //disableConcurrentBuilds()
+      quietPeriod(0)
       copyArtifactPermission('*')
       buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
     }
@@ -127,7 +122,7 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
       always {
         node('Docker') {
           script {
-            helper.doPublishBuildTestDeploy(builds)
+            helper.doPublishBuild(builds)
           }
         }
         script {
@@ -156,7 +151,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName, String
         def dockerArgs = "-u 0 --privileged --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
-            helper.doBuildTestDeploy(dependencyList, label, buildType, gitUrl)
+            helper.doBuildAndDeploy(dependencyList, label, buildType, gitUrl)
           }
         }
       }

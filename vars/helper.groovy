@@ -9,9 +9,13 @@
 // helper function, convert dependency name as listed in the .jenkinsfile into a Jenkins project name
 def dependencyToJenkinsProject(String dependency) {
   def dependencyProjectName = dependency
-  def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/')
+  def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/',2)
+  dependencyProject = dependencyProject.replace('/','%2F')
+  def jobType = env.JOB_TYPE
+  jobType = jobType.minus("-testing")
+  jobType = jobType.minus("-analysis")
   if(dependencyFolder != "DOOCS") {
-    dependencyProjectName = "${dependencyFolder}/${env.JOB_TYPE}/${dependencyProject}/master"
+    dependencyProjectName = "${dependencyFolder}/${jobType}/${dependencyProject}/master"
   }
   else {
     dependencyProjectName = "${dependencyFolder}/${dependencyProject}"
@@ -39,7 +43,7 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
 
 /**********************************************************************************************************************/
 
-def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String buildType, String gitUrl) {
+def doBuildAndDeploy(ArrayList<String> dependencyList, String label, String buildType, String gitUrl) {
 
   // prepare source directory and dependencies
   doPrepare(true, gitUrl)
@@ -48,19 +52,28 @@ def doBuildTestDeploy(ArrayList<String> dependencyList, String label, String bui
   // add inactivity timeout of 30 minutes (build will be interrupted if 30 minutes no log output has been produced)
   timeout(activity: true, time: 30) {
  
-    // start build and tests, then generate artefact
+    // perform build and generate build artefact
     doBuild(label, buildType)
-    if(buildType != "asan" && buildType != "tsan" && !env.DISABLE_TEST) {
-      // tests for asan and tsan are run in the analysis jobs
-      doTest(label, buildType)
-    }
 
-    // Run cppcheck only for focal-debug
-    //if((!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') && buildType == "Debug") {
-    //    doCppcheck(label, buildType)
-    //}
+    // deploy and generate deployment artefact
+    doDeploy(label, buildType)
 
-    doInstall(label, buildType)
+  }
+}
+
+/**********************************************************************************************************************/
+
+def doTesting(String label, String buildType) {
+
+  // prepare source directory and dependencies
+  doPrepare(false)
+  doBuilddirArtefact(label, buildType)
+
+  // add inactivity timeout of 30 minutes (build will be interrupted if 30 minutes no log output has been produced)
+  timeout(activity: true, time: 30) {
+ 
+    // run tests
+    doRunTests(label, buildType)
 
   }
 }
@@ -211,8 +224,9 @@ def doBuilddirArtefact(String label, String buildType) {
   
   // obtain artefacts of dependencies
   script {
-    def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
-    copyArtifacts filter: "build-${parentJob}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${parentJob}", selector: lastSuccessful(), target: "artefacts"
+    def buildJob = env.BUILD_JOB
+    def buildJob_cleaned = buildJob.replace('/','_')
+    copyArtifacts filter: "build-${buildJob_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${buildJob}", selector: lastSuccessful(), target: "artefacts"
 
     // Unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins).
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
@@ -227,7 +241,9 @@ def doBuilddirArtefact(String label, String buildType) {
     myFile = readFile(env.WORKSPACE+"/artefact.list")
     myFile.split("\n").each {
       if( it != "" ) {
-        copyArtifacts filter: "install-${it}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${it}", selector: lastSuccessful(), target: "artefacts"
+        def dependency = dependencyToJenkinsProject(it)
+        def dependency_cleaned = dependency.replace('/','_')
+        copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
       }
     }
   }
@@ -239,6 +255,11 @@ def doBuilddirArtefact(String label, String buildType) {
         tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
       done
     fi
+  """
+    
+  // fix ownership
+  sh """
+    chown -R msk_jenkins /scratch
   """
 
 }
@@ -300,11 +321,14 @@ EOF
 
 /**********************************************************************************************************************/
 
-def doTest(String label, String buildType) {
+def doRunTests(String label, String buildType) {
   if (env.SKIP_TESTS) {
     currentBuild.result = 'UNSTABLE'
     return
   }
+
+  def buildJob = env.BUILD_JOB
+  def buildJob_cleaned = buildJob.replace('/','_')
 
   // Run the tests via ctest
   // Prefix test names with label and buildType, so we can distinguish them later
@@ -312,7 +336,9 @@ def doTest(String label, String buildType) {
   sh """
     cat > /scratch/script <<EOF
 #!/bin/bash
-cd /scratch/build-${JOBNAME_CLEANED}
+cd /scratch/build-${buildJob_cleaned}
+cmake . -DBUILD_TESTS=ON
+ninja \${MAKEOPTS}
 if [ -z "\${CTESTOPTS}" ]; then
   CTESTOPTS="\${MAKEOPTS}"
 fi
@@ -322,7 +348,8 @@ done
 ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
 echo sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
 sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
-cp -r /scratch/build-${JOBNAME_CLEANED}/Testing "${WORKSPACE}"
+rm -rf "${WORKSPACE}/Testing"
+cp -r /scratch/build-${buildJob_cleaned}/Testing "${WORKSPACE}"
 EOF
     cat /scratch/script
     chmod +x /scratch/script
@@ -462,7 +489,7 @@ EOF
 
 /**********************************************************************************************************************/
 
-def doInstall(String label, String buildType) {
+def doDeploy(String label, String buildType) {
 
   // Install, but redirect files into the install directory (instead of installing into the system)
   // Generate tar ball of install directory - this will be the artefact used by our dependents
@@ -484,15 +511,7 @@ def doInstall(String label, String buildType) {
 
 /**********************************************************************************************************************/
 
-def doPublishBuildTestDeploy(ArrayList<String> builds) {
-
-  // Note: this part runs only once per project, not for each branch!
-
-  // Run cppcheck and publish the result. Since this is a static analysis, we don't have to run it for each label
-  //if(!env.DISABLE_CPPCHECK || env.DISABLE_CPPCHECK == '') {
-  //  unstash "cppcheck.xml"
-  //  publishCppcheck pattern: 'cppcheck.xml'
-  //}
+def doPublishBuild(ArrayList<String> builds) {
 
   // Scan for compiler warnings. This is scanning the entire build logs for all labels and build types  
   recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc()]
@@ -521,65 +540,11 @@ def doPublishAnalysis(ArrayList<String> builds) {
         }
       }
       
-      // get valgrind result (only Debug)
-      // -> disable for now
-      /*if(buildType == "Debug") {
-        try {
-          unstash "valgrind-${it}"
-        }
-        catch(all) {
-          echo("Could not retreive stashed valgrind results for ${it}")
-          currentBuild.result = 'FAILURE'
-        }
-      }*/
-      
     }
   }
-/*  
-  // publish valgrind result
-  publishValgrind (
-    failBuildOnInvalidReports: true,
-    failBuildOnMissingReports: true,
-    failThresholdDefinitelyLost: '',
-    failThresholdInvalidReadWrite: '',
-    failThresholdTotal: '',
-    pattern: '* / *.valgrind',
-    publishResultsForAbortedBuilds: false,
-    publishResultsForFailedBuilds: false,
-    sourceSubstitutionPaths: '',
-    unstableThresholdDefinitelyLost: '',
-    unstableThresholdInvalidReadWrite: '',
-    unstableThresholdTotal: '0'
-  )
-  */
+
   // publish cobertura result
   cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
 }
 
-/**********************************************************************************************************************/
-
-def doCppcheck(String label, String buildType) {
-  // Generate coverage report as HTML and also convert it into cobertura XML file
-  sh """
-    chown msk_jenkins -R /scratch
-    cat > /scratch/script <<EOF
-#!/bin/bash
-cd /scratch/build-${JOBNAME_CLEANED}-${label}-${buildType}
-for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
-   export \\`eval echo \\\${VAR}\\`
-done
-if [ -e compile_commands.json ]; then
-    cppcheck --inline-suppr --enable=all --xml --xml-version=2  --project=compile_commands.json 2>cppcheck.xml
-else
-    cppcheck --inline-suppr --enable=all --xml --xml-version=2  -ibuild -Iinclude /scratch/source 2>cppcheck.xml
-fi
-cp cppcheck.xml ${WORKSPACE} || true
-EOF
-    cat /scratch/script
-    chmod +x /scratch/script
-    sudo -H -E -u msk_jenkins /scratch/script
-  """
-
-  stash allowEmpty: true, includes: "cppcheck.xml", name: "cppcheck.xml"
-}

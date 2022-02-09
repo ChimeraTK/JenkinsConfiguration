@@ -42,6 +42,7 @@ def call(String libraryName, ArrayList<String> dependencyList) {
     }
     options {
       disableConcurrentBuilds()
+      quietPeriod(180)
       copyArtifactPermission('*')
       buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
     }
