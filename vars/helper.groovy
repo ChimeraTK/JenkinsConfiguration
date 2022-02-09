@@ -269,8 +269,13 @@ elif [ "${buildType}" == "asan" ]; then
   export CXX="clang++-10"
   export LSAN_OPTIONS=verbosity=1:log_threads=1
 fi
-cmake /scratch/source/\${RUN_FROM_SUBDIR} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS}
-make ${MAKEOPTS} VERBOSE=1
+if [ "${DISABLE_TEST}" == "true" ]; then
+  BUILD_TESTS_OPT="-DBUILD_TESTS=OFF"
+  echo \\\${BUILD_TESTS_OPT}
+fi
+echo \\\${BUILD_TESTS_OPT}
+cmake /scratch/source/\${RUN_FROM_SUBDIR} -GNinja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} \\\${BUILD_TESTS_OPT}
+ninja -v ${MAKEOPTS}
 EOF
       cat /scratch/script
       chmod +x /scratch/script
@@ -372,7 +377,7 @@ cd /scratch/build-${parentJob}
 for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
-make coverage || true
+ninja coverage || true
 python3 /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
 
 cp -r coverage_html ${WORKSPACE} || true
@@ -463,7 +468,7 @@ def doInstall(String label, String buildType) {
   // Generate tar ball of install directory - this will be the artefact used by our dependents
   sh """
     cd /scratch/build-${JOBNAME_CLEANED}
-    sudo -H -E -u msk_jenkins make install DESTDIR=../install
+    sudo -H -E -u msk_jenkins bash -c 'DESTDIR=../install ninja install'
   
     cd /scratch/install
     mkdir -p scratch
