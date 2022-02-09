@@ -23,6 +23,20 @@ def dependencyToJenkinsProject(String dependency) {
   return dependencyProjectName
 }
 
+
+/**********************************************************************************************************************/
+
+// helper function, convert Jenkins project name into dependency name (as listed e.g. in the .jenkinsfile)
+def jekinsProjectToDependency(String jenkinsProject) {
+  def projectSplit = jenkinsProject.split('/')
+  if(projectSplit.size() != 4) {
+    println(projectSplit.size())
+    error("Jenkins project name '${jenkinsProject}' has the wrong format for jekinsProjectToDependency()")
+  }
+  def (folder, type, project, branch) = projectSplit
+  return "${folder}/${project}"
+}
+
 /**********************************************************************************************************************/
 
 // helper function, recursively gather a deep list of dependencies
@@ -304,13 +318,6 @@ EOF
     """
   }
   script {
-    // copy compile_commands.json from build directory to workspace
-    // any will do so the last one will win
-    //sh """
-    //  cp /scratch/build-${JOBNAME_CLEANED}/compile_commands.json "${WORKSPACE}" || true
-    //"""
-  }
-  script {
     // generate and archive artefact from build directory (used for the analysis job)
     sh """
       sudo -H -E -u msk_jenkins tar cf build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz /scratch --use-compress-program="pigz -9 -p32"
@@ -431,64 +438,6 @@ EOF
 
 /**********************************************************************************************************************/
 
-def doValgrind(String label, String buildType) {
-  def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
-
-  // Run valgrind twice in memcheck and helgrind mode
-  // 
-  // First, find the test executables. Search for all CTestTestfile.cmake and look for add_test() inside. Resolve the
-  // given names relative to the location of the CTestTestfile.cmake file.
-  //
-  // We execute the tests in the directory where CTestTestfile.cmake is which lists them.
-  sh """
-    chown msk_jenkins -R /scratch
-
-    cd /home/msk_jenkins/JenkinsConfiguration
-    cat valgrind.suppressions/common.supp valgrind.suppressions/${label}.supp > /scratch/valgrind.supp
-
-    cat > /scratch/script <<EOF
-#!/bin/bash
-cd /scratch/build-${parentJob}
-
-for testlist in \\`find -name CTestTestfile.cmake\\` ; do
-  EXECLIST=""
-  dir=\\`dirname "\\\${testlist}"\\`
-  for test in \\`grep add_test "\\\${testlist}" | sed -e 's_^[^"]*"__' -e 's/")\\\$//'\\` ; do
-    # \\\${test} is just the name of the test executable, without add_test etc.
-    # It might be either relative to the directory the CTestTestfile.cmake is in, or absolute. Check for both.
-    if [ -f "\\\${test}" ]; then
-      EXECLIST="\\\${EXECLIST} \\`realpath \\\${test}\\`"
-    elif [ -f "\\\${dir}/\\\${test}" ]; then
-      EXECLIST="\\\${EXECLIST} \\`realpath \\\${dir}/\\\${test}\\`"
-    fi
-  done
-
-  cd "\\\${dir}"
-  for test in \\\${EXECLIST} ; do
-    testname=\\`basename \\\${test}\\`
-    if [ -z "\\`echo " \\\${valgrindExcludes} " | grep " \\\${testname} "\\`" ]; then
-      valgrind --num-callers=99 --gen-suppressions=all --suppressions=/scratch/valgrind.supp                         \\
-                                   --tool=memcheck --leak-check=full --undef-value-errors=yes --xml=yes              \\
-                                   --xml-file=/scratch/build-${parentJob}/${label}.\\\${testname}.memcheck.valgrind  \\
-                                   \\\${test}
-    fi
-  done
-  cd /scratch/build-${parentJob}
-
-done
-EOF
-    cat /scratch/script
-    chmod +x /scratch/script
-    sudo -H -E -u msk_jenkins /scratch/script
-
-    sudo -H -E -u msk_jenkins cp /scratch/build-${parentJob}/*.valgrind "${WORKSPACE}"
-  """
-  // stash valgrind result files for later publication
-  stash includes: '*.valgrind', name: "valgrind-${label}-${buildType}"
-}
-
-/**********************************************************************************************************************/
-
 def doDeploy(String label, String buildType) {
 
   // Install, but redirect files into the install directory (instead of installing into the system)
@@ -507,6 +456,45 @@ def doDeploy(String label, String buildType) {
   
   // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
   archiveArtifacts artifacts: "install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+  
+  // Get list of downstream projects
+  sh """
+    if [ -d /home/msk_jenkins/dependency-database/forward/${JOBNAME_CLEANED} ]; then
+      cd /home/msk_jenkins/dependency-database/forward/${JOBNAME_CLEANED}
+      cat * > "${WORKSPACE}/dependees.txt"
+    else
+      # no downstream projects present: create empty list
+      rm -f ${WORKSPACE}/dependees.txt
+      touch ${WORKSPACE}/dependees.txt
+    fi
+  """
+  def dependees = readFile(env.WORKSPACE+"/dependees.txt").split("\n")
+  
+  // For each downstream project:
+  dependees.each { dependee ->
+    if(dependee == '') return;
+    
+    // check whether it has a dependency (direct or indirect) which is currently building (excluding ourselves)
+    def myDeps = gatherDependenciesDeep([jekinsProjectToDependency(dependee)])
+    def triggerDependee = true
+    myDeps.each { myDep ->
+      if(myDep == "" || !triggerDependee) return;
+      def myDepJob = dependencyToJenkinsProject(myDep)
+      if(myDepJob == JOB_NAME) return;
+      def job = jenkins.model.Jenkins.instance.getItemByFullName(myDepJob)
+      def building = job.isBuilding()
+      if(building) {
+        triggerDependee = false
+        println("Not triggering ${dependee} as ${myDepJob} is still building.")
+      }
+    }
+    
+    
+    // trigger it
+    if(triggerDependee) {
+      build job: dependee, propagate: false, wait: false
+    }
+  }
 }
 
 /**********************************************************************************************************************/

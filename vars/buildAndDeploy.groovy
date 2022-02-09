@@ -48,8 +48,19 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
       archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
       
       // publish our list of direct dependencies for our downstream builds
-      writeFile file: "dependencyList.txt", text: dependencyList.join("\n")
+      writeFile file: "dependencyList.txt", text:dependencyList.join("\n")
       archiveArtifacts artifacts: "dependencyList.txt", onlyIfSuccessful: false
+      
+      // record our dependencies in central "data base" for explicit dependency triggering
+      def dependencyJobListJoined = dependencyJobList.join(" ").replace("/","_")
+      def jobNameCleaned = JOB_NAME.replace("/","_")
+      sh """
+        for dependency in ${dependencyJobListJoined}; do
+          mkdir -p "/home/msk_jenkins/dependency-database/forward/\${dependency}"
+          echo "${JOB_NAME}" > "/home/msk_jenkins/dependency-database/forward/\${dependency}/${jobNameCleaned}"
+        done
+        cp "${WORKSPACE}/dependencyList.txt" "/home/msk_jenkins/dependency-database/reverse/${jobNameCleaned}"
+      """
     } // docker
   } // script
 
@@ -63,9 +74,11 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
     agent none
 
     // setup build trigger
+    // Note: do not trigger automatically by dependencies, since this is implemented explicitly to have more control.
+    // The dependencies are tracked above in the scripts section in a central "database" and used to trigger downstream
+    // build jobs after the build.
     triggers {
       pollSCM('H/1 * * * *')
-      upstream(upstreamProjects: dependencies, threshold: hudson.model.Result.UNSTABLE)
     }
     options {
       //disableConcurrentBuilds()
@@ -148,7 +161,7 @@ def transformIntoStep(ArrayList<String> dependencyList, String buildName, String
     stage(buildName) {
       node('Docker') {
         // we need root access inside the container and access to the dummy pcie devices of the host
-        def dockerArgs = "-u 0 --privileged --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b"
+        def dockerArgs = "-u 0 --privileged --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             helper.doBuildAndDeploy(dependencyList, label, buildType, gitUrl)
