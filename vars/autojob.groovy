@@ -20,11 +20,11 @@ def call(ArrayList<String> dependencyList, String gitUrl='',
   env.PROJECT = project
   env.BRANCH = branch
 
-  if(job_type == 'fasttrack') {
+  if(job_type == 'fasttrack' || job_type == 'branches') {
     env.DISABLE_TEST=true
     buildAndDeploy(dependencyList, gitUrl, ['focal-Debug'])
   }
-  else if(job_type == 'fasttrack-testing') {
+  else if(job_type == 'fasttrack-testing' || job_type == 'branches-testing') {
     testing()
   }
   else {

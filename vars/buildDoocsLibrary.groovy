@@ -15,6 +15,8 @@ def call(String libraryName, ArrayList<String> dependencyList) {
                  'focal-asan'
                  ]
 
+  def dependencies
+
   script {
     node('Docker') {
       // publish our list of builds as artefact for our downstream builds
@@ -23,13 +25,27 @@ def call(String libraryName, ArrayList<String> dependencyList) {
  
       // publish our list of direct dependencies for our downstream builds
       writeFile file: "dependencyList.txt", text: dependencyList.join("\n")
-      archiveArtifacts artifacts: "dependencyList.txt", onlyIfSuccessful: false    }
-  }
+      archiveArtifacts artifacts: "dependencyList.txt", onlyIfSuccessful: false
 
-  // form comma-separated list of dependencies as needed for the trigger configuration
-  def dependencies = dependencyList.join(',')
-  if(dependencies == "") {
-    dependencies = "Create Docker Images"
+      // form comma-separated list of dependencies as needed for the trigger configuration
+      dependencies = dependencyList.join(',')
+      if(dependencies == "") {
+        dependencies = "Create Docker Images"
+      }
+      
+      // record our dependencies in central "data base" for explicit dependency triggering
+      def dependencyListJoined = dependencyList.join(" ").replace("/","_")
+      def JobNameAsDependency = JOB_NAME
+      def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
+      sh """
+        for dependency in ${dependencyListJoined}; do
+          mkdir -p "/home/msk_jenkins/dependency-database/forward/\${dependency}"
+          echo "${JobNameAsDependency}" > "/home/msk_jenkins/dependency-database/forward/\${dependency}/${JobNameAsDependencyCleaned}"
+        done
+        cp "${WORKSPACE}/dependencyList.txt" "/home/msk_jenkins/dependency-database/reverse/${JobNameAsDependencyCleaned}"
+      """
+
+    }
   }
 
   pipeline {

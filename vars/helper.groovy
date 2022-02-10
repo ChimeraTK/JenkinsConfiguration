@@ -4,18 +4,51 @@
 
 ***********************************************************************************************************************/
 
+ArrayList<String> BUILD_PLAN = []
+
 /**********************************************************************************************************************/
 
 // helper function, convert dependency name as listed in the .jenkinsfile into a Jenkins project name
-def dependencyToJenkinsProject(String dependency) {
+def dependencyToJenkinsProject(String dependency, boolean forceBranches = false) {
   def dependencyProjectName = dependency
   def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/',2)
   dependencyProject = dependencyProject.replace('/','%2F')
   def jobType = env.JOB_TYPE
-  jobType = jobType.minus("-testing")
-  jobType = jobType.minus("-analysis")
+  jobType = jobType?.minus("-testing")
+  jobType = jobType?.minus("-analysis")
+  
+  branch = "master"
+  
+  if(jobType == "branches") {
+  
+    println("Special branches check: ${dependency}")
+  
+    println(JOB_NAME)
+    println(params.BRANCH_UNDER_TEST)
+    println(BUILD_PLAN)
+    
+    println(BUILD_PLAN.flatten().size())
+    println(BUILD_PLAN.flatten().indexOf(dependency))
+    def dependencyUnderTest = jekinsProjectToDependency(params.BRANCH_UNDER_TEST)
+    println("dependencyUnderTest = ${dependencyUnderTest}")
+
+    if(!forceBranches && (BUILD_PLAN.flatten().indexOf(dependency) < 0 || params.BRANCH_UNDER_TEST == JOB_NAME) && dependencyUnderTest != dependency) {
+      jobType = "fasttrack"
+    }
+    else {
+      def (butFolder, butType, butProject, butBranch) = params.BRANCH_UNDER_TEST.split('/')
+      if(butFolder == dependencyFolder && butType == jobType && butProject == dependencyProject) {
+        branch = butBranch
+        println("dependency matches branch under test.")
+      }
+    }
+
+    println("jobType = ${jobType}")
+    println("branch = ${branch}")
+  }
+  
   if(dependencyFolder != "DOOCS") {
-    dependencyProjectName = "${dependencyFolder}/${jobType}/${dependencyProject}/master"
+    dependencyProjectName = "${dependencyFolder}/${jobType}/${dependencyProject}/${branch}"
   }
   else {
     dependencyProjectName = "${dependencyFolder}/${dependencyProject}"
@@ -42,17 +75,53 @@ def jekinsProjectToDependency(String jenkinsProject) {
 // helper function, recursively gather a deep list of dependencies
 def gatherDependenciesDeep(ArrayList<String> dependencyList) {
   script {
+    println("gatherDependenciesDeep(${dependencyList})")
     def deepList = dependencyList
-    dependencyList.each {
-      if(it != "") {
-        def dependencyProjectName = dependencyToJenkinsProject(it)
-        copyArtifacts filter: "dependencyList.txt", fingerprintArtifacts: true, projectName: dependencyProjectName, selector: lastSuccessful(), target: "artefacts"
-        myFile = readFile(env.WORKSPACE+"/artefacts/dependencyList.txt")
-        deepList.addAll(gatherDependenciesDeep(new ArrayList<String>(Arrays.asList(myFile.split("\n")))))
-      }
+    dependencyList.each { dependency ->
+      if(dependency == "") return;
+
+      def dependencyCleaned = dependency.replace('/','_')
+      myFile = readFile("/home/msk_jenkins/dependency-database/reverse/${dependencyCleaned}")
+      deepList.addAll(gatherDependenciesDeep(new ArrayList<String>(Arrays.asList(myFile.split("\n")))))
     }
     return deepList.unique()
   }
+}
+
+/**********************************************************************************************************************/
+
+// Helper function to get list of downstream projects
+def findReverseDependencies(String project) {
+  def projectCleaned = project.replace("/","_")
+  sh """
+    if [ -d /home/msk_jenkins/dependency-database/forward/${projectCleaned} ]; then
+      cd /home/msk_jenkins/dependency-database/forward/${projectCleaned}
+      cat *
+      cat * > "${WORKSPACE}/dependees.txt"
+    else
+      # no downstream projects present: create empty list
+      rm -f ${WORKSPACE}/dependees.txt
+      touch ${WORKSPACE}/dependees.txt
+    fi
+  """
+  def revDeps = readFile(env.WORKSPACE+"/dependees.txt").tokenize("\n")
+  sh """
+    rm -f ${WORKSPACE}/dependees.txt
+  """
+  return revDeps
+}
+
+/**********************************************************************************************************************/
+
+def generateBuildPlan() {
+  println("Generating build plan for ${JOB_NAME}...")
+  def depName = jekinsProjectToDependency(JOB_NAME)
+  sh """
+    cd ${WORKSPACE}
+    /home/msk_jenkins/generateBuildPlan ${depName}
+  """
+  def text = readFile(env.WORKSPACE+"/buildplan.txt")
+  return new groovy.json.JsonSlurper().parseText(text.replace("'", '"'))
 }
 
 /**********************************************************************************************************************/
@@ -139,11 +208,6 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
     grep -v secure_path /etc/sudoers-backup > /etc/sudoers
   '''
 
-  // make sure all files and directories in the msk_jenkins home folder cna be accessed/written by msk_jenkins (especially the workspace)
-  sh '''
-    chown -R msk_jenkins /home/msk_jenkins
-  '''
-  
   // Make sure, /var/run/lock/mtcadummy is writeable by msk_jenkins.
   // Create scratch directory. Keep the absolute path fixed, so we can copy the build directory as an artefact for the
   // analysis job
@@ -238,6 +302,10 @@ def doBuilddirArtefact(String label, String buildType) {
   
   // obtain artefacts of dependencies
   script {
+    sh """
+      rm -rf ${WORKSPACE}/artefacts
+    """   
+  
     def buildJob = env.BUILD_JOB
     def buildJob_cleaned = buildJob.replace('/','_')
     copyArtifacts filter: "build-${buildJob_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${buildJob}", selector: lastSuccessful(), target: "artefacts"
@@ -456,33 +524,29 @@ def doDeploy(String label, String buildType) {
   
   // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
   archiveArtifacts artifacts: "install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+
+  // Downstream projects are triggered in buildAndDeply of the first project only.
+  if(env.JOB_TYPE == "branches") return
   
   // Get list of downstream projects
-  sh """
-    if [ -d /home/msk_jenkins/dependency-database/forward/${JOBNAME_CLEANED} ]; then
-      cd /home/msk_jenkins/dependency-database/forward/${JOBNAME_CLEANED}
-      cat * > "${WORKSPACE}/dependees.txt"
-    else
-      # no downstream projects present: create empty list
-      rm -f ${WORKSPACE}/dependees.txt
-      touch ${WORKSPACE}/dependees.txt
-    fi
-  """
-  def dependees = readFile(env.WORKSPACE+"/dependees.txt").split("\n")
+  def dependees = findReverseDependencies(jekinsProjectToDependency(JOB_NAME))
+  println(dependees)
   
   // For each downstream project:
   dependees.each { dependee ->
     if(dependee == '') return;
+    println(dependee)
     
     // check whether it has a dependency (direct or indirect) which is currently building (excluding ourselves)
-    def myDeps = gatherDependenciesDeep([jekinsProjectToDependency(dependee)])
+    def myDeps = gatherDependenciesDeep([dependee])
     def triggerDependee = true
     myDeps.each { myDep ->
       if(myDep == "" || !triggerDependee) return;
       def myDepJob = dependencyToJenkinsProject(myDep)
       if(myDepJob == JOB_NAME) return;
       def job = jenkins.model.Jenkins.instance.getItemByFullName(myDepJob)
-      def building = job.isBuilding()
+      def building = false
+      building = job?.isBuilding() || job?.isInQueue()
       if(building) {
         triggerDependee = false
         println("Not triggering ${dependee} as ${myDepJob} is still building.")
@@ -492,7 +556,7 @@ def doDeploy(String label, String buildType) {
     
     // trigger it
     if(triggerDependee) {
-      build job: dependee, propagate: false, wait: false
+      build job: dependencyToJenkinsProject(dependee), propagate: false, wait: false
     }
   }
 }
