@@ -14,8 +14,9 @@ def call() {
   // Run for all -Debug builds of the main job
   script {
     node('Docker') {
-      copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: parentJob, selector: lastSuccessful(), target: "artefacts"
-      myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+      def JobNameAsDependency = helper.jekinsProjectToDependency(JOB_NAME)
+      def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
+      def myFile = readFile("/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}")
       builds = myFile.split("\n").toList()
       def builds_temp = builds.clone()
       builds_temp.each {

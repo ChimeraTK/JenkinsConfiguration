@@ -5,12 +5,17 @@
 ***********************************************************************************************************************/
 
 ArrayList<String> BUILD_PLAN = []
+String BRANCH_UNDER_TEST = ""
 
 /**********************************************************************************************************************/
 
 // helper function, convert dependency name as listed in the .jenkinsfile into a Jenkins project name
 def dependencyToJenkinsProject(String dependency, boolean forceBranches = false) {
   def dependencyProjectName = dependency
+  if(dependency.contains('@')) {
+    // get rid of build number if specified
+    dependency = dependency.split('@')[0]
+  }
   def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/',2)
   dependencyProject = dependencyProject.replace('/','%2F')
   def jobType = env.JOB_TYPE
@@ -24,19 +29,19 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
     println("Special branches check: ${dependency}")
   
     println(JOB_NAME)
-    println(params.BRANCH_UNDER_TEST)
+    println(BRANCH_UNDER_TEST)
     println(BUILD_PLAN)
     
     println(BUILD_PLAN.flatten().size())
     println(BUILD_PLAN.flatten().indexOf(dependency))
-    def dependencyUnderTest = jekinsProjectToDependency(params.BRANCH_UNDER_TEST)
+    def dependencyUnderTest = jekinsProjectToDependency(BRANCH_UNDER_TEST)
     println("dependencyUnderTest = ${dependencyUnderTest}")
 
-    if(!forceBranches && (BUILD_PLAN.flatten().indexOf(dependency) < 0 || params.BRANCH_UNDER_TEST == JOB_NAME) && dependencyUnderTest != dependency) {
+    if(!forceBranches && (BUILD_PLAN.flatten().indexOf(dependency) < 0 || BRANCH_UNDER_TEST == JOB_NAME) && dependencyUnderTest != dependency) {
       jobType = "fasttrack"
     }
-    else {
-      def (butFolder, butType, butProject, butBranch) = params.BRANCH_UNDER_TEST.split('/')
+    else { 
+      def (butFolder, butType, butProject, butBranch) = BRANCH_UNDER_TEST.split('/')
       if(butFolder == dependencyFolder && butType == jobType && butProject == dependencyProject) {
         branch = butBranch
         println("dependency matches branch under test.")
@@ -122,6 +127,84 @@ def generateBuildPlan() {
   """
   def text = readFile(env.WORKSPACE+"/buildplan.txt")
   return new groovy.json.JsonSlurper().parseText(text.replace("'", '"'))
+}
+
+/**********************************************************************************************************************/
+
+def getArtefactName(boolean forReading, String basename, String label, String buildType, String dependency = jekinsProjectToDependency(JOB_NAME)) {
+  // Compute name for artifact in local file storage on the build node. This saves time and is more flexible than using
+  // Jenkins archiveArtifact/copyArtifact, but won't work when using multiple build nodes.
+  //
+  // "basename" is the filename with extension but without path. It should not contain any job/build specific parts, as
+  // this will be taken care of in the path. Typical values are "build" and "install".
+  //
+  // This function also creates the directory if not yet existing.
+
+  def dependencyNoBuildNo = dependency
+  if(dependencyNoBuildNo.contains('@')) {
+    // get rid of build number if specified
+    dependencyNoBuildNo = dependency.split('@')[0]
+  }
+  
+  def jobName = dependencyToJenkinsProject(dependencyNoBuildNo)
+  def JOBNAME_CLEANED=jobName.replace('/','_')
+  
+  println("getArtefactName(${forReading}, ${basename}, ${label}, ${buildType}, ${dependency})")
+
+  println("jobName = ${jobName}")
+  println("JOBNAME_CLEANED = ${JOBNAME_CLEANED}")
+  
+  def path = "/home/msk_jenkins/artifacts/${JOBNAME_CLEANED}/${label}/${buildType}"
+  
+  def buildNumer = null
+  if(forReading) {
+
+    def upstreamCause = currentBuild.rawBuild.getCause(Cause.UpstreamCause)
+    println("upstreamCause = ${upstreamCause}")
+    if(upstreamCause) {
+      println("upstreamCause.getUpstreamProject() = ${upstreamCause.getUpstreamProject()}")
+    }
+
+    if(dependency.contains('@')) {
+      buildNumber = dependency.split('@',2)[1]
+      println("Build number from dependency name!")
+    }
+    else if(upstreamCause && upstreamCause.getUpstreamProject() == jobName) {
+      // looking for build name of job which triggered us
+      buildNumber = upstreamCause.getUpstreamBuild()
+      println("Build number from upstream trigger!")
+    }
+    else {
+      // determine latest available build
+      println("path = ${path}")
+      upstreamCause = null // the object may not be serializable which causes an exception when executing sh
+      buildNumber = sh ( script: "ls ${path} | sort -n | tail -n1", returnStdout: true ).trim()
+      println("Build number from latest build!")    
+    }
+  }
+  else {
+    buildNumber = BUILD_NUMBER
+  }
+
+  println("buildNumber = ${buildNumber}")
+  
+  path = path+"/"+buildNumber
+
+  sh """
+    mkdir -p ${path}
+    chown msk_jenkins:msk_jenkins -R ${path}
+  """
+
+  println("path = ${path}")
+
+  return "${path}/${basename}"
+}
+
+/**********************************************************************************************************************/
+
+def getBuildNumberFromArtefactFileName(String fileName) {
+  def components = fileName.split('/')
+  return components[components.size()-2]
 }
 
 /**********************************************************************************************************************/
@@ -266,17 +349,27 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
       obtainedArtefacts.add(dependency)
 
       // download the artefact
-      copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
+      //copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
 
       // unpack artefact
+      def theFile = getArtefactName(true, "install.tgz", label, buildType, it)
+      println("theFile = ${theFile}")
       sh """
-        tar xf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
+        #tar xf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
+        tar xf \"${theFile}\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
       """
 
       // keep track of dependencies to download - used when dependees need to resolve our dependencies
+      def depBuildNo = getBuildNumberFromArtefactFileName(theFile)
+      println("it = ${it}")
+      println("depBuildNo = ${depBuildNo}")
       sh """
         touch /scratch/artefact.list
-        echo "${it}" >> /scratch/artefact.list
+        if [[ "${it}" == *"@"* ]]; then
+          echo "${it}" >> /scratch/artefact.list
+        else
+          echo "${it}@${depBuildNo}" >> /scratch/artefact.list
+        fi
       """
 
       // process dependencies of the dependency we just downloaded
@@ -308,14 +401,17 @@ def doBuilddirArtefact(String label, String buildType) {
   
     def buildJob = env.BUILD_JOB
     def buildJob_cleaned = buildJob.replace('/','_')
-    copyArtifacts filter: "build-${buildJob_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${buildJob}", selector: lastSuccessful(), target: "artefacts"
+    //copyArtifacts filter: "build-${buildJob_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${buildJob}", selector: lastSuccessful(), target: "artefacts"
+    
+    def theFile = getArtefactName(true, "build.tgz", label, buildType)
 
     // Unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins).
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
-      for a in artefacts/build-*-${label}-${buildType}.tgz ; do
-        sudo -H -E -u msk_jenkins tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
-      done
+      #for a in artefacts/build-*-${label}-${buildType}.tgz ; do
+      #  sudo -H -E -u msk_jenkins tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
+      #done
+      sudo -H -E -u msk_jenkins tar xf \"${theFile}\" -C / --use-compress-program="pigz -9 -p32"
 
       touch /scratch/artefact.list
       cp /scratch/artefact.list ${WORKSPACE}/artefact.list
@@ -325,18 +421,24 @@ def doBuilddirArtefact(String label, String buildType) {
       if( it != "" ) {
         def dependency = dependencyToJenkinsProject(it)
         def dependency_cleaned = dependency.replace('/','_')
-        copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
+        // copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
+
+        theFile = getArtefactName(true, "install.tgz", label, buildType, it)
+        sh """
+          tar xf \"${theFile}\" -C / --use-compress-program="pigz -9 -p32"
+        """
+
       }
     }
   }
 
   // unpack artefacts of dependencies into the Docker system root
   sh """
-    if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
-      for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-        tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
-      done
-    fi
+    #if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
+    #  for a in artefacts/install-*-${label}-${buildType}.tgz ; do
+    #    tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
+    #  done
+    #fi
   """
     
   // fix ownership
@@ -386,11 +488,12 @@ EOF
     """
   }
   script {
-    // generate and archive artefact from build directory (used for the analysis job)
+    // generate and archive artefact from build directory (used e.g. for the analysis job)
+    def theFile = getArtefactName(false, "build.tgz", label, buildType)
     sh """
-      sudo -H -E -u msk_jenkins tar cf build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz /scratch --use-compress-program="pigz -9 -p32"
+      sudo -H -E -u msk_jenkins tar cf \"${theFile}\" /scratch --use-compress-program="pigz -9 -p32"
     """
-    archiveArtifacts artifacts: "build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
+    //archiveArtifacts artifacts: "build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   }
 }
 
@@ -510,6 +613,7 @@ def doDeploy(String label, String buildType) {
 
   // Install, but redirect files into the install directory (instead of installing into the system)
   // Generate tar ball of install directory - this will be the artefact used by our dependents
+  def theFile = getArtefactName(false, "install.tgz", label, buildType)
   sh """
     cd /scratch/build-${JOBNAME_CLEANED}
     sudo -H -E -u msk_jenkins bash -c 'DESTDIR=../install ninja install'
@@ -519,11 +623,9 @@ def doDeploy(String label, String buildType) {
     if [ -e /scratch/artefact.list ]; then
       cp /scratch/artefact.list scratch/dependencies.${JOBNAME_CLEANED}.list
     fi
-    sudo -H -E -u msk_jenkins tar cf ${WORKSPACE}/install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz . --use-compress-program="pigz -9 -p32"
+    #sudo -H -E -u msk_jenkins tar cf ${WORKSPACE}/install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz . --use-compress-program="pigz -9 -p32"
+    sudo -H -E -u msk_jenkins tar cf ${theFile} . --use-compress-program="pigz -9 -p32"
   """
-  
-  // Archive the artefact tar ball (even if other branches of this build failed - TODO: do we really want to do that?)
-  archiveArtifacts artifacts: "install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
 
   // Downstream projects are triggered in buildAndDeply of the first project only.
   if(env.JOB_TYPE == "branches") return

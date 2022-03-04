@@ -8,15 +8,6 @@
 // The last optional argument is the list of builds to be run. Format must be "<docker_image_name>-<cmake_build_type>"
 def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> builds) {
 
-  def dependencyJobList = new ArrayList<String>()
-  
-  // Temporary work around for branches builds: Since build artefacts would be used from wrong builds if multiple
-  // branches are build/tested at the same time, we block here until no other branch is currently build/tested.
-  // The resourceToLock initially contains a unique name so the lock will not be effective by default. Only if this
-  // build is the first branches build the name will be changed below into 'branches-build', such that no concurrent
-  // build can occur.
-  def resourceToLock = "not-a-lock-${JOB_NAME}@${BUILD_NUMBER}"
-
   script {
 
     // if branches job type, add parameter BRANCH_UNDER_TEST
@@ -29,15 +20,14 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
       ])
 
       helper.BUILD_PLAN = new groovy.json.JsonSlurper().parseText(params.BUILD_PLAN)
+      helper.BRANCH_UNDER_TEST = params.BRANCH_UNDER_TEST
      
       println("helper.BUILD_PLAN = ${helper.BUILD_PLAN}")
-      println("params.BRANCH_UNDER_TEST = ${params.BRANCH_UNDER_TEST}")
-  
-      if(params.BRANCH_UNDER_TEST == JOB_NAME) {
-        println("This is the main job in a branches build. Exclude concurrent builds!")
-        resourceToLock = "branches-build"
-      }
+      println("helper.BRANCH_UNDER_TEST = ${helper.BRANCH_UNDER_TEST}")
 
+    }
+    else {
+      helper.BRANCH_UNDER_TEST = ""
     }
     
     node('Docker') {
@@ -59,14 +49,10 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
         def projectCorrected = project.replace('/','%2F')
         def dependency = "${folder}/${projectCorrected}"
         dependencyListCorrected.add(dependency)
-        
-        // generate job name from dependency name
-        def dependencyProjectName = helper.dependencyToJenkinsProject(dependency)
-        dependencyJobList.add(dependencyProjectName)
   
         // obtain list of builds for the dependency
-        copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: dependencyProjectName, selector: lastSuccessful(), target: "artefacts"
-        myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+        def dependencyCleaned = dependency.replace('/','_')
+        myFile = readFile("/home/msk_jenkins/dependency-database/buildnames/${dependencyCleaned}")
         def depBuilds = myFile.split("\n")
         def curBuilds = builds.clone()
         
@@ -78,29 +64,26 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
         }
       } // dependencyList.each
 
-      // publish our list of builds as artefact for our downstream builds
-      writeFile file: "builds.txt", text: builds.join("\n")
-      archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
-      
-      // publish our list of direct dependencies for our downstream builds
-      writeFile file: "dependencyList.txt", text:dependencyListCorrected.join("\n")
-      archiveArtifacts artifacts: "dependencyList.txt", onlyIfSuccessful: false
-      
-      // record our dependencies in central "data base" for explicit dependency triggering
-      def dependencyListJoined = dependencyListCorrected.join(" ").replace("/","_")
+      // compute names used below
       def JobNameAsDependency = helper.jekinsProjectToDependency(JOB_NAME)
       def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
+
+      // publish our list of builds as artefact for our downstream builds
+      writeFile file: "/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}", text: builds.join("\n")
+      
+      // record our dependencies in central "data base" for explicit dependency triggering
+      writeFile file: "/home/msk_jenkins/dependency-database/reverse/${JobNameAsDependencyCleaned}", text:dependencyListCorrected.join("\n")
+      def dependencyListJoined = dependencyListCorrected.join(" ").replace("/","_")
       sh """
         for dependency in ${dependencyListJoined}; do
           mkdir -p "/home/msk_jenkins/dependency-database/forward/\${dependency}"
           echo "${JobNameAsDependency}" > "/home/msk_jenkins/dependency-database/forward/\${dependency}/${JobNameAsDependencyCleaned}"
         done
-        cp "${WORKSPACE}/dependencyList.txt" "/home/msk_jenkins/dependency-database/reverse/${JobNameAsDependencyCleaned}"
       """
       
       println("============ HIER 1")
 
-      if(env.JOB_TYPE == "branches" && params.BRANCH_UNDER_TEST == JOB_NAME) {
+      if(env.JOB_TYPE == "branches" && helper.BRANCH_UNDER_TEST == JOB_NAME) {
         println("============ HIER 2")
         // first branches-typed build: create build plan
         helper.BUILD_PLAN = helper.generateBuildPlan()
@@ -111,121 +94,186 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
     
   } // script
 
-  // form comma-separated list of dependencies as needed for the trigger configuration
-  def dependencies = dependencyJobList.join(',')
-  if(dependencies == "") {
-    dependencies = "Create Docker Images"
-  }
-  
-  lock(resource: resourceToLock) {
+  pipeline {
+    agent none
 
-    pipeline {
-      agent none
+    // setup build trigger
+    // Note: do not trigger automatically by dependencies, since this is implemented explicitly to have more control.
+    // The dependencies are tracked above in the scripts section in a central "database" and used to trigger downstream
+    // build jobs after the build.
+    triggers {
+      pollSCM('* * * * *')
+    }
+    options {
+      //disableConcurrentBuilds()
+      quietPeriod(0)
+      copyArtifactPermission('*')
+      buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
+    }
 
-      // setup build trigger
-      // Note: do not trigger automatically by dependencies, since this is implemented explicitly to have more control.
-      // The dependencies are tracked above in the scripts section in a central "database" and used to trigger downstream
-      // build jobs after the build.
-      triggers {
-        pollSCM('* * * * *')
-      }
-      options {
-        //disableConcurrentBuilds()
-        quietPeriod(0)
-        copyArtifactPermission('*')
-        buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
-      }
-
-      stages {
-        // apply changes from project-template
-        stage('preprocess') {
-          steps {
-            script {
-              node('Docker') {
-                if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
-                  git branch: env.BRANCH_NAME, url: gitUrl
-                } else {
-                  git gitUrl
-                }
-                sh """
-                  git reset --hard
-                  git clean -f -d -x
-                  git config credential.helper store
-                  git remote add project-template "https://github.com/ChimeraTK/project-template" || true
-                  git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
-                  git remote update
-                  git merge -X theirs --no-edit project-template/master && \
-                  git push --all || \
-                  true
-                """
-                // We could also apply the clang-format style here, but this should be discussed first.
-                //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
-                //  git commit -a -m "Automated commit: apply clang-format" && git push --all || true
-              }
-            }
-          }
-        } // stage preprocess
-        
-        stage('build') {
-          // Run the build stages for all labels + build types in parallel, each in a separate docker container
-          steps {
-            script {
-              parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it, gitUrl)] }
-            }
-          }
-        } // stage build
-        
-        stage('downstream-builds') {
-          when {
-            expression { return params.BRANCH_UNDER_TEST == JOB_NAME }
-          }
-          steps {
-            script {
-              helper.BUILD_PLAN.each { buildGroup ->
-                parallel buildGroup.collectEntries { ["${it}" : {
-                  def theJob = helper.dependencyToJenkinsProject(it, true)
-                  
-                  def r = build(job: theJob, propagate: false, wait: true, parameters: [
-                    string(name: 'BRANCH_UNDER_TEST', value: params.BRANCH_UNDER_TEST),
-                    string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN))
-                  ])
-                  currentBuild.result = hudson.model.Result.combine(hudson.model.Result.fromString(currentBuild.currentResult), hudson.model.Result.fromString(r.result))
-
-                  build(job: theJob.replace("/branches/", "/branches-testing/"), propagate: true, wait: false, parameters: [
-                    string(name: 'BRANCH_UNDER_TEST', value: params.BRANCH_UNDER_TEST),
-                    string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN))
-                  ])
-                }] }
-              }
-            }
-          }
-        } // stage downstream-builds
-      } // end stages
-      post {
-        failure {
-          emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.MAILTO
-          //mattermostSend channel: env.JOB_NAME, color: "danger", message: "Build of ${env.JOB_NAME} failed."
-          //mattermostSend channel: "Jenkins", color: "danger", message: "Build of ${env.JOB_NAME} failed."
-        }
-        always {
-          node('Docker') {
-            script {
-              helper.doPublishBuild(builds)
-            }
-          }
+    stages {
+      // apply changes from project-template
+      stage('preprocess') {
+        steps {
           script {
-            if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
-              if (!currentBuild.resultIsWorseOrEqualTo(currentBuild.getPreviousBuild().result)) {
-                //mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
-                //mattermostSend channel: "Jenkins", color: "good", message: "Build of ${env.JOB_NAME} is good again."
+
+            // if this job has no dependency, make sure it gets triggered when docker images are renewed
+            if(dependencyList.isEmpty()) {
+              properties([pipelineTriggers([upstream('Create Docker Images')])])
+            }
+
+            node('Docker') {
+              if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
+                git branch: env.BRANCH_NAME, url: gitUrl
+              } else {
+                git gitUrl
               }
+              sh """
+                git reset --hard
+                git clean -f -d -x
+                git config credential.helper store
+                git remote add project-template "https://github.com/ChimeraTK/project-template" || true
+                git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
+                git remote update
+                git merge -X theirs --no-edit project-template/master && \
+                git push --all || \
+                true
+              """
+              // We could also apply the clang-format style here, but this should be discussed first.
+              //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
+              //  git commit -a -m "Automated commit: apply clang-format" && git push --all || true
             }
           }
-        } // end always
-      } // end post
-    } // end pipeline
-  
-  } // end lock
+        }
+      } // stage preprocess
+      
+      stage('build') {
+        // Run the build stages for all labels + build types in parallel, each in a separate docker container
+        steps {
+          script {
+            parallel builds.collectEntries { ["${it}" : transformIntoStep(dependencyList, it, gitUrl)] }
+          }
+        }
+      } // stage build
+      
+      stage('downstream-builds') {
+        when {
+          expression { return helper.BRANCH_UNDER_TEST == JOB_NAME }
+        }
+        steps {
+          script {
+            def buildList = helper.BUILD_PLAN.flatten()
+            
+            // buildDone: map of condition variables to signal when build terminates
+            def buildDone = [:]
+            // buildStatus: map of build statuses (true = ok, false = failed)
+            def buildStatus = [:]
+            buildList.each {
+              buildDone[it] = createCondition()
+            }
+            buildDone[helper.jekinsProjectToDependency(JOB_NAME)] = createCondition()
+            buildStatus[helper.jekinsProjectToDependency(JOB_NAME)] = true
+            
+            parallel buildList.collectEntries { ["${it}" : {
+              def theJob = helper.dependencyToJenkinsProject(it, true)
+              
+              // signal downstream builds (waiting in parallel) when finished
+              signalAll(buildDone[it]) {
+
+                // wait until all dependencies which are also build here (in parallel) are done
+                def myDeps
+                node {
+                  myDeps = helper.gatherDependenciesDeep([it])
+                }
+                def failedDeps = false
+                myDeps.each { dep ->
+                  // myDeps contains the job itself -> ignore it
+                  if(dep == it) return
+                  // ignore dependencies which are not build within this job
+                  if(!buildDone.containsKey(dep)) return
+                  // if build status not yet set, wait for notification
+                  // Attention: There is a potential race condition if the notification happens between the check of the
+                  // build status and the call to awaitCondition()! Unclear how to solve this. For now we just add a
+                  // sleep between setting the build status and sending the notification below.
+                  if(!buildStatus.containsKey(dep)) {
+                    echo("Waiting for depepdency ${dep}...")
+                    awaitCondition(buildDone[dep])
+                  }
+                  if(!buildStatus[dep]) {
+                    echo("Depepdency ${dep} has failed, not triggering downstream build...")
+                    failedDeps = true
+                  }
+                }
+                if(failedDeps) {
+                  echo("Not proceeding with downstream build due to failed dependencies.")
+                  return
+                }
+
+                // trigger the build and wait until done
+                // Note: propagate=true would abort+fail even if downstream build result is unstable. Also in case of
+                // a failure we first need to set the buildStatus before failing...
+                def r = build(job: theJob, propagate: false, wait: true, parameters: [
+                  string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
+                  string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN))
+                ])
+                
+                echo("r.result = ${r.result}")
+                def result =  hudson.model.Result.fromString(r.result)
+                
+                if(result == Result.SUCCESS) {
+                  buildStatus[it] = true
+                  sleep(5) // mitigate race condition, see above
+                  echo("Build result of ${it} is SUCCESS.")
+                }
+                else if(result == Result.UNSTABLE) {
+                  buildStatus[it] = true
+                  sleep(5) // mitigate race condition, see above
+                  unstable(message: "Build result of ${it} is UNSTABLE.")
+                }
+                else {
+                  buildStatus[it] = false
+                  sleep(5) // mitigate race condition, see above
+                  error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
+                }
+
+              } // <-- signal downstream projects waiting for this build
+
+              // trigger the test and wait until done
+              // propagate=true is ok here, since we do not do anything further downstream in this parallel stage.
+              build(job: theJob.replace("/branches/", "/branches-testing/"), propagate: true, wait: true, parameters: [
+                string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
+                string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN))
+              ])
+
+            }] }
+          }
+        }
+      } // stage downstream-builds
+    } // end stages
+    post {
+      failure {
+        emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.MAILTO
+        //mattermostSend channel: env.JOB_NAME, color: "danger", message: "Build of ${env.JOB_NAME} failed."
+        //mattermostSend channel: "Jenkins", color: "danger", message: "Build of ${env.JOB_NAME} failed."
+      }
+      always {
+        node('Docker') {
+          script {
+            helper.doPublishBuild(builds)
+          }
+        }
+        script {
+          if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
+            if (!currentBuild.resultIsWorseOrEqualTo(currentBuild.getPreviousBuild().result)) {
+              //mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
+              //mattermostSend channel: "Jenkins", color: "good", message: "Build of ${env.JOB_NAME} is good again."
+            }
+          }
+        }
+      } // end always
+    } // end post
+  } // end pipeline
+
 }
 
 /**********************************************************************************************************************/

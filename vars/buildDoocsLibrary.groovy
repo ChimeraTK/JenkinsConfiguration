@@ -19,13 +19,14 @@ def call(String libraryName, ArrayList<String> dependencyList) {
 
   script {
     node('Docker') {
+      def JobNameAsDependency = JOB_NAME
+      def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
+
       // publish our list of builds as artefact for our downstream builds
-      writeFile file: "builds.txt", text: builds.join("\n")
-      archiveArtifacts artifacts: "builds.txt", onlyIfSuccessful: false
+      writeFile file: "/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}", text: builds.join("\n")
  
       // publish our list of direct dependencies for our downstream builds
-      writeFile file: "dependencyList.txt", text: dependencyList.join("\n")
-      archiveArtifacts artifacts: "dependencyList.txt", onlyIfSuccessful: false
+      writeFile file: "/home/msk_jenkins/dependency-database/reverse/${JobNameAsDependencyCleaned}", text: dependencyList.join("\n")
 
       // form comma-separated list of dependencies as needed for the trigger configuration
       dependencies = dependencyList.join(',')
@@ -35,14 +36,11 @@ def call(String libraryName, ArrayList<String> dependencyList) {
       
       // record our dependencies in central "data base" for explicit dependency triggering
       def dependencyListJoined = dependencyList.join(" ").replace("/","_")
-      def JobNameAsDependency = JOB_NAME
-      def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
       sh """
         for dependency in ${dependencyListJoined}; do
           mkdir -p "/home/msk_jenkins/dependency-database/forward/\${dependency}"
           echo "${JobNameAsDependency}" > "/home/msk_jenkins/dependency-database/forward/\${dependency}/${JobNameAsDependencyCleaned}"
         done
-        cp "${WORKSPACE}/dependencyList.txt" "/home/msk_jenkins/dependency-database/reverse/${JobNameAsDependencyCleaned}"
       """
 
     }
@@ -58,7 +56,7 @@ def call(String libraryName, ArrayList<String> dependencyList) {
     }
     options {
       disableConcurrentBuilds()
-      quietPeriod(180)
+      //quietPeriod(180)
       copyArtifactPermission('*')
       buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
     }
@@ -98,7 +96,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
           git gitUrl
         }
         // we need root access inside the container
-        def dockerArgs = "-u 0 --privileged"
+        def dockerArgs = "-u 0 --privileged -v /home/msk_jenkins:/home/msk_jenkins"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             sh '''
@@ -106,6 +104,9 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               mkdir -p /export/doocs/library/common
             '''
             helper.doDependencyArtefacts(dependencyList, label, buildType)
+
+            // Compute name where to put the install artifact
+            def installArtifactFile = helper.getArtefactName(false, "install.tgz", label, buildType, JOB_NAME)
 
             // We don't care that in gitlab the repository structure is different. Those project only work with meson builds anyway, and form them the path does not matter.
             sh """
@@ -161,9 +162,8 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               touch mv /scratch/artefact.list
               mv /scratch/artefact.list /scratch/dependencies.${JOBNAME_CLEANED}.list
               echo /scratch/dependencies.${JOBNAME_CLEANED}.list >> export.list.installed
-              sudo -H -u msk_jenkins tar cf install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz --files-from export.list.installed --use-compress-program="pigz -9 -p32"
+              sudo -H -u msk_jenkins tar cf ${installArtifactFile} --files-from export.list.installed --use-compress-program="pigz -9 -p32"
             """
-            archiveArtifacts artifacts: "install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
           }
         }
       }

@@ -55,8 +55,9 @@ def call() {
           script {
             node('Docker') {
               // fetch list of build types
-              copyArtifacts filter: "builds.txt", fingerprintArtifacts: true, projectName: BUILD_JOB, selector: lastSuccessful(), target: "artefacts"  
-              def myFile = readFile(env.WORKSPACE+"/artefacts/builds.txt")
+              def JobNameAsDependency = helper.jekinsProjectToDependency(JOB_NAME)
+              def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
+              def myFile = readFile("/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}")
               builds = myFile.split("\n")
             }
           }
@@ -101,7 +102,7 @@ def transformIntoStep(String buildName) {
     stage(buildName) {
       node('Docker') {
         // we need root access inside the container and access to the dummy pcie devices of the host
-        def dockerArgs = "-u 0 --privileged --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b"
+        def dockerArgs = "-u 0 --privileged --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             helper.doTesting(label, buildType)
