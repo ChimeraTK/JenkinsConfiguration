@@ -1,0 +1,39 @@
+#!/bin/bash
+
+function findDependenciesRecursive() {
+
+dep="$1"
+echo ${dep}
+
+if [ -z "${dep}" ]; then
+  echo "BUG!" >&2
+  exit 1
+fi
+
+depCleaned=${dep//\//_}
+
+filna="/home/msk_jenkins/dependency-database/reverse/${depCleaned}"
+
+if [ ! -f "${filna}" ]; then
+  echo "Wrong dependency name: ${dep}" >&2
+  echo "File was not found: ${filna}" >&2
+  exit 1
+fi
+
+for depdep in `cat ${filna}`; do
+  findDependenciesRecursive ${depdep}
+done
+
+}
+
+#############################################################################################################################
+
+if [ -z "${1}" ]; then
+  echo "Parameter missing." >&2
+  exit 1
+fi
+
+while [ -n "$1" ]; do
+  findDependenciesRecursive "$1"
+  shift
+done

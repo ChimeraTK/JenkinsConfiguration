@@ -81,6 +81,13 @@ def jekinsProjectToDependency(String jenkinsProject) {
 def gatherDependenciesDeep(ArrayList<String> dependencyList) {
   script {
     println("gatherDependenciesDeep(${dependencyList})")
+    
+    def stringList = dependencyList.join(' ')
+    def output = sh ( script: "/home/msk_jenkins/findDependenciesDeep ${stringList}", returnStdout: true ).trim()    
+    def deepList = new ArrayList<String>(Arrays.asList(output.split("\n"))))
+    return deepList.unique()
+    
+    /*
     def deepList = dependencyList
     dependencyList.each { dependency ->
       if(dependency == "") return;
@@ -90,6 +97,7 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
       deepList.addAll(gatherDependenciesDeep(new ArrayList<String>(Arrays.asList(myFile.split("\n")))))
     }
     return deepList.unique()
+    */
   }
 }
 
