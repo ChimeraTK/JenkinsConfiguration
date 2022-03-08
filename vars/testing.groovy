@@ -9,35 +9,9 @@ def call() {
   
   ArrayList<String> builds
 
-    // if branches job type, add parameter BRANCH_UNDER_TEST
   script {
-    if(env.JOB_TYPE != "branches-testing") {
-      // name of the job which ran the build
-      env.BUILD_JOB = helper.dependencyToJenkinsProject("${env.ORGANISATION}/${env.PROJECT}")
-
-      // setup build trigger
-      properties([
-        pipelineTriggers([upstream(upstreamProjects: BUILD_JOB, threshold: hudson.model.Result.UNSTABLE)]),
-        disableConcurrentBuilds()
-      ])
-    }
-    else {
-      properties([
-        parameters([
-          string(name: 'BRANCH_UNDER_TEST', description: 'Jenkins project name for the branch to be tested', defaultValue: JOB_NAME),
-          string(name: 'BUILD_PLAN', description: 'JSON object with plan of the build', defaultValue: '[]'),
-        ])
-      ])
-
-      helper.BUILD_PLAN = new groovy.json.JsonSlurper().parseText(params.BUILD_PLAN)
-     
-      println("helper.BUILD_PLAN = ${helper.BUILD_PLAN}")
-      println("params.BRANCH_UNDER_TEST = ${params.BRANCH_UNDER_TEST}")
-    
-      // name of the job which ran the build. Needs to have the BUILD_PLAN available for branches-testing...
-      env.BUILD_JOB = helper.dependencyToJenkinsProject("${env.ORGANISATION}/${env.PROJECT}")
-    }
-
+    helper.setParameters()
+    env.BUILD_JOB = helper.dependencyToJenkinsProject("${env.ORGANISATION}/${env.PROJECT}")
   }
 
   pipeline {
@@ -45,6 +19,7 @@ def call() {
     
     // configure artefact permissions and discarding of old builds/artefacts
     options {
+      quietPeriod(0)
       copyArtifactPermission('*')
       buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
     }

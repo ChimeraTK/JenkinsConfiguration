@@ -6,6 +6,23 @@
 
 ArrayList<String> BUILD_PLAN = []
 String BRANCH_UNDER_TEST = ""
+def DEPENDENCY_BUILD_NUMBERS = [:]
+
+/**********************************************************************************************************************/
+
+def setParameters() {
+  properties([
+    parameters([
+      string(name: 'BRANCH_UNDER_TEST', description: 'LEAVE AT DEFAULT! Jenkins project name for the branch to be tested', defaultValue: JOB_NAME),
+      string(name: 'BUILD_PLAN', description: 'LEAVE AT DEFAULT! JSON object with list of downstream projects to build', defaultValue: '[]'),
+      string(name: 'DEPENDENCY_BUILD_NUMBERS', description: 'LEAVE AT DEFAULT! JSON object with map of dependency build numbers to use', defaultValue: '{}'),
+    ])
+  ])
+
+  BRANCH_UNDER_TEST = params.BRANCH_UNDER_TEST
+  BUILD_PLAN = readJSON(text: params.BUILD_PLAN)  // new groovy.json.JsonSlurper().parseText(params.BUILD_PLAN)
+  DEPENDENCY_BUILD_NUMBERS = readJSON(text: params.DEPENDENCY_BUILD_NUMBERS) // new groovy.json.JsonSlurper().parseText(params.DEPENDENCY_BUILD_NUMBERS)
+}
 
 /**********************************************************************************************************************/
 
@@ -23,33 +40,20 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
   jobType = jobType?.minus("-analysis")
   
   branch = "master"
-  
-  if(jobType == "branches") {
-  
-    println("Special branches check: ${dependency}")
-  
-    println(JOB_NAME)
-    println(BRANCH_UNDER_TEST)
-    println(BUILD_PLAN)
-    
-    println(BUILD_PLAN.flatten().size())
-    println(BUILD_PLAN.flatten().indexOf(dependency))
-    def dependencyUnderTest = jekinsProjectToDependency(BRANCH_UNDER_TEST)
-    println("dependencyUnderTest = ${dependencyUnderTest}")
 
-    if(!forceBranches && (BUILD_PLAN.flatten().indexOf(dependency) < 0 || BRANCH_UNDER_TEST == JOB_NAME) && dependencyUnderTest != dependency) {
-      jobType = "fasttrack"
-    }
-    else { 
-      def (butFolder, butType, butProject, butBranch) = BRANCH_UNDER_TEST.split('/')
-      if(butFolder == dependencyFolder && butType == jobType && butProject == dependencyProject) {
-        branch = butBranch
-        println("dependency matches branch under test.")
-      }
-    }
+  def dependencyUnderTest = jekinsProjectToDependency(BRANCH_UNDER_TEST)
 
-    println("jobType = ${jobType}")
-    println("branch = ${branch}")
+  if( !env.JOB_TYPE.startsWith('branches') ||
+      ( !forceBranches && (BUILD_PLAN.indexOf(dependency) < 0 || BRANCH_UNDER_TEST == JOB_NAME) &&
+        dependencyUnderTest != dependency)                                                         ) {
+    jobType = "fasttrack"
+  }
+  else { 
+    def (butFolder, butType, butProject, butBranch) = BRANCH_UNDER_TEST.split('/')
+    if(butFolder == dependencyFolder && butType == jobType && butProject == dependencyProject) {
+      branch = butBranch
+      echo("Dependency ${dependency} matches branch under test.")
+    }
   }
   
   if(dependencyFolder != "DOOCS") {
@@ -68,7 +72,6 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
 def jekinsProjectToDependency(String jenkinsProject) {
   def projectSplit = jenkinsProject.split('/')
   if(projectSplit.size() != 4) {
-    println(projectSplit.size())
     error("Jenkins project name '${jenkinsProject}' has the wrong format for jekinsProjectToDependency()")
   }
   def (folder, type, project, branch) = projectSplit
@@ -80,24 +83,10 @@ def jekinsProjectToDependency(String jenkinsProject) {
 // helper function, recursively gather a deep list of dependencies
 def gatherDependenciesDeep(ArrayList<String> dependencyList) {
   script {
-    println("gatherDependenciesDeep(${dependencyList})")
-    
     def stringList = dependencyList.join(' ')
     def output = sh ( script: "/home/msk_jenkins/findDependenciesDeep ${stringList}", returnStdout: true ).trim()    
     def deepList = new ArrayList<String>(Arrays.asList(output.split("\n")))
     return deepList.unique()
-    
-    /*
-    def deepList = dependencyList
-    dependencyList.each { dependency ->
-      if(dependency == "") return;
-
-      def dependencyCleaned = dependency.replace('/','_')
-      myFile = readFile("/home/msk_jenkins/dependency-database/reverse/${dependencyCleaned}")
-      deepList.addAll(gatherDependenciesDeep(new ArrayList<String>(Arrays.asList(myFile.split("\n")))))
-    }
-    return deepList.unique()
-    */
   }
 }
 
@@ -127,7 +116,6 @@ def findReverseDependencies(String project) {
 /**********************************************************************************************************************/
 
 def generateBuildPlan() {
-  println("Generating build plan for ${JOB_NAME}...")
   def depName = jekinsProjectToDependency(JOB_NAME)
   sh """
     cd ${WORKSPACE}
@@ -156,45 +144,31 @@ def getArtefactName(boolean forReading, String basename, String label, String bu
   
   def jobName = dependencyToJenkinsProject(dependencyNoBuildNo)
   def JOBNAME_CLEANED=jobName.replace('/','_')
-  
-  println("getArtefactName(${forReading}, ${basename}, ${label}, ${buildType}, ${dependency})")
 
-  println("jobName = ${jobName}")
-  println("JOBNAME_CLEANED = ${JOBNAME_CLEANED}")
-  
   def path = "/home/msk_jenkins/artifacts/${JOBNAME_CLEANED}/${label}/${buildType}"
   
   def buildNumer = null
   if(forReading) {
 
-    def upstreamCause = currentBuild.rawBuild.getCause(Cause.UpstreamCause)
-    println("upstreamCause = ${upstreamCause}")
-    if(upstreamCause) {
-      println("upstreamCause.getUpstreamProject() = ${upstreamCause.getUpstreamProject()}")
-    }
-
     if(dependency.contains('@')) {
       buildNumber = dependency.split('@',2)[1]
-      println("Build number from dependency name!")
+      echo("Build number from dependency name: ${dependency} -> ${buildNumber}")
     }
-    else if(upstreamCause && upstreamCause.getUpstreamProject() == jobName) {
+    else if(DEPENDENCY_BUILD_NUMBERS.containsKey(dependencyNoBuildNo)) {
       // looking for build name of job which triggered us
-      buildNumber = upstreamCause.getUpstreamBuild()
-      println("Build number from upstream trigger!")
+      buildNumber = DEPENDENCY_BUILD_NUMBERS[dependencyNoBuildNo]
+      echo("Build number from upstream trigger: ${dependency} -> ${buildNumber}")
     }
     else {
       // determine latest available build
-      println("path = ${path}")
-      upstreamCause = null // the object may not be serializable which causes an exception when executing sh
       buildNumber = sh ( script: "ls ${path} | sort -n | tail -n1", returnStdout: true ).trim()
-      println("Build number from latest build!")    
+      echo("Build number from latest build: ${dependency} -> ${buildNumber}")
+      DEPENDENCY_BUILD_NUMBERS[dependencyNoBuildNo] = buildNumber
     }
   }
   else {
     buildNumber = BUILD_NUMBER
   }
-
-  println("buildNumber = ${buildNumber}")
   
   path = path+"/"+buildNumber
 
@@ -202,8 +176,6 @@ def getArtefactName(boolean forReading, String basename, String label, String bu
     mkdir -p ${path}
     chown msk_jenkins:msk_jenkins -R ${path}
   """
-
-  println("path = ${path}")
 
   return "${path}/${basename}"
 }
@@ -349,6 +321,7 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
       
       // generate job name from dependency name
       def dependency = dependencyToJenkinsProject(it)
+
       // cleaned version of the job name without slashes, for use in filenames etc.
       def dependency_cleaned = dependency.replace('/','_')
       
@@ -356,21 +329,14 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
       if(obtainedArtefacts.find{it == dependency} == dependency) return;
       obtainedArtefacts.add(dependency)
 
-      // download the artefact
-      //copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
-
       // unpack artefact
       def theFile = getArtefactName(true, "install.tgz", label, buildType, it)
-      println("theFile = ${theFile}")
       sh """
-        #tar xf \"artefacts/install-${dependency_cleaned}-${label}-${buildType}.tgz\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
         tar xf \"${theFile}\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
       """
 
       // keep track of dependencies to download - used when dependees need to resolve our dependencies
       def depBuildNo = getBuildNumberFromArtefactFileName(theFile)
-      println("it = ${it}")
-      println("depBuildNo = ${depBuildNo}")
       sh """
         touch /scratch/artefact.list
         if [[ "${it}" == *"@"* ]]; then
@@ -409,16 +375,12 @@ def doBuilddirArtefact(String label, String buildType) {
   
     def buildJob = env.BUILD_JOB
     def buildJob_cleaned = buildJob.replace('/','_')
-    //copyArtifacts filter: "build-${buildJob_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${buildJob}", selector: lastSuccessful(), target: "artefacts"
     
     def theFile = getArtefactName(true, "build.tgz", label, buildType)
 
     // Unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins).
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
-      #for a in artefacts/build-*-${label}-${buildType}.tgz ; do
-      #  sudo -H -E -u msk_jenkins tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
-      #done
       sudo -H -E -u msk_jenkins tar xf \"${theFile}\" -C / --use-compress-program="pigz -9 -p32"
 
       touch /scratch/artefact.list
@@ -429,7 +391,6 @@ def doBuilddirArtefact(String label, String buildType) {
       if( it != "" ) {
         def dependency = dependencyToJenkinsProject(it)
         def dependency_cleaned = dependency.replace('/','_')
-        // copyArtifacts filter: "install-${dependency_cleaned}-${label}-${buildType}.tgz", fingerprintArtifacts: true, projectName: "${dependency}", selector: lastSuccessful(), target: "artefacts"
 
         theFile = getArtefactName(true, "install.tgz", label, buildType, it)
         sh """
@@ -484,9 +445,7 @@ elif [ "${buildType}" == "asan" ]; then
 fi
 if [ "${DISABLE_TEST}" == "true" ]; then
   BUILD_TESTS_OPT="-DBUILD_TESTS=OFF"
-  echo \\\${BUILD_TESTS_OPT}
 fi
-echo \\\${BUILD_TESTS_OPT}
 cmake /scratch/source/\${RUN_FROM_SUBDIR} -GNinja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} \\\${BUILD_TESTS_OPT}
 ninja -v ${MAKEOPTS}
 EOF
@@ -532,7 +491,6 @@ for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
 ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
-echo sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
 sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
 rm -rf "${WORKSPACE}/Testing"
 cp -r /scratch/build-${buildJob_cleaned}/Testing "${WORKSPACE}"
@@ -634,41 +592,6 @@ def doDeploy(String label, String buildType) {
     #sudo -H -E -u msk_jenkins tar cf ${WORKSPACE}/install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz . --use-compress-program="pigz -9 -p32"
     sudo -H -E -u msk_jenkins tar cf ${theFile} . --use-compress-program="pigz -9 -p32"
   """
-
-  // Downstream projects are triggered in buildAndDeply of the first project only.
-  if(env.JOB_TYPE == "branches") return
-  
-  // Get list of downstream projects
-  def dependees = findReverseDependencies(jekinsProjectToDependency(JOB_NAME))
-  println(dependees)
-  
-  // For each downstream project:
-  dependees.each { dependee ->
-    if(dependee == '') return;
-    println(dependee)
-    
-    // check whether it has a dependency (direct or indirect) which is currently building (excluding ourselves)
-    def myDeps = gatherDependenciesDeep([dependee])
-    def triggerDependee = true
-    myDeps.each { myDep ->
-      if(myDep == "" || !triggerDependee) return;
-      def myDepJob = dependencyToJenkinsProject(myDep)
-      if(myDepJob == JOB_NAME) return;
-      def job = jenkins.model.Jenkins.instance.getItemByFullName(myDepJob)
-      def building = false
-      building = job?.isBuilding() || job?.isInQueue()
-      if(building) {
-        triggerDependee = false
-        println("Not triggering ${dependee} as ${myDepJob} is still building.")
-      }
-    }
-    
-    
-    // trigger it
-    if(triggerDependee) {
-      build job: dependencyToJenkinsProject(dependee), propagate: false, wait: false
-    }
-  }
 }
 
 /**********************************************************************************************************************/
@@ -697,8 +620,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
           unstash "cobertura-${it}"
         }
         catch(all) {
-          echo("Could not retreive stashed cobertura results for ${it}")
-          currentBuild.result = 'FAILURE'
+          error(message: "Could not retreive stashed cobertura results for ${it}")
         }
       }
       

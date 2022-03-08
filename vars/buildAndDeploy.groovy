@@ -9,27 +9,8 @@
 def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> builds) {
 
   script {
+    helper.setParameters()
 
-    // if branches job type, add parameter BRANCH_UNDER_TEST
-    if(env.JOB_TYPE == "branches") {
-      properties([
-        parameters([
-          string(name: 'BRANCH_UNDER_TEST', description: 'Jenkins project name for the branch to be tested', defaultValue: JOB_NAME),
-          string(name: 'BUILD_PLAN', description: 'JSON object with plan of the build', defaultValue: '[]'),
-        ])
-      ])
-
-      helper.BUILD_PLAN = new groovy.json.JsonSlurper().parseText(params.BUILD_PLAN)
-      helper.BRANCH_UNDER_TEST = params.BRANCH_UNDER_TEST
-     
-      println("helper.BUILD_PLAN = ${helper.BUILD_PLAN}")
-      println("helper.BRANCH_UNDER_TEST = ${helper.BRANCH_UNDER_TEST}")
-
-    }
-    else {
-      helper.BRANCH_UNDER_TEST = ""
-    }
-    
     node('Docker') {
 
       // Reduce list of builds to those builds which exist for all dependencies
@@ -81,13 +62,10 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
         done
       """
       
-      println("============ HIER 1")
-
-      if(env.JOB_TYPE == "branches" && helper.BRANCH_UNDER_TEST == JOB_NAME) {
-        println("============ HIER 2")
-        // first branches-typed build: create build plan
-        helper.BUILD_PLAN = helper.generateBuildPlan()
-        println("helper.BUILD_PLAN = ${helper.BUILD_PLAN}")
+      if(helper.BRANCH_UNDER_TEST == JOB_NAME) {
+        // first build (i.e. not triggered by upstream project): store list of downstream projects to build
+        helper.BUILD_PLAN = helper.generateBuildPlan().flatten()
+        helper.DEPENDENCY_BUILD_NUMBERS = [ "${JobNameAsDependency}" : BUILD_NUMBER ]
       }
 
     } // docker
@@ -155,29 +133,53 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
           }
         }
       } // stage build
-      
+
+      // run all downstream builds, i.e. also "grand childs" etc.
+      // Implementation note:
+      //  - create one parallel step per downstream project (including the test of the main job)
+      //  - each parallel step initially waits until all its dependencies have been built
+      //  - signalling between parallel steps is realised through a Condition object to wake up waiting jobs and
+      //    a build status flag
+      //  - FIXME: Need to clarify whether we need to use locks or so to protect the maps!
       stage('downstream-builds') {
         when {
+          // downstream builds are run only in the first job, i.e. not when being triggered by an upstream dependency
           expression { return helper.BRANCH_UNDER_TEST == JOB_NAME }
         }
         steps {
           script {
-            def buildList = helper.BUILD_PLAN.flatten()
-            
+
             // buildDone: map of condition variables to signal when build terminates
             def buildDone = [:]
             // buildStatus: map of build statuses (true = ok, false = failed)
             def buildStatus = [:]
-            buildList.each {
+            helper.BUILD_PLAN.each {
               buildDone[it] = createCondition()
             }
             buildDone[helper.jekinsProjectToDependency(JOB_NAME)] = createCondition()
             buildStatus[helper.jekinsProjectToDependency(JOB_NAME)] = true
+
+            // add special build name for the test to be run
+            def buildList = helper.BUILD_PLAN + "TESTS"
             
+            // execute parallel step for all builds
             parallel buildList.collectEntries { ["${it}" : {
+              if(it == "TESTS") {
+                // build the test. Result is always propagated.
+                build(job: JOB_NAME.replace("/${env.JOB_TYPE}/", "/${env.JOB_TYPE}-testing/"),
+                      propagate: true, wait: true, parameters: [
+                        string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
+                        string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN)),
+                        string(name: 'DEPENDENCY_BUILD_NUMBERS',
+                               value: groovy.json.JsonOutput.toJson(helper.DEPENDENCY_BUILD_NUMBERS))
+                ])
+                return
+              }
+            
+              // build downstream project
               def theJob = helper.dependencyToJenkinsProject(it, true)
               
-              // signal downstream builds (waiting in parallel) when finished
+              // signal builds downstream of this build when finished (they are all waiting in parallel)
               signalAll(buildDone[it]) {
 
                 // wait until all dependencies which are also build here (in parallel) are done
@@ -212,12 +214,17 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
                 // trigger the build and wait until done
                 // Note: propagate=true would abort+fail even if downstream build result is unstable. Also in case of
                 // a failure we first need to set the buildStatus before failing...
+                // In any case, the build result is only propagated for branches builds.
                 def r = build(job: theJob, propagate: false, wait: true, parameters: [
                   string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
-                  string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN))
+                  string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN)),
+                  string(name: 'DEPENDENCY_BUILD_NUMBERS',
+                         value: groovy.json.JsonOutput.toJson(helper.DEPENDENCY_BUILD_NUMBERS))
                 ])
-                
-                echo("r.result = ${r.result}")
+
+                def number = r.getNumber()
+                helper.DEPENDENCY_BUILD_NUMBERS[it] = number
+
                 def result =  hudson.model.Result.fromString(r.result)
                 
                 if(result == Result.SUCCESS) {
@@ -228,21 +235,37 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
                 else if(result == Result.UNSTABLE) {
                   buildStatus[it] = true
                   sleep(5) // mitigate race condition, see above
-                  unstable(message: "Build result of ${it} is UNSTABLE.")
+                  if(env.JOB_TYPE == "branches")  {
+                    unstable(message: "Build result of ${it} is UNSTABLE.")
+                  }
+                  else {
+                    echo("Build result of ${it} is UNSTABLE.")
+                  }
                 }
                 else {
                   buildStatus[it] = false
                   sleep(5) // mitigate race condition, see above
-                  error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
+                  if(env.JOB_TYPE == "branches")  {
+                    error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
+                  }
+                  else {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                      error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
+                    }
+                  }
                 }
 
               } // <-- signal downstream projects waiting for this build
 
               // trigger the test and wait until done
               // propagate=true is ok here, since we do not do anything further downstream in this parallel stage.
-              build(job: theJob.replace("/branches/", "/branches-testing/"), propagate: true, wait: true, parameters: [
-                string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
-                string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN))
+              // Again, the build result is only propagated for branches builds.
+              build(job: theJob.replace("/${env.JOB_TYPE}/", "/${env.JOB_TYPE}-testing/"),
+                    propagate: (env.JOB_TYPE == "branches"), wait: true, parameters: [
+                      string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
+                      string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN)),
+                      string(name: 'DEPENDENCY_BUILD_NUMBERS',
+                             value: groovy.json.JsonOutput.toJson(helper.DEPENDENCY_BUILD_NUMBERS))
               ])
 
             }] }
