@@ -9,8 +9,7 @@
 def call(ArrayList<String> dependencyList, String gitUrl='',
          ArrayList<String> builds=['focal-Debug',
                                    'focal-Release',
-                                   'focal-tsan',
-                                   'focal-asan']) {
+                                   'focal-tsan']) {
 //                                   'tumbleweed-Debug',
 //                                   'tumbleweed-Release']) {
 

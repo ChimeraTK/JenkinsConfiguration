@@ -12,7 +12,6 @@ def call(String libraryName, ArrayList<String> dependencyList) {
   def builds = [ 'focal-Debug',
                  'focal-Release',
                  'focal-tsan',
-                 'focal-asan'
                  ]
 
   script {

@@ -11,7 +11,6 @@ def call() {
   def builds = [ 'focal-Debug',
                  'focal-Release',
                  'focal-tsan',
-                 'focal-asan',
                  ]
 
   pipeline {
