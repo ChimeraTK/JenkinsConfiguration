@@ -42,6 +42,13 @@ def call(String libraryName, ArrayList<String> dependencyList) {
           echo "${JobNameAsDependency}" > "/home/msk_jenkins/dependency-database/forward/\${dependency}/${JobNameAsDependencyCleaned}"
         done
       """
+      
+      def (organisation, project) = env.JOB_NAME.tokenize('/')
+      env.ORGANISATION = organisation
+      env.JOB_TYPE = "fasttrack"
+      env.PROJECT = project
+      env.BRANCH = "master"
+      helper.setParameters()
 
     }
   }

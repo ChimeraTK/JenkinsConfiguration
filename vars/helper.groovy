@@ -71,6 +71,11 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
 // helper function, convert Jenkins project name into dependency name (as listed e.g. in the .jenkinsfile)
 def jekinsProjectToDependency(String jenkinsProject) {
   def projectSplit = jenkinsProject.split('/')
+
+  if(projectSplit[0] == "DOOCS") {
+    return jenkinsProject
+  }
+
   if(projectSplit.size() != 4) {
     error("Jenkins project name '${jenkinsProject}' has the wrong format for jekinsProjectToDependency()")
   }
