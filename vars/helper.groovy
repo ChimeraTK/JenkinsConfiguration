@@ -177,10 +177,20 @@ def getArtefactName(boolean forReading, String basename, String label, String bu
   
   path = path+"/"+buildNumber
 
-  sh """
-    mkdir -p ${path}
-    chown msk_jenkins:msk_jenkins -R ${path}
-  """
+  if(!forReading) {
+    sh """
+      mkdir -p ${path}
+      chown msk_jenkins:msk_jenkins -R ${path}
+    """
+  }
+  else {
+    sh """
+      if [ ! -d ${path} ]; then
+        echo "Dependency directory does not exist: path=${path} with label=${label} buildType=${buildType} dependency=${dependency} dependencyNoBuildNo=${dependencyNoBuildNo} jobName=${jobName} JOBNAME_CLEANED=${JOBNAME_CLEANED} buildNumber=${buildNumber} env.JOB_TYPE=${env.JOB_TYPE}"
+        exit 1
+      fi
+    """
+  }
 
   return "${path}/${basename}"
 }
