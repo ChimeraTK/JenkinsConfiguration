@@ -4,17 +4,18 @@ if [ $# != 1 -a $# != 4 ]; then
   echo "Usage: ./login_docker.sh <label> [<jobName> <buildType> <buildNumber>]"
   echo "  <label> denomiates the Linux system name, e.g. xenial, bionic, focal, tubleweed etc."
   echo "  <jobName> denomiates a Jenkins job name whose build artefact and dependencies should be unpacked into the container."
-  echo "  <buildType> denonminates the cmake build type to retreive the job and artefacts for, i.e. Debug or Releas."
+  echo "  <buildType> denonminates the cmake build type to retreive the job and artefacts for, i.e. Debug or Release."
   echo "  <buildNumbger> denonminates the Jenkins build number to retreive the build artefact for. Dependency artefacts are always retreived as lastSuccessfulBuild!"
   exit 1
 fi
 
 label=$1
-jobName=$2
+# replace all slashes with underscores in jobName
+jobName=${2//\//_}
 buildType=$3
 buildNumber=$4
 
-JENKINS_HOST="https://jenkins.msktools.desy.de"
+ARTIFACTS="/home/msk_jenkins/artifacts"
 
 # should be the same as in the pipeline script (excluding the -u 0)
 DOCKER_PARAMS="--device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b"
@@ -28,21 +29,36 @@ docker start ${ID} || exit 1
 
   # download and unpack build artefact
   if [ -n "${jobName}" ]; then
-    echo "Downloading artefact build-${jobName}-${label}-${buildType}.tgz..."
+    echo "Find & unpack artefact build-${jobName}-${label}-${buildType}.tgz..."
     sleep 2
-    wget --no-check-certificate "${JENKINS_HOST}/job/${jobName}/${buildNumber}/artifact/build-${jobName}-${label}-${buildType}.tgz" -O artefact.tgz
-    tar xf artefact.tgz scratch/artefact.list || true
-    docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
-    rm artefact.tgz
+
+   artefact=${ARTIFACTS}/${jobName}/${label}/${buildType}/${buildNumber}/build.tgz
+   tar xf ${artefact} scratch/artefact.list || true
+    docker exec -u 0 -it ${ID} tar xf ${artefact}
 
     # download and unpack dependency artefacts
     if [ -f scratch/artefact.list ]; then
       for dep in `cat scratch/artefact.list` ; do
-        echo "Downloading artefact install-${dep}-${label}-${buildType}.tgz..."
-        sleep 2
-        wget --no-check-certificate "${JENKINS_HOST}/job/${dep}/lastSuccessfulBuild/artifact/install-${dep}-${label}-${buildType}.tgz" -O artefact.tgz
-        docker exec -u 0 -it ${ID} tar xf /home/msk_jenkins/artefact.tgz
-        rm artefact.tgz
+        echo "Find & unpack dependency artefact install-${dep}-${label}-${buildType}.tgz..."
+        sleep 1
+        # dependencies have are formatted like 'ChimeraTK/ApplicationCore@1571'
+        depBuildNumber=${dep##*@}
+        # remove build Number
+        depJobName=${dep%@*}
+        # in artifacs, look for folder named like ChimeraTK_fasttrack_ApplicationCore_master/, if it does not exist, look for ChimeratTK_ApplicationCore/
+        # replace first slash by _fasttrack_, append _master
+        depJobName1=${depJobName/\//_fasttrack_}_master
+        # replace further slashes by %2F
+        depJobName1=${depJobName1//\//%2F}
+        depArtefactFolder=$ARTIFACTS/${depJobName1}
+        if [ ! -d ${depArtefactFolder} ] ; then
+          depJobName2=${depJobName/\//_}
+          # replace further slashes by %2F
+          depJobName1=${depJobName1//\//%2F}
+          depArtefactFolder=$ARTIFACTS/${depJobName2}
+        fi
+        depArtefact=${depArtefactFolder}/${label}/${buildType}/${depBuildNumber}/install.tgz
+        docker exec -u 0 -it ${ID} tar xf ${depArtefact}
       done
       rm scratch/artefact.list
       rmdir scratch
