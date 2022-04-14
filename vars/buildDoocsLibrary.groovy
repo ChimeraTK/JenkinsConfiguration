@@ -166,7 +166,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               fi
               cd "$WORKSPACE"
               diff /export.list.before /export.list.after | grep "^> " | sed -e 's/^> //' > export.list.installed
-              touch mv /scratch/artefact.list
+              touch /scratch/artefact.list
               mv /scratch/artefact.list /scratch/dependencies.${JOBNAME_CLEANED}.list
               echo /scratch/dependencies.${JOBNAME_CLEANED}.list >> export.list.installed
               sudo -H -u msk_jenkins tar cf ${installArtifactFile} --files-from export.list.installed --use-compress-program="pigz -9 -p32"
