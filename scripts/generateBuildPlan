@@ -37,10 +37,16 @@ def findReverseDependenciesDeep(project) :
   return deepList
 
 def getDependenciesDeep(project) :
+  projectCleaned = project.replace('/','_')
+  filna = '/home/msk_jenkins/dependency-database/reverse/' + projectCleaned
+  
+  if not os.path.exists(filna) :
+    print("WARNING: Reverse dependency file not found: "+filna)
+    return set()
+  
   deepList = set()
 
-  projectCleaned = project.replace('/','_')
-  with open('/home/msk_jenkins/dependency-database/reverse/' + projectCleaned) as file :
+  with open(filna) as file :
     while True :
       line = file.readline().replace('\n','')
       if not line :
