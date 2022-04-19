@@ -84,7 +84,7 @@ def gatherDependenciesDeep(ArrayList<String> dependencyList) {
     
     def stringList = dependencyList.join(' ')
     def output = sh ( script: "/home/msk_jenkins/findDependenciesDeep ${stringList}", returnStdout: true ).trim()    
-    def deepList = new ArrayList<String>(Arrays.asList(output.split("\n"))))
+    def deepList = new ArrayList<String>(Arrays.asList(output.split("\n")))
     return deepList.unique()
     
     /*
