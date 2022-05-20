@@ -28,13 +28,15 @@ def setParameters() {
 
 // helper function, convert dependency name as listed in the .jenkinsfile into a Jenkins project name
 def dependencyToJenkinsProject(String dependency, boolean forceBranches = false) {
-  def dependencyProjectName = dependency
   if(dependency.contains('@')) {
     // get rid of build number if specified
     dependency = dependency.split('@')[0]
   }
+  def dependencyProjectName = dependency
   def (dependencyFolder, dependencyProject) = dependencyProjectName.split('/',2)
   dependencyProject = dependencyProject.replace('/','%2F')
+  dependency = "${dependencyFolder}/${dependencyProject}"
+
   def jobType = env.JOB_TYPE
   jobType = jobType?.minus("-testing")
   jobType = jobType?.minus("-analysis")
@@ -43,8 +45,9 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
 
   def dependencyUnderTest = jekinsProjectToDependency(BRANCH_UNDER_TEST)
 
+  // Note: BUILD_PLAN.indexOf(dependency) does not deliver same result as BUILD_PLAN.findIndexOf{ it == dependency }!
   if( !env.JOB_TYPE.startsWith('branches') ||
-      ( !forceBranches && (BUILD_PLAN.indexOf(dependency) < 0 || BRANCH_UNDER_TEST == JOB_NAME) &&
+      ( !forceBranches && (BUILD_PLAN.findIndexOf{ it == dependency } < 0 || BRANCH_UNDER_TEST == JOB_NAME) &&
         dependencyUnderTest != dependency)                                                         ) {
     jobType = "fasttrack"
   }
