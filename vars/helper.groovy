@@ -182,8 +182,7 @@ def getArtefactName(boolean forReading, String basename, String label, String bu
 
   if(!forReading) {
     sh """
-      mkdir -p ${path}
-      chown msk_jenkins:msk_jenkins -R ${path}
+      sudo -u msk_jenkins mkdir -p ${path}
     """
   }
   else {
