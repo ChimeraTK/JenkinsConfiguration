@@ -208,7 +208,7 @@ def doBuildAndDeploy(ArrayList<String> dependencyList, String label, String buil
 
   // prepare source directory and dependencies
   doPrepare(true, gitUrl)
-  doDependencyArtefacts(dependencyList, label, buildType)
+  doDependencyArtefacts(dependencyList, label, buildType, jekinsProjectToDependency(JOB_NAME))
 
   // add inactivity timeout of 30 minutes (build will be interrupted if 30 minutes no log output has been produced)
   timeout(activity: true, time: 30) {
@@ -319,7 +319,7 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
 
 /**********************************************************************************************************************/
 
-def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String buildType, ArrayList<String> obtainedArtefacts=[]) {
+def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String buildType, String dependee, ArrayList<String> obtainedArtefacts=[]) {
 
   // obtain artefacts of dependencies
   script {
@@ -341,7 +341,11 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
       def dependency_cleaned = dependency.replace('/','_')
       
       // skip if artefact is already downloaded
-      if(obtainedArtefacts.find{it == dependency} == dependency) return;
+      if(obtainedArtefacts.find{it == dependency} == dependency) {
+        echo("Dependency '${dependency}' already resolved previously.")
+        return;
+      }
+      echo("Dependency '${dependency}' pulled in by '${dependee}'.")
       obtainedArtefacts.add(dependency)
 
       // unpack artefact
@@ -367,7 +371,7 @@ def doDependencyArtefacts(ArrayList<String> dependencyList, String label, String
         cp /scratch/dependencies.${dependency_cleaned}.list ${WORKSPACE}/artefact.list
       """
       myFile = readFile(env.WORKSPACE+"/artefact.list")
-      doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType, obtainedArtefacts)
+      doDependencyArtefacts(new ArrayList<String>(Arrays.asList(myFile.split("\n"))), label, buildType, dependency, obtainedArtefacts)
     }
     
     // fix ownership
