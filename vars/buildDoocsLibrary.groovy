@@ -110,7 +110,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               mkdir /scratch
               mkdir -p /export/doocs/library/common
             '''
-            helper.doDependencyArtefacts(dependencyList, label, buildType)
+            helper.doDependencyArtefacts(dependencyList, label, buildType, jekinsProjectToDependency(JOB_NAME))
 
             // Compute name where to put the install artifact
             def installArtifactFile = helper.getArtefactName(false, "install.tgz", label, buildType, JOB_NAME)
