@@ -305,6 +305,9 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
       } else {
           git gitUrl
       }
+      // Sync upstream changes of submodules
+      sh 'sudo -H -E -u msk_jenkins git submodule sync --recursive'
+      // Then call update on the submodules
       sh 'sudo -H -E -u msk_jenkins git submodule update --init --recursive'
     }
     else {
