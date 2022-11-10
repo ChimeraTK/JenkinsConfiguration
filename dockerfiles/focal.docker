@@ -38,7 +38,8 @@ RUN apt-get update && \
         python3-pytest \
         libxerces-c-dev \
         python3-mako \
-        libmuparser-dev && \
+        libmuparser-dev \
+        libmbedtls-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
     pip3 install meson
