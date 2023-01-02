@@ -59,12 +59,7 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
     }
   }
   
-  if(dependencyFolder != "DOOCS") {
-    dependencyProjectName = "${dependencyFolder}/${jobType}/${dependencyProject}/${branch}"
-  }
-  else {
-    dependencyProjectName = "${dependencyFolder}/${dependencyProject}"
-  }
+  dependencyProjectName = "${dependencyFolder}/${jobType}/${dependencyProject}/${branch}"
   return dependencyProjectName
 }
 
@@ -74,10 +69,6 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
 // helper function, convert Jenkins project name into dependency name (as listed e.g. in the .jenkinsfile)
 def jekinsProjectToDependency(String jenkinsProject) {
   def projectSplit = jenkinsProject.split('/')
-
-  if(projectSplit[0] == "DOOCS") {
-    return jenkinsProject
-  }
 
   if(projectSplit.size() != 4) {
     error("Jenkins project name '${jenkinsProject}' has the wrong format for jekinsProjectToDependency()")
@@ -470,7 +461,18 @@ fi
 if [ "${DISABLE_TEST}" == "true" ]; then
   BUILD_TESTS_OPT="-DBUILD_TESTS=OFF"
 fi
-cmake /scratch/source/\${RUN_FROM_SUBDIR} -GNinja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} \\\${BUILD_TESTS_OPT}
+
+if [ -f "/scratch/source/\${RUN_FROM_SUBDIR}/CMakeLists.txt" ]; then
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -GNinja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} \\\${BUILD_TESTS_OPT}
+elif [ -f "/scratch/source/\${RUN_FROM_SUBDIR}/meson.build" ]; then
+  meson setup /scratch/source/\${RUN_FROM_SUBDIR} --wrap-mode=nofallback --buildtype=${buildType == "Debug" ? "debug" : "debugoptimized"} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
+else
+  echo "*********************************************************************"
+  echo " Neither CMakeLists.txt nor meson.build found in source directory."
+  echo " Don't know what to do. Failing now."
+  echo "*********************************************************************"
+  exit 1
+fi
 ninja -v ${MAKEOPTS}
 EOF
       cat /scratch/script
