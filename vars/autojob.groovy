@@ -1,7 +1,7 @@
 /***********************************************************************************************************************
 
-  autojob() is called from the .jenkinsfile of each project to automatically detect the necessary actions in dependence
-  of the organization folder name.
+  autojob() is called from the .jenkinsfile of each project to automatically detect the necessary actions depending
+  on the organization folder name.
 
 ***********************************************************************************************************************/
 

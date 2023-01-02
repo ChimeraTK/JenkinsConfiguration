@@ -83,10 +83,8 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
       pollSCM('* * * * *')
     }
     options {
-      //disableConcurrentBuilds()
       quietPeriod(0)
-      copyArtifactPermission('*')
-      buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
+      buildDiscarder(logRotator(numToKeepStr: '15'))
     }
 
     stages {

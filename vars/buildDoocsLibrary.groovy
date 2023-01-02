@@ -62,10 +62,7 @@ def call(String libraryName, ArrayList<String> dependencyList) {
       upstream dependencies
     }
     options {
-      disableConcurrentBuilds()
-      //quietPeriod(180)
-      copyArtifactPermission('*')
-      buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
+      buildDiscarder(logRotator(numToKeepStr: '30'))
     }
 
     stages {
@@ -112,8 +109,8 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
             '''
             helper.doDependencyArtefacts(dependencyList, label, buildType, helper.jekinsProjectToDependency(JOB_NAME))
 
-            // Compute name where to put the install artifact
-            def installArtifactFile = helper.getArtefactName(false, "install.tgz", label, buildType, JOB_NAME)
+            // Compute name where to put the install artefact
+            def installArtefactFile = helper.getArtefactName(false, "install.tgz", label, buildType, JOB_NAME)
 
             // We don't care that in gitlab the repository structure is different. Those project only work with meson builds anyway, and form them the path does not matter.
             sh """
@@ -169,7 +166,7 @@ def transformIntoStep(String libraryName, ArrayList<String> dependencyList, Stri
               touch /scratch/artefact.list
               mv /scratch/artefact.list /scratch/dependencies.${JOBNAME_CLEANED}.list
               echo /scratch/dependencies.${JOBNAME_CLEANED}.list >> export.list.installed
-              sudo -H -u msk_jenkins tar cf ${installArtifactFile} --files-from export.list.installed --use-compress-program="pigz -9 -p32"
+              sudo -H -u msk_jenkins tar cf ${installArtefactFile} --files-from export.list.installed --use-compress-program="pigz -9 -p32"
             """
           }
         }
