@@ -15,6 +15,9 @@ jobName=${2//\//_}
 buildType=$3
 buildNumber=$4
 
+IFS='/' read -r -a jobNameArray <<< "$2"
+jobType=${jobNameArray[1]}
+
 ARTIFACTS="/home/msk_jenkins/artifacts"
 
 # should be the same as in the pipeline script (excluding the -u 0)
@@ -47,7 +50,7 @@ docker start ${ID} || exit 1
         depJobName=${dep%@*}
         # in artifacs, look for folder named like ChimeraTK_fasttrack_ApplicationCore_master/, if it does not exist, look for ChimeratTK_ApplicationCore/
         # replace first slash by _fasttrack_, append _master
-        depJobName1=${depJobName/\//_fasttrack_}_master
+        depJobName1=${depJobName/\//_${jobType}_}_master
         # replace further slashes by %2F
         depJobName1=${depJobName1//\//%2F}
         depArtefactFolder=$ARTIFACTS/${depJobName1}

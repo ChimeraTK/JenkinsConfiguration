@@ -46,12 +46,9 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
   def dependencyUnderTest = jekinsProjectToDependency(BRANCH_UNDER_TEST)
 
   // Note: BUILD_PLAN.indexOf(dependency) does not deliver same result as BUILD_PLAN.findIndexOf{ it == dependency }!
-  if( !env.JOB_TYPE.startsWith('branches') ||
-      ( !forceBranches && (BUILD_PLAN.findIndexOf{ it == dependency } < 0 || BRANCH_UNDER_TEST == JOB_NAME) &&
-        dependencyUnderTest != dependency)                                                         ) {
-    jobType = "fasttrack"
-  }
-  else { 
+  if( env.JOB_TYPE.startsWith('branches') &&
+      ( forceBranches || (BUILD_PLAN.findIndexOf{ it == dependency } >= 0 && BRANCH_UNDER_TEST != JOB_NAME) ||
+        dependencyUnderTest == dependency)                                                         ) {
     def (butFolder, butType, butProject, butBranch) = BRANCH_UNDER_TEST.split('/')
     if(butFolder == dependencyFolder && butType == jobType && butProject == dependencyProject) {
       branch = butBranch
@@ -66,8 +63,12 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
 
 /**********************************************************************************************************************/
 
-// helper function, convert Jenkins project name into dependency name (as listed e.g. in the .jenkinsfile)
+// helper function, convert Jenkins project name into name dependency (as listed e.g. in the .jenkinsfile)
 def jekinsProjectToDependency(String jenkinsProject) {
+  if(jenkinsProject == "nightly-manager") {
+    return "nightly-manager"
+  }
+
   def projectSplit = jenkinsProject.split('/')
 
   if(projectSplit.size() != 4) {
@@ -263,6 +264,9 @@ def doAnalysis(String label, String buildType) {
       doSanitizerAnalysis(label, buildType)
 
     }
+  }
+  else  {
+    doTesting(label, buildType)
   }
 }
 
@@ -533,7 +537,8 @@ EOF
 /**********************************************************************************************************************/
 
 def doSanitizerAnalysis(String label, String buildType) {
-  def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+  def buildJob = env.BUILD_JOB
+  def buildJob_cleaned = buildJob.replace('/','_')
 
   // Run the tests via ctest
   // Prefix test names with label and buildType, so we can distinguish them later
@@ -541,7 +546,9 @@ def doSanitizerAnalysis(String label, String buildType) {
   sh """
     cat > /scratch/script <<EOF
 #!/bin/bash
-cd /scratch/build-${parentJob}
+cd /scratch/build-${buildJob_cleaned}
+cmake . -DBUILD_TESTS=ON
+ninja \${MAKEOPTS}
 if [ -z "\${CTESTOPTS}" ]; then
   CTESTOPTS="\${MAKEOPTS}"
 fi
@@ -552,32 +559,47 @@ export LSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitiz
 export UBSAN_OPTIONS="suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/ubsan.supp,\${UBSAN_OPTIONS}"
 export TSAN_OPTIONS="second_deadlock_stack=1,suppressions=/home/msk_jenkins/JenkinsConfiguration/sanitizer.suppressions/tsan.supp,\${TSAN_OPTIONS}"
 ctest --no-compress-output \${CTESTOPTS} -T Test -V
+sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
+rm -rf "${WORKSPACE}/Testing"
+cp -r /scratch/build-${buildJob_cleaned}/Testing "${WORKSPACE}"
 EOF
     cat /scratch/script
     chmod +x /scratch/script
     sudo -H -E -u msk_jenkins /scratch/script
   """
+
+  // Publish test result directly (works properly even with multiple publications from parallel branches)  
+  xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+         tools: [ CTest(pattern: "Testing/*/*.xml") ])
 }
 
 /**********************************************************************************************************************/
 
 def doCoverage(String label, String buildType) {
-  def parentJob = env.JOBNAME_CLEANED[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+  def buildJob = env.BUILD_JOB
+  def buildJob_cleaned = buildJob.replace('/','_')
 
   // Generate coverage report as HTML and also convert it into cobertura XML file
   sh """
     chown msk_jenkins -R /scratch
     cat > /scratch/script <<EOF
 #!/bin/bash
-cd /scratch/build-${parentJob}
+cd /scratch/build-${buildJob_cleaned}
+cmake . -DBUILD_TESTS=ON
+ninja \${MAKEOPTS}
 for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
+sed -e 's/cmake --build . --target test/ctest --no-compress-output \${CTESTOPTS} -T Test -V/' -i ./make_coverage.sh
 ninja coverage || true
 python3 /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
 
 cp -r coverage_html ${WORKSPACE} || true
 cp -r coverage.xml ${WORKSPACE} || true
+
+sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
+rm -rf "${WORKSPACE}/Testing"
+cp -r /scratch/build-${buildJob_cleaned}/Testing "${WORKSPACE}"
 EOF
     cat /scratch/script
     chmod +x /scratch/script
@@ -590,12 +612,16 @@ EOF
   // publish HTML coverage report now, since it already allows publication of multiple distinguised reports
   publishHTML (target: [
       allowMissing: true,
-      alwaysLinkToLastBuild: false,
-      keepAll: false,
+      alwaysLinkToLastBuild: true,
+      keepAll: true,
       reportDir: "coverage_html",
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
   ])  
+
+  // Publish test result directly (works properly even with multiple publications from parallel branches)  
+  xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+         tools: [ CTest(pattern: "Testing/*/*.xml") ])
 }
 
 /**********************************************************************************************************************/
@@ -614,7 +640,6 @@ def doDeploy(String label, String buildType) {
     if [ -e /scratch/artefact.list ]; then
       cp /scratch/artefact.list scratch/dependencies.${JOBNAME_CLEANED}.list
     fi
-    #sudo -H -E -u msk_jenkins tar cf ${WORKSPACE}/install-${JOBNAME_CLEANED}-${label}-${buildType}.tgz . --use-compress-program="pigz -9 -p32"
     sudo -H -E -u msk_jenkins tar cf ${theFile} . --use-compress-program="pigz -9 -p32"
   """
 }
@@ -656,4 +681,151 @@ def doPublishAnalysis(ArrayList<String> builds) {
   cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
 }
+
+/**********************************************************************************************************************/
+
+// run all downstream builds, i.e. also "grand childs" etc.
+// Implementation note:
+//  - create one parallel step per downstream project (including the test of the main job)
+//  - each parallel step initially waits until all its dependencies have been built
+//  - signalling between parallel steps is realised through a Condition object to wake up waiting jobs and
+//    a build status flag
+//  - FIXME: Need to clarify whether we need to use locks or so to protect the maps!
+def doDownstreamBuilds(boolean isNightlyManager = false) {
+
+  // buildDone: map of condition variables to signal when build terminates
+  def buildDone = [:]
+  // buildStatus: map of build statuses (true = ok, false = failed)
+  def buildStatus = [:]
+  BUILD_PLAN.each {
+    buildDone[it] = createCondition()
+  }
+
+  buildDone[jekinsProjectToDependency(JOB_NAME)] = createCondition()
+  buildStatus[jekinsProjectToDependency(JOB_NAME)] = true
+
+  // add special build name for the test to be run
+  def buildList = BUILD_PLAN
+  if(!isNightlyManager) {
+    buildList += "TESTS"
+  }
+  
+  // execute parallel step for all builds
+  parallel buildList.collectEntries { ["${it}" : {
+    if(it == "TESTS") {
+      // build the test. Result is always propagated.
+      build(job: JOB_NAME.replace("/${env.JOB_TYPE}/", "/${env.JOB_TYPE}-testing/"),
+            propagate: true, wait: true, parameters: [
+              string(name: 'BRANCH_UNDER_TEST', value: BRANCH_UNDER_TEST),
+              string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(BUILD_PLAN)),
+              string(name: 'DEPENDENCY_BUILD_NUMBERS',
+                     value: groovy.json.JsonOutput.toJson(DEPENDENCY_BUILD_NUMBERS))
+      ])
+      return
+    }
+  
+    // build downstream project
+    def theJob = dependencyToJenkinsProject(it, true)
+
+    // wait until all dependencies which are also build here (in parallel) are done
+    def myDeps
+    node {
+      myDeps = gatherDependenciesDeep([it])
+    }
+    def failedDeps = false
+    myDeps.each { dep ->
+      // myDeps contains the job itself -> ignore it
+      if(dep == it) return
+      // if another depepdency has failed, terminate build attempt
+      if(failedDeps) return
+      // ignore dependencies which are not build within this job
+      if(!buildDone.containsKey(dep)) return
+      // if build status not yet set, wait for notification
+      // Attention: There is a potential race condition if the notification happens between the check of the
+      // build status and the call to awaitCondition()! Unclear how to solve this. For now we just add a
+      // sleep between setting the build status and sending the notification below.
+      if(!buildStatus.containsKey(dep)) {
+        echo("Waiting for depepdency ${dep}...")
+        awaitCondition(buildDone[dep])
+      }
+      if(!buildStatus[dep]) {
+        echo("Depepdency ${dep} has failed, not triggering downstream build...")
+        failedDeps = true
+      }
+    }
+    
+    // signal builds downstream of this build when finished (they are all waiting in parallel)
+    signalAll(buildDone[it]) {
+      if(failedDeps) {
+        buildStatus[it] = false
+        echo("Not proceeding with downstream build due to failed dependencies.")
+        sleep(5) // mitigate race condition, see above
+        return
+      }
+
+      // trigger the build and wait until done
+      // Note: propagate=true would abort+fail even if downstream build result is unstable. Also in case of
+      // a failure we first need to set the buildStatus before failing...
+      // In any case, the build result is only propagated for branches builds.
+      def r = build(job: theJob, propagate: false, wait: true, parameters: [
+        string(name: 'BRANCH_UNDER_TEST', value: BRANCH_UNDER_TEST),
+        string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(BUILD_PLAN)),
+        string(name: 'DEPENDENCY_BUILD_NUMBERS',
+               value: groovy.json.JsonOutput.toJson(DEPENDENCY_BUILD_NUMBERS))
+      ])
+
+      def number = r.getNumber()
+      DEPENDENCY_BUILD_NUMBERS[it] = number
+
+      def result =  hudson.model.Result.fromString(r.result)
+      
+      if(result == Result.SUCCESS) {
+        buildStatus[it] = true
+        sleep(5) // mitigate race condition, see above
+        echo("Build result of ${it} is SUCCESS.")
+      }
+      else if(result == Result.UNSTABLE) {
+        buildStatus[it] = true
+        sleep(5) // mitigate race condition, see above
+        if(env.JOB_TYPE == "branches")  {
+          unstable(message: "Build result of ${it} is UNSTABLE.")
+        }
+        else {
+          echo("Build result of ${it} is UNSTABLE.")
+        }
+      }
+      else {
+        buildStatus[it] = false
+        failedDeps = true
+        sleep(5) // mitigate race condition, see above
+        if(env.JOB_TYPE == "branches")  {
+          error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
+        }
+        else {
+          catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
+          }
+        }
+      }
+
+    } // <-- signal downstream projects waiting for this build
+
+    if(!failedDeps) {
+      // trigger the test and wait until done
+      // propagate=true is ok here, since we do not do anything further downstream in this parallel stage.
+      // Again, the build result is only propagated for branches builds.
+      build(job: theJob.replace("/${env.JOB_TYPE}/", "/${env.JOB_TYPE}-testing/"),
+            propagate: (env.JOB_TYPE == "branches"), wait: true, parameters: [
+              string(name: 'BRANCH_UNDER_TEST', value: BRANCH_UNDER_TEST),
+              string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(BUILD_PLAN)),
+              string(name: 'DEPENDENCY_BUILD_NUMBERS',
+                     value: groovy.json.JsonOutput.toJson(DEPENDENCY_BUILD_NUMBERS))
+      ])
+    }
+
+  }] }
+
+}
+
+/**********************************************************************************************************************/
 

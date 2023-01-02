@@ -51,6 +51,9 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
 
       // publish our list of builds as artefact for our downstream builds
       writeFile file: "/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}", text: builds.join("\n")
+
+      // publish our list of builds as artefact for our downstream builds
+      writeFile file: "/home/msk_jenkins/dependency-database/jobnames/${JobNameAsDependencyCleaned}", text: JobNameAsDependency
       
       // record our dependencies in central "data base" for explicit dependency triggering
       writeFile file: "/home/msk_jenkins/dependency-database/reverse/${JobNameAsDependencyCleaned}", text:dependencyListCorrected.join("\n")
@@ -75,13 +78,7 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
   pipeline {
     agent none
 
-    // setup build trigger
-    // Note: do not trigger automatically by dependencies, since this is implemented explicitly to have more control.
-    // The dependencies are tracked above in the scripts section in a central "database" and used to trigger downstream
-    // build jobs after the build.
-    triggers {
-      pollSCM('* * * * *')
-    }
+    // configure discarding of old builds/artefacts
     options {
       quietPeriod(0)
       buildDiscarder(logRotator(numToKeepStr: '15'))
@@ -93,11 +90,6 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
         steps {
           script {
 
-            // if this job has no dependency, make sure it gets triggered when docker images are renewed
-            if(dependencyList.isEmpty()) {
-              properties([pipelineTriggers([upstream('Create Docker Images')])])
-            }
-
             node('Docker') {
               if (env.BRANCH_NAME && env.BRANCH_NAME != '') {
                 git branch: env.BRANCH_NAME, url: gitUrl
@@ -107,17 +99,7 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
               sh """
                 git reset --hard
                 git clean -f -d -x
-                #git config credential.helper store
-                #git remote add project-template "https://github.com/ChimeraTK/project-template" || true
-                #git remote set-url origin `echo ${gitUrl} | sed -e 's_http://doocs-git.desy.de/cgit/_git@doocs-git.desy.de:_' -e 's_/\$__'`
-                #git remote update
-                #git merge -X theirs --no-edit project-template/master && \
-                #git push --all || \
-                #true
               """
-              // We could also apply the clang-format style here, but this should be discussed first.
-              //  find \( -name '*.cc' -o -name '*.cxx' -o -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' -o -name '*.hh' \) -exec clang-format-6.0 -style=file -i \{\} \;
-              //  git commit -a -m "Automated commit: apply clang-format" && git push --all || true
             }
           }
         }
@@ -133,12 +115,6 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
       } // stage build
 
       // run all downstream builds, i.e. also "grand childs" etc.
-      // Implementation note:
-      //  - create one parallel step per downstream project (including the test of the main job)
-      //  - each parallel step initially waits until all its dependencies have been built
-      //  - signalling between parallel steps is realised through a Condition object to wake up waiting jobs and
-      //    a build status flag
-      //  - FIXME: Need to clarify whether we need to use locks or so to protect the maps!
       stage('downstream-builds') {
         when {
           // downstream builds are run only in the first job, i.e. not when being triggered by an upstream dependency
@@ -146,127 +122,7 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
         }
         steps {
           script {
-
-            // buildDone: map of condition variables to signal when build terminates
-            def buildDone = [:]
-            // buildStatus: map of build statuses (true = ok, false = failed)
-            def buildStatus = [:]
-            helper.BUILD_PLAN.each {
-              buildDone[it] = createCondition()
-            }
-            buildDone[helper.jekinsProjectToDependency(JOB_NAME)] = createCondition()
-            buildStatus[helper.jekinsProjectToDependency(JOB_NAME)] = true
-
-            // add special build name for the test to be run
-            def buildList = helper.BUILD_PLAN + "TESTS"
-            
-            // execute parallel step for all builds
-            parallel buildList.collectEntries { ["${it}" : {
-              if(it == "TESTS") {
-                // build the test. Result is always propagated.
-                build(job: JOB_NAME.replace("/${env.JOB_TYPE}/", "/${env.JOB_TYPE}-testing/"),
-                      propagate: true, wait: true, parameters: [
-                        string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
-                        string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN)),
-                        string(name: 'DEPENDENCY_BUILD_NUMBERS',
-                               value: groovy.json.JsonOutput.toJson(helper.DEPENDENCY_BUILD_NUMBERS))
-                ])
-                return
-              }
-            
-              // build downstream project
-              def theJob = helper.dependencyToJenkinsProject(it, true)
-              
-              // signal builds downstream of this build when finished (they are all waiting in parallel)
-              signalAll(buildDone[it]) {
-
-                // wait until all dependencies which are also build here (in parallel) are done
-                def myDeps
-                node {
-                  myDeps = helper.gatherDependenciesDeep([it])
-                }
-                def failedDeps = false
-                myDeps.each { dep ->
-                  // myDeps contains the job itself -> ignore it
-                  if(dep == it) return
-                  // ignore dependencies which are not build within this job
-                  if(!buildDone.containsKey(dep)) return
-                  // if build status not yet set, wait for notification
-                  // Attention: There is a potential race condition if the notification happens between the check of the
-                  // build status and the call to awaitCondition()! Unclear how to solve this. For now we just add a
-                  // sleep between setting the build status and sending the notification below.
-                  if(!buildStatus.containsKey(dep)) {
-                    echo("Waiting for depepdency ${dep}...")
-                    awaitCondition(buildDone[dep])
-                  }
-                  if(!buildStatus[dep]) {
-                    echo("Depepdency ${dep} has failed, not triggering downstream build...")
-                    failedDeps = true
-                  }
-                }
-                if(failedDeps) {
-                  echo("Not proceeding with downstream build due to failed dependencies.")
-                  return
-                }
-
-                // trigger the build and wait until done
-                // Note: propagate=true would abort+fail even if downstream build result is unstable. Also in case of
-                // a failure we first need to set the buildStatus before failing...
-                // In any case, the build result is only propagated for branches builds.
-                def r = build(job: theJob, propagate: false, wait: true, parameters: [
-                  string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
-                  string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN)),
-                  string(name: 'DEPENDENCY_BUILD_NUMBERS',
-                         value: groovy.json.JsonOutput.toJson(helper.DEPENDENCY_BUILD_NUMBERS))
-                ])
-
-                def number = r.getNumber()
-                helper.DEPENDENCY_BUILD_NUMBERS[it] = number
-
-                def result =  hudson.model.Result.fromString(r.result)
-                
-                if(result == Result.SUCCESS) {
-                  buildStatus[it] = true
-                  sleep(5) // mitigate race condition, see above
-                  echo("Build result of ${it} is SUCCESS.")
-                }
-                else if(result == Result.UNSTABLE) {
-                  buildStatus[it] = true
-                  sleep(5) // mitigate race condition, see above
-                  if(env.JOB_TYPE == "branches")  {
-                    unstable(message: "Build result of ${it} is UNSTABLE.")
-                  }
-                  else {
-                    echo("Build result of ${it} is UNSTABLE.")
-                  }
-                }
-                else {
-                  buildStatus[it] = false
-                  sleep(5) // mitigate race condition, see above
-                  if(env.JOB_TYPE == "branches")  {
-                    error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
-                  }
-                  else {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                      error(message: "Build result of ${it} is FAILURE (or ABORTED etc.).")
-                    }
-                  }
-                }
-
-              } // <-- signal downstream projects waiting for this build
-
-              // trigger the test and wait until done
-              // propagate=true is ok here, since we do not do anything further downstream in this parallel stage.
-              // Again, the build result is only propagated for branches builds.
-              build(job: theJob.replace("/${env.JOB_TYPE}/", "/${env.JOB_TYPE}-testing/"),
-                    propagate: (env.JOB_TYPE == "branches"), wait: true, parameters: [
-                      string(name: 'BRANCH_UNDER_TEST', value: helper.BRANCH_UNDER_TEST),
-                      string(name: 'BUILD_PLAN', value: groovy.json.JsonOutput.toJson(helper.BUILD_PLAN)),
-                      string(name: 'DEPENDENCY_BUILD_NUMBERS',
-                             value: groovy.json.JsonOutput.toJson(helper.DEPENDENCY_BUILD_NUMBERS))
-              ])
-
-            }] }
+            helper.doDownstreamBuilds()
           }
         }
       } // stage downstream-builds
@@ -274,21 +130,11 @@ def call(ArrayList<String> dependencyList, String gitUrl, ArrayList<String> buil
     post {
       failure {
         emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.MAILTO
-        //mattermostSend channel: env.JOB_NAME, color: "danger", message: "Build of ${env.JOB_NAME} failed."
-        //mattermostSend channel: "Jenkins", color: "danger", message: "Build of ${env.JOB_NAME} failed."
       }
       always {
         node('Docker') {
           script {
             helper.doPublishBuild(builds)
-          }
-        }
-        script {
-          if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
-            if (!currentBuild.resultIsWorseOrEqualTo(currentBuild.getPreviousBuild().result)) {
-              //mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
-              //mattermostSend channel: "Jenkins", color: "good", message: "Build of ${env.JOB_NAME} is good again."
-            }
           }
         }
       } // end always
