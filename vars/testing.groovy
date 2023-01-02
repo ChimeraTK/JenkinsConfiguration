@@ -20,8 +20,7 @@ def call() {
     // configure artefact permissions and discarding of old builds/artefacts
     options {
       quietPeriod(0)
-      copyArtifactPermission('*')
-      buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '2'))
+      buildDiscarder(logRotator(numToKeepStr: '15'))
     }
 
     stages {

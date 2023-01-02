@@ -136,7 +136,7 @@ def generateBuildPlan() {
 /**********************************************************************************************************************/
 
 def getArtefactName(boolean forReading, String basename, String label, String buildType, String dependency = jekinsProjectToDependency(JOB_NAME)) {
-  // Compute name for artifact in local file storage on the build node. This saves time and is more flexible than using
+  // Compute name for artafact in local file storage on the build node. This saves time and is more flexible than using
   // Jenkins archiveArtifact/copyArtifact, but won't work when using multiple build nodes.
   //
   // "basename" is the filename with extension but without path. It should not contain any job/build specific parts, as
@@ -153,7 +153,7 @@ def getArtefactName(boolean forReading, String basename, String label, String bu
   def jobName = dependencyToJenkinsProject(dependencyNoBuildNo)
   def JOBNAME_CLEANED=jobName.replace('/','_')
 
-  def path = "/home/msk_jenkins/artifacts/${JOBNAME_CLEANED}/${label}/${buildType}"
+  def path = "/home/msk_jenkins/artefacts/${JOBNAME_CLEANED}/${label}/${buildType}"
   
   def buildNumer = null
   if(forReading) {
@@ -484,7 +484,6 @@ EOF
     sh """
       sudo -H -E -u msk_jenkins tar cf \"${theFile}\" /scratch --use-compress-program="pigz -9 -p32"
     """
-    //archiveArtifacts artifacts: "build-${JOBNAME_CLEANED}-${label}-${buildType}.tgz", onlyIfSuccessful: false
   }
 }
 
