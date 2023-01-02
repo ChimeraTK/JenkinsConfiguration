@@ -5,10 +5,8 @@
 ***********************************************************************************************************************/
 
 // This is the function called from the .jenkinsfile
-def call() {
+def call(ArrayList<String> builds) {
   
-  ArrayList<String> builds
-
   script {
     helper.setParameters()
     env.BUILD_JOB = helper.dependencyToJenkinsProject("${env.ORGANISATION}/${env.PROJECT}")
@@ -16,8 +14,8 @@ def call() {
 
   pipeline {
     agent none
-    
-    // configure artefact permissions and discarding of old builds/artefacts
+
+    // configure discarding of old builds/artefacts
     options {
       quietPeriod(0)
       buildDiscarder(logRotator(numToKeepStr: '15'))
@@ -32,7 +30,11 @@ def call() {
               def JobNameAsDependency = helper.jekinsProjectToDependency(JOB_NAME)
               def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
               def myFile = readFile("/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}")
-              builds = myFile.split("\n")
+              ArrayList<String> depBuilds = myFile.split("\n")
+              
+              // remove all builds from our list of builds which is not present for the dependency
+              def curBuilds = builds.clone()
+              builds = curBuilds.intersect(depBuilds)
             }
           }
         }
@@ -49,19 +51,7 @@ def call() {
     post {
       failure {
         emailext body: '$DEFAULT_CONTENT', recipientProviders: [brokenTestsSuspects(), brokenBuildSuspects(), developers()], subject: '[Jenkins] $DEFAULT_SUBJECT', to: env.MAILTO
-        //mattermostSend channel: env.JOB_NAME, color: "danger", message: "Build of ${env.JOB_NAME} failed."
-        //mattermostSend channel: "Jenkins", color: "danger", message: "Build of ${env.JOB_NAME} failed."
       }
-      always {
-        script {
-          if (currentBuild?.getPreviousBuild()?.result == 'FAILURE') {
-            if (!currentBuild.resultIsWorseOrEqualTo(currentBuild.getPreviousBuild().result)) {
-              //mattermostSend channel: env.JOB_NAME, color: "good", message: "Build of ${env.JOB_NAME} is good again."
-              //mattermostSend channel: "Jenkins", color: "good", message: "Build of ${env.JOB_NAME} is good again."
-            }
-          }
-        }
-      } // end always
     } // end post
   } // end pipeline
 }

@@ -8,45 +8,42 @@
 
 // This is the function called from the .jenkinsfile
 def call() {
-  def builds = []
-  def parentJob = env.JOB_NAME[0..-10]     // remove "-analysis" from the job name, which is 9 chars long
+  ArrayList<String> builds
 
-  // Run for all -Debug builds of the main job
   script {
-    node('Docker') {
-      def JobNameAsDependency = helper.jekinsProjectToDependency(JOB_NAME)
-      def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
-      def myFile = readFile("/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}")
-      builds = myFile.split("\n").toList()
-      def builds_temp = builds.clone()
-      builds_temp.each {
-        if(!it.endsWith("-Debug") && !it.endsWith("-asan") && !it.endsWith("-tsan")) {
-          def build = it
-          builds.removeAll { it == build }
-        }
-      }
-
-      // Update JenkinsConfiguration to have the latest valgrind suppressions
-      sh '''
-        cd /home/msk_jenkins/JenkinsConfiguration
-        git pull || true
-      '''
-    }
+    helper.setParameters()
+    env.BUILD_JOB = helper.dependencyToJenkinsProject("${env.ORGANISATION}/${env.PROJECT}")
   }
 
   pipeline {
     agent none
     
     // setup build trigger etc.
-    triggers {
-      upstream(upstreamProjects: parentJob, threshold: hudson.model.Result.UNSTABLE)
-    }
     options {
-      disableConcurrentBuilds()
+      quietPeriod(0)
       buildDiscarder(logRotator(numToKeepStr: '10'))
     }
   
     stages {
+      stage('prepare') {
+        steps {
+          script {
+            node('Docker') {
+              // fetch list of build types
+              def JobNameAsDependency = helper.jekinsProjectToDependency(JOB_NAME)
+              def JobNameAsDependencyCleaned = JobNameAsDependency.replace("/","_")
+              def myFile = readFile("/home/msk_jenkins/dependency-database/buildnames/${JobNameAsDependencyCleaned}")
+              builds = myFile.split("\n")
+
+              // Update JenkinsConfiguration to have the latest valgrind suppressions
+              sh '''
+                cd /home/msk_jenkins/JenkinsConfiguration
+                git pull || true
+              '''
+            }
+          }
+        }
+      }
       stage('build') {
         // Run the build stages for all labels + build types in parallel, each in a separate docker container
         steps {
@@ -78,7 +75,7 @@ def transformIntoStep(String buildName) {
     stage(buildName) {
       node('Docker') {
         // we need root access inside the container and access to the dummy pcie devices of the host
-        def dockerArgs = "-u 0 --privileged --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /home/msk_jenkins/JenkinsConfiguration:/home/msk_jenkins/JenkinsConfiguration"
+        def dockerArgs = "-u 0 --privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             helper.doAnalysis(label, buildType)
