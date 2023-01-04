@@ -1,5 +1,7 @@
 #/bin/bash
 
+exit 0
+
 # Unfortunately some of the package installations on tumbleweed require the
 # --security-opt seccomp:unconfined flag, which is not available when building an image. So here is the work-around:
 
