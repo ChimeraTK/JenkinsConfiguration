@@ -5,14 +5,14 @@ ENV https_proxy ${https_proxy}
 RUN zypper refresh && \
     zypper up -y && \
     zypper dup -y --force-resolution --allow-vendor-change && \
-    zypper install -y lsb-release wget sudo tar gzip pigz && \
-    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make  gdb meson ninja && \
+    zypper install -y lsb-release sysuser-tools iputils wget sudo tar gzip pigz && \
+    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make gdb meson ninja git && \
+    zypper install -y libboost_*-devel libqt5-qtbase-devel && \
     zypper install -y libxml++26-devel && \
-    zypper install -y python3-devel python3-numpy-devel && \
+    zypper install -y python310-pip python3-devel python3-numpy-devel && \
     zypper install -y ncurses-devel && \
     zypper install -y clang && \
     zypper install -y python3-Sphinx && \
-    zypper install -y java-1_8_0-openjdk && \
     zypper install -y graphviz && \
     zypper install -y kernel-devel && \
     zypper install -y kernel-default-devel && \
@@ -23,17 +23,28 @@ RUN zypper refresh && \
     zypper install -y nano && \
     zypper install -y vim && \
     zypper install -y python3-pytest && \
-    zypper install -y python38-Mako && \
+    zypper install -y python310-Mako && \
     zypper install -y perl-JSON && \
     zypper install -y diffutils && \
-    ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3
+    zypper install -y mbedtls-devel && \
+    zypper install -y rpcbind libtirpc-devel && \
+    bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
+    useradd -u 30996 msk_jenkins && \
+    ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
+    pip3 install meson
+
+#    zypper install -y java-1_8_0-openjdk && \
+
+
+#    git config --system http.proxy http://xfelproxy.desy.de:3128 && \
+#    git config --system https.proxy http://xfelproxy.desy.de:3128
+
 
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
 
 # NOTE: Die to a bug (?), several packets cannot be added here, and commands not executed. They need --security-opt seccomp:unconfined, which is only avaible when running containers, not when creating images. There will be a post-processing step for the generated image in tumbleweed.modify_image.sh
 
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
-ADD tumbleweed_proxy /etc/sysconfig/proxy
 
 # Start rpcbind at launch of the container, required for DOOCS
 ENTRYPOINT ["bash", "-c", "rpcbind -f -w ; bash"]
