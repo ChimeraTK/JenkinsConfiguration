@@ -338,43 +338,25 @@ if [ ! -f "/home/msk_jenkins/.ssh/id_rsa" ]; then
   cat /home/msk_jenkins/.ssh/id_rsa.pub >> /home/msk_jenkins/.ssh/authorized_keys
 fi
 
-if [ -z "`grep msk-jenkins-documentation /home/msk_jenkins/.git-credentials`" ]; then
-  echo "Adding git credentials for documentation update..."
-  echo "https://msk-jenkins-documentation:2e303954a32cf27593d4eb22e731dc4212a25ae1@github.com" > /home/msk_jenkins/.git-credentials
-  chown msk_jenkins:msk_jenkins /home/msk_jenkins/.git-credentials
-  chmod go-rwx /home/msk_jenkins/.git-credentials
-fi
-
-if [ -z "`grep xfelproxy.desy.de /etc/wgetrc`" ]; then
-  echo "Setting up xfel proxy for wget..."
-  echo "https_proxy = http://xfelproxy.desy.de:3128/" >> /etc/wgetrc
-  echo "http_proxy = http://xfelproxy.desy.de:3128/" >> /etc/wgetrc
-fi
+#if [ -z "`grep xfelproxy.desy.de /etc/wgetrc`" ]; then
+#  echo "Setting up xfel proxy for wget..."
+#  echo "https_proxy = http://xfelproxy.desy.de:3128/" >> /etc/wgetrc
+#  echo "http_proxy = http://xfelproxy.desy.de:3128/" >> /etc/wgetrc
+#fi
 
 if [ ! -f "/home/msk_jenkins/.gitconfig" ]; then
   echo "Setting up git config..."
 cat > /home/msk_jenkins/.gitconfig <<EOF
-[http]
-        proxy = xfelproxy.desy.de:3128
-        sslVerify = false
+#[http]
+#        proxy = xfelproxy.desy.de:3128
+#        sslVerify = false
 
 [push]
         default = simple
 [user]
-        email = msk_jenkins@msk-ubuntu1604.desy.de
+        email = msk_jenkins@jenkins-vm
         name = Automated MSK Jenkins User
 EOF
-fi
-
-if [ -z "`grep /export/LOCALHOST/opt/msk-workspace /etc/fstab`" ]; then
-  echo "Setting up NFS mount for workspace..."
-  echo "xfelspare1.desy.de:/export/LOCALHOST/opt/msk-workspace    /workspace    nfs    rw    0 0" >> /etc/fstab
-  mkdir -p /workspace
-  mount /workspace
-  mkdir -p /home/msk_jenkins/workspace
-  chown msk_jenkins:msk_jenkins /home/msk_jenkins/workspace
-  ln -sfn /workspace/mtca4u_systemlike_installation /home/msk_jenkins/workspace
-  ln -sfn /workspace/DOOCS_installation /home/msk_jenkins/workspace
 fi
 
 if [ -f /etc/openntpd/ntpd.conf ]; then
@@ -396,3 +378,9 @@ if [ -f /etc/ntp.conf ]; then
   fi
 fi
 ntpdate time.desy.de
+
+echo "==============================================================================="
+echo " Setup node done."
+echo " Note: The ssh key for github access to the msk-jenkins-documentation user"
+echo "       must be generated and added manually on first setup."
+echo "==============================================================================="
