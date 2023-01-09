@@ -290,7 +290,7 @@ cat <<EOF > /etc/rc.local
 # Do not modify here!
 #
 mount /common /common -t 9p -o trans=virtio,version=9p2000.L
-/common/setup-node.sh
+/common/JenkinsConfiguration/host-scripts/setup-node.sh
 exit 0
 EOF
 
@@ -306,7 +306,7 @@ cat <<EOF > /etc/cron.daily/setup-node.sh
 # Warning: This script is overwritten at boot and every day by setup-node.sh
 # Do not modify here!
 #
-/common/setup-node.sh
+/common/JenkinsConfiguration/host-scripts/setup-node.sh
 EOF
 chmod +x /etc/cron.daily/setup-node.sh
 
