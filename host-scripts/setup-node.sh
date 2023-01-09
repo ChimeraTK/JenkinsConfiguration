@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ `hostname` == "mskbuildhost" -o `hostname` == "xfelspare1" ]; then
+if [ `hostname` == "mskbuildhost" -o `hostname` == "xfelspare1" -o `hostname` == "mskbuildhost2" ]; then
   echo "Do not run this script on the head node!"
   exit 1
 fi
@@ -77,13 +77,11 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   if [ "$DISTRIB_ID" = "Debian" ]; then
     apt-get install -y linux-headers-amd64
   fi
-  # on Debian, execute /etc/rc.local at boot time
-  if [ "$DISTRIB_ID" = "Debian" ]; then
-    touch /etc/rc.local
-    chmod +x /etc/rc.local
-    if [ -z "`grep rc.local /etc/crontab`" ]; then
-      echo "@reboot         root    /bin/bash -c /etc/rc.local" >> /etc/crontab
-    fi
+  # execute /etc/rc.local at boot time
+  touch /etc/rc.local
+  chmod +x /etc/rc.local
+  if [ -z "`grep rc.local /etc/crontab`" ]; then
+    echo "@reboot         root    /bin/bash -c /etc/rc.local" >> /etc/crontab
   fi
   # clean up old packages
   apt-get autoremove -y
