@@ -46,13 +46,17 @@ def dependencyToJenkinsProject(String dependency, boolean forceBranches = false)
   def dependencyUnderTest = jekinsProjectToDependency(BRANCH_UNDER_TEST)
 
   // Note: BUILD_PLAN.indexOf(dependency) does not deliver same result as BUILD_PLAN.findIndexOf{ it == dependency }!
-  if( env.JOB_TYPE.startsWith('branches') &&
-      ( forceBranches || (BUILD_PLAN.findIndexOf{ it == dependency } >= 0 && BRANCH_UNDER_TEST != JOB_NAME) ||
-        dependencyUnderTest == dependency)                                                         ) {
-    def (butFolder, butType, butProject, butBranch) = BRANCH_UNDER_TEST.split('/')
-    if(butFolder == dependencyFolder && butType == jobType && butProject == dependencyProject) {
-      branch = butBranch
-      echo("Dependency ${dependency} matches branch under test.")
+  if(env.JOB_TYPE.startsWith('branches')) {
+    if( forceBranches || (BUILD_PLAN.findIndexOf{ it == dependency } >= 0 && BRANCH_UNDER_TEST != JOB_NAME) ||
+        dependencyUnderTest == dependency                                                                      ) {
+      def (butFolder, butType, butProject, butBranch) = BRANCH_UNDER_TEST.split('/')
+      if(butFolder == dependencyFolder && butType == jobType && butProject == dependencyProject) {
+        branch = butBranch
+        echo("Dependency ${dependency} matches branch under test.")
+      }
+    }
+    else {
+      jobType = "fasttrack"
     }
   }
   
