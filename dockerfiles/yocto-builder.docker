@@ -1,0 +1,18 @@
+FROM ghcr.io/siemens/kas/kas:3.1
+ENV http_proxy ${http_proxy}
+ENV https_proxy ${https_proxy}
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+    apt-get install -y gcc-9 g++-9 apt-utils && \
+    useradd -u 30996 msk_jenkins
+
+RUN \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 255 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 255 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
+
+RUN echo "msk_jenkins ALL=NOPASSWD: ALL" > /etc/sudoers.d/msk_jenkins-nopasswd && \
+    chmod 660 /etc/sudoers.d/builder-nopasswd
+
