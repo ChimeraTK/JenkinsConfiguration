@@ -1,18 +1,16 @@
-FROM ghcr.io/siemens/kas/kas:3.1
+FROM ubuntu:focal
 ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
-    apt-get install -y gcc-9 g++-9 apt-utils python3-xcbgen && \
+    apt-get install -y gawk wget git diffstat unzip texinfo gcc build-essential chrpath socat cpio \
+            python2 locales \
+            python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git \
+            python3-jinja2 libegl1-mesa libsdl1.2-dev pylint3 xterm python3-subunit \
+            mesa-common-dev zstd liblz4-tool apt-utils && \
+    locale-gen en_US.UTF-8 && \
+    update-locale && \
+    pip3 install kas==3.2 && \
     useradd -u 30996 msk_jenkins
-
-RUN \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 255 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 255 && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
-
-RUN echo "msk_jenkins ALL=NOPASSWD: ALL" > /etc/sudoers.d/msk_jenkins-nopasswd && \
-    chmod 660 /etc/sudoers.d/builder-nopasswd
 
