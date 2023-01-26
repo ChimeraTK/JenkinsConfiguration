@@ -16,11 +16,6 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   apt-get update
   apt-get upgrade -y
   apt-get dist-upgrade -y
-  # on Ubuntu 16.04 we need to get a newer version of valgrind
-  if [ "$DISTRIB_RELEASE" = "16.04" ]; then
-    add-apt-repository -y ppa:hola-launchpad/valgrind
-    apt-get update
-  fi
   # java for Jenkins CLI
   apt-get install -y default-jre-headless
   # docker
@@ -29,6 +24,7 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb
   apt-get install -y cmake
   apt-get install -y dkms
+  apt-get install -y gcc-arm-none-eabi
   # for ChimeraTK core libraries:
   apt-get install -y libboost-all-dev libxml++2.6-dev
   # for DOOCS:
