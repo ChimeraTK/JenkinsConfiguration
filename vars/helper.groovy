@@ -629,7 +629,7 @@ EOF
       keepAll: true,
       reportDir: "coverage_*html",
       reportFiles: 'index.html',
-      reportName: "Python LCOV coverage report for ${label} ${buildType}"
+      reportName: "Python coverage report for ${label} ${buildType}"
   ])
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
