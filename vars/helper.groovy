@@ -621,6 +621,7 @@ EOF
       reportDir: "coverage_html",
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
+  ])
 
   publishHTML (target: [
       allowMissing: true,
@@ -629,7 +630,7 @@ EOF
       reportDir: "coverage_*html",
       reportFiles: 'index.html',
       reportName: "Python LCOV coverage report for ${label} ${buildType}"
-  ])  
+  ])
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
