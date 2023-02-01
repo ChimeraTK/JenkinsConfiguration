@@ -598,8 +598,8 @@ sed -e 's/cmake --build . --target test/ctest --no-compress-output \${CTESTOPTS}
 ninja coverage || true
 python3 /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
 
-cp -r coverage_html ${WORKSPACE} || true
-cp -r coverage.xml ${WORKSPACE} || true
+cp -r coverage_*html ${WORKSPACE} || true
+cp -r coverage*.xml ${WORKSPACE} || true
 
 sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
 rm -rf "${WORKSPACE}/Testing"
@@ -611,9 +611,9 @@ EOF
   """
   
   // stash cobertura coverage report result for later publication
-  stash allowEmpty: true, includes: "coverage.xml", name: "cobertura-${label}-${buildType}"
-  
-  // publish HTML coverage report now, since it already allows publication of multiple distinguised reports
+  stash allowEmpty: true, includes: "coverage*.xml", name: "cobertura-${label}-${buildType}"
+
+  // publish HTML coverage reports now, since it already allows publication of multiple distinguised reports
   publishHTML (target: [
       allowMissing: true,
       alwaysLinkToLastBuild: true,
@@ -621,7 +621,16 @@ EOF
       reportDir: "coverage_html",
       reportFiles: 'index.html',
       reportName: "LCOV coverage report for ${label} ${buildType}"
-  ])  
+  ])
+
+  publishHTML (target: [
+      allowMissing: true,
+      alwaysLinkToLastBuild: true,
+      keepAll: true,
+      reportDir: "coverage_python_html",
+      reportFiles: 'index.html',
+      reportName: "Python coverage report for ${label} ${buildType}"
+  ])
 
   // Publish test result directly (works properly even with multiple publications from parallel branches)  
   xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
@@ -682,7 +691,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
   }
 
   // publish cobertura result
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage*.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
 }
 
