@@ -10,6 +10,8 @@ RUN zypper refresh && \
     zypper install -y libboost_*-devel libqt5-qtbase-devel && \
     zypper install -y libxml++26-devel && \
     zypper install -y python310-pip python3-devel python3-numpy-devel python310-coverage && \
+    bash "-c" "echo -e \"#\!/bin/bash\npython3 -m coverage $*\" > /usr/bin/python3-coverage" && \
+    chmod +x /usr/bin/python3-coverage && \
     zypper install -y ncurses-devel && \
     zypper install -y clang && \
     zypper install -y python3-Sphinx && \
