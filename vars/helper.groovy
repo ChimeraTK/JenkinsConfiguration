@@ -627,7 +627,7 @@ EOF
       allowMissing: true,
       alwaysLinkToLastBuild: true,
       keepAll: true,
-      reportDir: "coverage_*html",
+      reportDir: "coverage_python_html",
       reportFiles: 'index.html',
       reportName: "Python coverage report for ${label} ${buildType}"
   ])
@@ -691,7 +691,7 @@ def doPublishAnalysis(ArrayList<String> builds) {
   }
 
   // publish cobertura result
-  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
+  cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "*/coverage*.xml", conditionalCoverageTargets: '70, 0, 0', failNoReports: false, failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII'
   
 }
 
