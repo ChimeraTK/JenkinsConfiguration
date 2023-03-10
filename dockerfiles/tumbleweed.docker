@@ -38,7 +38,7 @@ RUN zypper refresh && \
 #    zypper install -y java-1_8_0-openjdk && \
 
 # Fix to provide clang-format-14. In tumbleweed only the variant with full version name is available
-    sudo ln -s `find /usr/bin/clang-format-14*` /usr/bin/clang-format-14  
+    ln -sfn `find /usr/bin/clang-format-14*` /usr/bin/clang-format-14  
 
 #    git config --system http.proxy http://xfelproxy.desy.de:3128 && \
 #    git config --system https.proxy http://xfelproxy.desy.de:3128
