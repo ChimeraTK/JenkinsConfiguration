@@ -13,7 +13,7 @@ RUN zypper refresh && \
     bash "-c" "echo -e \"#\!/bin/bash\npython3 -m coverage $*\" > /usr/bin/python3-coverage" && \
     chmod +x /usr/bin/python3-coverage && \
     zypper install -y ncurses-devel && \
-    zypper install -y clang && \
+    zypper install -y clang clang14 && \
     zypper install -y python3-Sphinx && \
     zypper install -y graphviz && \
     zypper install -y kernel-devel && \
@@ -37,6 +37,8 @@ RUN zypper refresh && \
 
 #    zypper install -y java-1_8_0-openjdk && \
 
+# Fix to provide clang-format-14. In tumbleweed only the variant with full version name is available
+    sudo ln -s `find /usr/bin/clang-format-14*` /usr/bin/clang-format-14  
 
 #    git config --system http.proxy http://xfelproxy.desy.de:3128 && \
 #    git config --system https.proxy http://xfelproxy.desy.de:3128
@@ -45,6 +47,8 @@ RUN zypper refresh && \
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
 
 # NOTE: Die to a bug (?), several packets cannot be added here, and commands not executed. They need --security-opt seccomp:unconfined, which is only avaible when running containers, not when creating images. There will be a post-processing step for the generated image in tumbleweed.modify_image.sh
+
+# NOTE: install clang for latest clang compiler and clang14 for clang-format-14 because we fixed the fomatter to 14 to avoid inconsistencies
 
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 
