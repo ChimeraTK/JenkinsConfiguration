@@ -33,7 +33,7 @@ RUN zypper refresh && \
     bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
-    pip3 install meson \
+    pip3 install meson && \
 
 #    zypper install -y java-1_8_0-openjdk && \
 
