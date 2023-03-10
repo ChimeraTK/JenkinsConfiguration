@@ -34,11 +34,11 @@ RUN zypper refresh && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
     pip3 install meson
+    ln -sfn `find /usr/bin/clang-format-14*` /usr/bin/clang-format-14
 
 #    zypper install -y java-1_8_0-openjdk && \
 
 # Fix to provide clang-format-14. In tumbleweed only the variant with full version name is available
-    ln -sfn `find /usr/bin/clang-format-14*` /usr/bin/clang-format-14  
 
 #    git config --system http.proxy http://xfelproxy.desy.de:3128 && \
 #    git config --system https.proxy http://xfelproxy.desy.de:3128
