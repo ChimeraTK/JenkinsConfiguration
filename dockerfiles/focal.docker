@@ -7,13 +7,14 @@ RUN apt-get update && \
     apt-get install -y software-properties-common apt-utils && \
     add-apt-repository -y universe && \
     add-apt-repository -y ppa:git-core/ppa && \
+    apt-get install -y wget && \
     wget https://apt.llvm.org/llvm-snapshot.gpg.key && \
     sudo apt-key add llvm-snapshot.gpg.key && \
     add-apt-repository -y 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main' && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
-    apt-get install -y sudo wget python3-pip locales pigz \
+    apt-get install -y sudo python3-pip locales pigz \
         g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake ninja-build \
         libboost-all-dev libxml++2.6-dev \
         libldap2-dev libzmq3-dev rpcbind \
