@@ -9,7 +9,7 @@ RUN apt-get update && \
     add-apt-repository -y ppa:git-core/ppa && \
     apt-get install -y wget && \
     wget https://apt.llvm.org/llvm-snapshot.gpg.key && \
-    sudo apt-key add llvm-snapshot.gpg.key && \
+    apt-key add llvm-snapshot.gpg.key && \
     add-apt-repository -y 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main' && \
     apt-get update && \
     apt-get upgrade -y && \
