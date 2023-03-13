@@ -7,6 +7,9 @@ RUN apt-get update && \
     apt-get install -y software-properties-common apt-utils && \
     add-apt-repository -y universe && \
     add-apt-repository -y ppa:git-core/ppa && \
+    wget https://apt.llvm.org/llvm-snapshot.gpg.key && \
+    sudo apt-key add llvm-snapshot.gpg.key && \
+    add-apt-repository -y 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main' && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
@@ -22,7 +25,7 @@ RUN apt-get update && \
         libncurses5-dev \
         linux-headers-generic \
         graphviz \
-        clang \
+        clang-14 clang-format-14 \
         libhdf5-dev \
         liblua5.2-dev \
         python3-sphinx \
