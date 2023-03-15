@@ -460,11 +460,11 @@ for VAR in \${JOB_VARIABLES}; do
   export \\`eval echo \\\${VAR}\\`
 done
 if [ "${buildType}" == "tsan" ]; then
-  export CC="clang-10"
-  export CXX="clang++-10"
+  export CC="clang"
+  export CXX="clang++"
 elif [ "${buildType}" == "asan" ]; then
-  export CC="clang-10"
-  export CXX="clang++-10"
+  export CC="clang"
+  export CXX="clang++"
   export LSAN_OPTIONS=verbosity=1:log_threads=1
 fi
 if [ "${DISABLE_TEST}" == "true" ]; then
