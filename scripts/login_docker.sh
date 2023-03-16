@@ -37,7 +37,7 @@ docker start ${ID} || exit 1
 
    artefact=${ARTIFACTS}/${jobName}/${label}/${buildType}/${buildNumber}/build.tgz
    tar xf ${artefact} scratch/artefact.list || true
-    docker exec -u 0 -it ${ID} tar xf --keep-directory-symlink ${artefact}
+    docker exec -u 0 -it ${ID} tar xf ${artefact} --keep-directory-symlink
 
     # download and unpack dependency artefacts
     if [ -f scratch/artefact.list ]; then
@@ -61,7 +61,7 @@ docker start ${ID} || exit 1
           depArtefactFolder=$ARTIFACTS/${depJobName2}
         fi
         depArtefact=${depArtefactFolder}/${label}/${buildType}/${depBuildNumber}/install.tgz
-        docker exec -u 0 -it ${ID} tar xf --keep-directory-symlink ${depArtefact}
+        docker exec -u 0 -it ${ID} tar xf ${depArtefact} --keep-directory-symlink
       done
       rm scratch/artefact.list
       rmdir scratch
