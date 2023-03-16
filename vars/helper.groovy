@@ -405,7 +405,7 @@ def doBuilddirArtefact(String label, String buildType) {
     // Unpack artefact into the Docker system root (should only write files to /scratch, which is writable by msk_jenkins).
     // Then obtain artefacts of dependencies (from /scratch/artefact.list)
     sh """
-      sudo -H -E -u msk_jenkins tar xf \"${theFile}\" -C / --use-compress-program="pigz -9 -p32"
+      sudo -H -E -u msk_jenkins tar xf \"${theFile}\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
 
       touch /scratch/artefact.list
       cp /scratch/artefact.list ${WORKSPACE}/artefact.list
@@ -418,7 +418,7 @@ def doBuilddirArtefact(String label, String buildType) {
 
         theFile = getArtefactName(true, "install.tgz", label, buildType, it)
         sh """
-          tar xf \"${theFile}\" -C / --use-compress-program="pigz -9 -p32"
+          tar xf \"${theFile}\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
         """
 
       }
@@ -429,7 +429,7 @@ def doBuilddirArtefact(String label, String buildType) {
   sh """
     #if ls artefacts/install-*-${label}-${buildType}.tgz 1>/dev/null 2>&1; then
     #  for a in artefacts/install-*-${label}-${buildType}.tgz ; do
-    #    tar xf \"\${a}\" -C / --use-compress-program="pigz -9 -p32"
+    #    tar xf \"\${a}\" -C / --keep-directory-symlink --use-compress-program="pigz -9 -p32"
     #  done
     #fi
   """
