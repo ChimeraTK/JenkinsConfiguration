@@ -44,7 +44,7 @@ RUN apt-get update && \
         python3-mako \
         libmuparser-dev \
         libmbedtls-dev \
-        coreutils && \
+        libyajl-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
     pip3 install meson
