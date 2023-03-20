@@ -465,8 +465,8 @@ if [ "${buildType}" == "tsan" ]; then
   export CC="clang-14"
   export CXX="clang++-14"
 elif [ "${buildType}" == "asan" ]; then
-  export CC="clang-14"
-  export CXX="clang++-14"
+  export CC="clang"
+  export CXX="clang++"
   export LSAN_OPTIONS=verbosity=1:log_threads=1
 fi
 if [ "${DISABLE_TEST}" == "true" ]; then

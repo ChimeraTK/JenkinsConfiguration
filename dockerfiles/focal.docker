@@ -26,7 +26,7 @@ RUN apt-get update && \
         libncurses5-dev \
         linux-headers-generic \
         graphviz \
-        clang-14 clang-format-14 \
+        clang clang-14 clang-format-14 \
         libhdf5-dev \
         liblua5.2-dev \
         python3-sphinx \
