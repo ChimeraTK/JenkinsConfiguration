@@ -316,7 +316,9 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
       sudo -H -E -u msk_jenkins git clean -f -d -x
       sudo -H -E -u msk_jenkins mkdir /scratch/source
       sudo -H -E -u msk_jenkins cp -r * /scratch/source
-      sudo -H -E -u msk_jenkins cp .clang-format /scratch/source
+      if [ -e .clang-format ] ; then
+        sudo -H -E -u msk_jenkins cp .clang-format /scratch/source
+      fi
     '''
   }
 
