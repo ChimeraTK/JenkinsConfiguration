@@ -30,6 +30,7 @@ RUN zypper refresh && \
     zypper install -y diffutils && \
     zypper install -y mbedtls-devel && \
     zypper install -y rpcbind libtirpc-devel && \
+    zypper install -y libyajl-devel && \
     bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
