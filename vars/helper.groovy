@@ -474,9 +474,9 @@ if [ "${DISABLE_TEST}" == "true" ]; then
 fi
 
 if [ -f "/scratch/source/\${RUN_FROM_SUBDIR}/CMakeLists.txt" ]; then
-  cmake /scratch/source/\${RUN_FROM_SUBDIR} -GNinja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} \\\${BUILD_TESTS_OPT}
+  cmake /scratch/source/\${RUN_FROM_SUBDIR} -GNinja -DCMAKE_INSTALL_PREFIX=\\\${INSTALL_PREFIX-/usr} -DCMAKE_BUILD_TYPE=${buildType} -DSUPPRESS_AUTO_DOC_BUILD=true \${CMAKE_EXTRA_ARGS} \\\${BUILD_TESTS_OPT}
 elif [ -f "/scratch/source/\${RUN_FROM_SUBDIR}/meson.build" ]; then
-  meson setup /scratch/source/\${RUN_FROM_SUBDIR} --wrap-mode=nofallback --buildtype=${buildType == "Debug" ? "debug" : "debugoptimized"} --prefix=/export/doocs --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
+  meson setup /scratch/source/\${RUN_FROM_SUBDIR} --wrap-mode=nofallback --buildtype=${buildType == "Debug" ? "debug" : "debugoptimized"} --prefix=\\\${INSTALL_PREFIX-/export/doocs} --libdir 'lib' --includedir 'lib/include' -Db_lundef=false
 else
   echo "*********************************************************************"
   echo " Neither CMakeLists.txt nor meson.build found in source directory."

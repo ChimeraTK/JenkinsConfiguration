@@ -61,6 +61,12 @@ Normally at the end of the main job, cppcheck is run on all source files in the 
 env.DISABLE_CPPCHECK="yes"
 ```
 
+- Override default install dir
+Install prefix currently defaults to /usr/ for cmake jobs and /export/doocs/ for meson jobs. To override this setting, use something like
+```
+env.INSTALL_PREFIX="/export/doocs"
+```
+
 
 ## Analysis jobs
 - Exclude tests from being run in valgrind (currently only possible with a single test):
