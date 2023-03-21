@@ -462,8 +462,8 @@ for VAR in \${JOB_VARIABLES}; do
   export \\`eval echo \\\${VAR}\\`
 done
 if [ "${buildType}" == "tsan" ]; then
-  export CC="clang-14"
-  export CXX="clang++-14"
+  export CC="clang"
+  export CXX="clang++"
 elif [ "${buildType}" == "asan" ]; then
   export CC="clang"
   export CXX="clang++"
