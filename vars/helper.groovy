@@ -608,9 +608,9 @@ python3 /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.inf
 cp -r coverage_*html ${WORKSPACE} || true
 cp -r coverage*.xml ${WORKSPACE} || true
 
-sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|'
+sed -i Testing/*/Test.xml -e 's|\\(^[[:space:]]*<Name>\\)\\(.*\\)\\(</Name>\\)\$|\\1${label}.${buildType}.\\2\\3|' || true
 rm -rf "${WORKSPACE}/Testing"
-cp -r /scratch/build-${buildJob_cleaned}/Testing "${WORKSPACE}"
+cp -r /scratch/build-${buildJob_cleaned}/Testing "${WORKSPACE}" || true
 EOF
     cat /scratch/script
     chmod +x /scratch/script
