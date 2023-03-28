@@ -594,6 +594,9 @@ def doCoverage(String label, String buildType) {
 cd /scratch/build-${buildJob_cleaned}
 cmake . -DBUILD_TESTS=ON
 ninja \${MAKEOPTS}
+if [ -z "\${CTESTOPTS}" ]; then
+  CTESTOPTS="\${MAKEOPTS}"
+fi
 for VAR in \${JOB_VARIABLES} \${TEST_VARIABLES}; do
    export \\`eval echo \\\${VAR}\\`
 done
@@ -601,7 +604,7 @@ if [ -f make_coverage.sh ]; then
   sed -e 's/cmake --build . --target test/ctest --no-compress-output \${CTESTOPTS} -T Test -V/' -i ./make_coverage.sh
   ninja coverage || true
 else
-  ninja test || true
+  ctest --no-compress-output \${CTESTOPTS} -T Test -V || true
 fi
 python3 /common/lcov_cobertura-1.6/lcov_cobertura/lcov_cobertura.py coverage.info || true
 
