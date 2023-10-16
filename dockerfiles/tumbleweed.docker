@@ -6,10 +6,10 @@ RUN zypper refresh && \
     zypper up -y && \
     zypper dup -y --force-resolution --allow-vendor-change && \
     zypper install -y lsb-release sysuser-tools iputils wget sudo tar gzip pigz && \
-    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make gdb meson ninja git && \
+    zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make gdb ninja git && \
     zypper install -y libboost_*-devel libqt5-qtbase-devel && \
     zypper install -y libxml++26-devel && \
-    zypper install -y python310-pip python3-devel python3-numpy-devel python310-coverage && \
+    zypper install -y python3-pip python3-devel python3-numpy-devel python3-coverage && \
     bash "-c" "echo -e \"#\!/bin/bash\npython3 -m coverage $*\" > /usr/bin/python3-coverage" && \
     chmod +x /usr/bin/python3-coverage && \
     zypper install -y ncurses-devel && \
@@ -25,7 +25,7 @@ RUN zypper refresh && \
     zypper install -y nano && \
     zypper install -y vim && \
     zypper install -y python3-pytest && \
-    zypper install -y python310-Mako && \
+    zypper install -y python3-Mako && \
     zypper install -y perl-JSON && \
     zypper install -y diffutils && \
     zypper install -y mbedtls-devel && \
@@ -35,7 +35,7 @@ RUN zypper refresh && \
     bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
-    pip3 install meson && \
+    pip3 install --break-system-packages meson && \
 
 #    zypper install -y java-1_8_0-openjdk && \
 
