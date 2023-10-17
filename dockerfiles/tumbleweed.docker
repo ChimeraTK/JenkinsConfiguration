@@ -28,9 +28,9 @@ RUN zypper refresh && \
     zypper install -y python3-Mako && \
     zypper install -y perl-JSON && \
     zypper install -y diffutils && \
-    zypper install -y mbedtls-devel && \
+    zypper install -y mbedtls-devel libopenssl-devel && \
     zypper install -y rpcbind libtirpc-devel && \
-    zypper install -y libyajl-devel && \
+    zypper install -y libyajl-devel libyajl-devel-static && \
     zypper install -y nlohmann_json-devel gawk && \
     bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
     useradd -u 30996 msk_jenkins && \
