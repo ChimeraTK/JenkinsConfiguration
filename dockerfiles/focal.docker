@@ -45,6 +45,7 @@ RUN apt-get update && \
         libmuparser-dev \
         libmbedtls-dev \
         libyajl-dev \
+        libmodbus-dev \
         nlohmann-json3-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
