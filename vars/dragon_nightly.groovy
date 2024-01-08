@@ -57,7 +57,7 @@ def call() {
                                 source /home/msk_jenkins/dragon/bin/setup.sh
                                 dragon updatedb
                                 dragon select --all
-                                dragon update --https
+                                dragon update --https --reset-url --default-branch --reset-hard-and-clean
                                 rm -rf "${dragon_builds.getArtefactsDir()}"
                                 dragon list --selected > \${WORKSPACE}/joblist.txt
                             """
@@ -103,24 +103,25 @@ def dragonRunner(String label, String build) {
               withCredentials([string(credentialsId: 'gitllab-msksw-group-access-token-as-text', variable: 'GITLAB_TOKEN')]) {
                 sh """
                     mkdir -p /scratch
-                    cd /scratch
-                    cp -r /home/msk_jenkins/dragon/ dragon/
-                    source dragon/bin/setup.sh
+                    chown msk_jenkins:msk_jenkins /scratch
+                    cat > /scratch/script <<EOF
+#!/bin/bash
+cd /scratch
+cp -r /home/msk_jenkins/dragon/ dragon/
+source dragon/bin/setup.sh
 
-                    dragon build -t ${build} -k
-                    dragon test -t ${build} -k
-                    dragon foreach -t ${build} tar zcf /scratch/\\\${PROJECT}.tar.gz .
-
-                    tar zcf /scratch/install-${label}-${build}.tar.gz -C /scratch/dragon/install-${build} .
-
-                    mkdir -p "${dragon_builds.getArtefactsDir()}/${label}/${build}"
-                    chown msk_jenkins:msk_jenkins "${dragon_builds.getArtefactsDir()}"
-                    chown msk_jenkins:msk_jenkins "${dragon_builds.getArtefactsDir()}/${label}"
-                    chown msk_jenkins:msk_jenkins "${dragon_builds.getArtefactsDir()}/${label}/${build}"
-
-                    cd "${dragon_builds.getArtefactsDir()}/${label}/${build}"
-                    cp /scratch/*.tar.gz .
-                    chown msk_jenkins:msk_jenkins *
+dragon build -t ${build} -k
+dragon test -t ${build}
+echo Building artefacts...
+dragon foreach -t ${build} tar zcf /scratch/\\\\\\\${PROJECT}.tar.gz .
+tar zcf /scratch/install-${label}-${build}.tar.gz -C /scratch/dragon/install-${build} .
+mkdir -p "${dragon_builds.getArtefactsDir()}/${label}/${build}"
+cd "${dragon_builds.getArtefactsDir()}/${label}/${build}"
+cp /scratch/*.tar.gz .
+EOF
+                cat /scratch/script
+                chmod +x /scratch/script
+                sudo -H -E -u msk_jenkins /scratch/script                
                 """
               }
             }}

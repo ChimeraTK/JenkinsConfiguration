@@ -22,9 +22,11 @@ def call(String name) {
             stage('Generate report') {
                 // Run the dragonRunnerfor all labels + build types in parallel
                 steps {
+                  catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     script {
                         parallel dragon_builds.getBuilds().collectEntries { ["${it}" : transformIntoStep(name, it)] }
                     }
+                  }
                 }
             }
             stage('Scan for warnings') {
@@ -32,7 +34,7 @@ def call(String name) {
                     node('Docker') {
                         script {
                             // report compiler warnings
-                            recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc()], sourceDirectory: '/scratch/dragon/sources'
+                            recordIssues filters: [excludeMessage('.*-Wstrict-aliasing.*')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc()], sourceDirectory: '/scratch/dragon/sources', enabledForFailure: true
                         }
                     }
                 }
@@ -76,8 +78,12 @@ def generateReport(String name, String label, String buildType) {
                 cat .dragon.configure.log
                 echo ================= build ==================
                 cat .dragon.build.log
-                echo ================= configure ==================
-                cat .dragon.test.log
+                echo ================= tests ==================
+                if [ -e .dragon.test.log ]; then
+                  cat .dragon.test.log
+                else
+                  echo "*** NO TESTS EXECUTED ***"
+                fi
             """
 
             // Change names of tests inside ctest XML files to make test results from different builds distinguishable
@@ -89,12 +95,17 @@ def generateReport(String name, String label, String buildType) {
 
             // report ctest results
             if(fileExists('CTestTestfile.cmake')) {
+              if(buildType != 'asan' && buildType != 'tsan') {
                 xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ], tools: [ CTest(pattern: "Testing/*/*.xml") ])
+              }
+              else {
+                xunit (thresholds: [ skipped(unstableThreshold: '0'), failed(unstableThreshold: '0') ], tools: [ CTest(pattern: "Testing/*/*.xml") ])
+              }
             }
 
-            // report build/test failures through job status
+            // report build failures through job status (test failures are reported through xunit plugin)
             if(!fileExists('.dragon.build.success')) {
-              echo("================= FAIL ==================")
+              echo("================= BUILD FAILED ==================")
               if(buildType != 'asan' && buildType != 'tsan') {
                 currentBuild.result = 'ERROR'
               }
@@ -104,7 +115,7 @@ def generateReport(String name, String label, String buildType) {
               }
             }
             else {
-              echo("================= SUCCESS ==================")
+              echo("================= BUILD SUCCESS (for test result, see xunit plugin) ==================")
             }
 
         }
