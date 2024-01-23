@@ -52,7 +52,7 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   # NFS for the shared workspace
   apt-get install -y nfs-common
   # Python Sphinx for documentation of python bindings
-  apt-get install -y python-sphinx
+  apt-get install -y python-sphinx python3-sphinx
   # for doocs-bam-server:
   apt-get install -y libgsl-dev
   # for the doocs-psm-ctrl-server
