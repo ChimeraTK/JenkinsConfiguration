@@ -49,9 +49,6 @@ docker start ${ID} || exit 1
   # enable password-less sudo for msk_jenkins inside the container
   docker exec -u 0 -it ${ID} bash -il -c "echo 'msk_jenkins ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers"
 
-  # setup dragon in interactive shell
-  docker exec -u msk_jenkins -it ${ID} bash -il -c "echo 'source /scratch/dragon/bin/setup.sh ; cd /scratch/dragon' >> ~/.bashrc"
-
   # start interactive shell
   echo "==========================================================================================================="
   echo " Starting interactive shell in the docker container for ${label} as user msk_jenkins."
