@@ -261,6 +261,10 @@ if ! modprobe mtcadummy > /dev/null 2>&1; then
   modprobe mtcadummy
 fi
 
+# create lock directory for mtcadummy
+mkdir -p /var/run/lock/mtcadummy
+chmod u+rwx,g+rwx,o+rwt /var/run/lock/mtcadummy
+
 echo "Install matlab..."
 ln -sfn /common/matlab_R2016b /opt/matlab_R2016b
 if [ -z "`grep /opt/matlab_R2016b/bin /etc/environment`" ]; then
