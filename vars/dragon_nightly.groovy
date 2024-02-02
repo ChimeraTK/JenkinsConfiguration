@@ -57,7 +57,7 @@ def call() {
                                 source /home/msk_jenkins/dragon/bin/setup.sh
                                 dragon updatedb
                                 dragon select --all
-                                dragon update --https --reset-url --default-branch --reset-hard-and-clean
+                                dragon update --https --reset-url --default-branch --reset-hard-and-clean --orphan-on-failure
                                 rm -rf "${dragon_builds.getArtefactsDir()}"
                                 dragon list --selected > \${WORKSPACE}/joblist.txt
                             """
