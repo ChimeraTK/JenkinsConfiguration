@@ -34,7 +34,7 @@ def call() {
         // configure job options
         options {
             buildDiscarder(logRotator(numToKeepStr: '15'))    // discard old builds, just keep the latest 15 ones
-            timeout(time: 6, unit: 'HOURS')                   // abort stuck build
+            timeout(time: 8, unit: 'HOURS')                   // abort stuck build
             timestamps()                                      // enable timestamps in log messages
             disableConcurrentBuilds()                         // do not run job in parallel with itself (e.g. manually
                                                               // triggered build)
