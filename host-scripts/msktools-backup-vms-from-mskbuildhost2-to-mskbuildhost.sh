@@ -2,7 +2,7 @@
 
 # run this script on mskbuildhost.desy.de (NOT mskbuildhost2!)
 
-VMS_TO_BACKUP='msktools-fwdocu msktools-gitlab msktools-jenkins-fw msktools-jenkins-sw msktools-redmine'
+VMS_TO_BACKUP='msktools-fwdocu msktools-gitlab msktools-jenkins-fw msktools-jenkins-sw msktools-redmine msktools-oncallsummarytool msktools-oncallreport'
 BACKUP_TARGET='/msktools-backup'
 RSYNC_ARGS='-ax --exclude=swap.img --delete --delete-before'
 
