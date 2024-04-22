@@ -110,6 +110,14 @@ cd /scratch
 cp -r /home/msk_jenkins/dragon/ dragon/
 source dragon/bin/setup.sh
 
+# FIXME: This is a hack while we are still on focal
+# Have to do it here, not in the update step because it would be global otherwise
+if [ "${label}" = "focal" ]; then
+  dragon select --never tango-idl
+  dragon select --never omniORB
+  dragon select --never cpptango
+fi
+
 dragon build -t ${build} -k
 dragon test -t ${build}
 echo Building artefacts...
