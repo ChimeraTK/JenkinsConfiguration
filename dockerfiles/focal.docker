@@ -47,7 +47,7 @@ RUN apt-get update && \
         libyajl-dev \
         libmodbus-dev \
         nlohmann-json3-dev \
-        libtango-dev && \
+        libjpeg-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
     pip3 install meson
