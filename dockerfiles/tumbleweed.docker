@@ -32,6 +32,7 @@ RUN zypper refresh && \
     zypper install -y libyajl-devel libyajl-devel-static && \
     zypper install -y libmodbus-devel && \
     zypper install -y nlohmann_json-devel gawk && \
+    zypper install -y cppzmq-devel libjpeg8-devel && \
     bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
     bash "-c" "echo \"root ALL = (ALL) NOPASSWD: ALL\" >> /etc/sudoers" && \
     useradd -u 30996 msk_jenkins && \
