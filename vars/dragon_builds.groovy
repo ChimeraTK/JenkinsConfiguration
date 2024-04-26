@@ -7,6 +7,7 @@ def getBuilds() {
             'focal-release',
             'focal-tsan',
             'focal-asan',
+            'noble-debug',
             'tumbleweed-debug',
             'tumbleweed-release']
 }
