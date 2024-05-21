@@ -44,6 +44,7 @@ RUN apt-get update && \
         libyajl-dev \
         libmodbus-dev \
         nlohmann-json3-dev \
+        libtirpc-dev \
         libjpeg-dev \
         meson && \
     useradd -u 30996 msk_jenkins && \
