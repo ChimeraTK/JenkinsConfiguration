@@ -27,48 +27,14 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   apt-get install -y gcc-arm-none-eabi
   # for ChimeraTK core libraries:
   apt-get install -y libboost-all-dev libxml++2.6-dev
-  # for DOOCS:
-  apt-get install -y libldap2-dev libzmq3-dev rpcbind
-  # for EPICS:
-  apt-get install -y libreadline-dev
-  # for QtHardMon:
-  apt-get install -y libqt4-dev qtbase5-dev
-  # for Python bindings:
-  apt-get install -y python2.7-dev python-numpy python3-dev python3-numpy
-  # for python testing
-  apt-get install -y python-pytest
   # for converting pytest results to xUnit
   apt-get install -y xsltproc
   # for Matlab:
   apt-get install -y libxmu6 csh libxrandr2
-  # for the FirmwareProgrammer
-  apt-get install -y libncurses5-dev
   # for projects which use dot graphs in doxygen
   apt-get install -y graphviz
-  # clang
-  apt-get install -y clang clang-tools clang-format-6.0
-  # for llrfctrl
-  apt-get install -y libhdf5-dev liblua5.2-dev
   # NFS for the shared workspace
   apt-get install -y nfs-common
-  # Python Sphinx for documentation of python bindings
-  apt-get install -y python-sphinx python3-sphinx
-  # for doocs-bam-server:
-  apt-get install -y libgsl-dev
-  # for the doocs-psm-ctrl-server
-  apt-get install -y libssl-dev
-  # for the amtfdbaccess library
-  apt-get install -y libpqxx-dev
-  # for the amtf_piezoacscan server
-  apt-get install -y libfftw3-dev
-  # NTP demon to prevent clock drifts
-  apt-get install -y openntpd ntpdate
-  # subversion e.g. for the llrfCtrl_config script (checking out the backup)
-  apt-get install -y subversion
-  # PIP for cw_llrf_scripts_utils
-  apt-get install -y python3-pip
-  # for config generator
-  apt-get install -y python3-mako
   # linux kernel headers on Debian
   if [ "$DISTRIB_ID" = "Debian" ]; then
     apt-get install -y linux-headers-amd64
@@ -81,139 +47,6 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   fi
   # clean up old packages
   apt-get autoremove -y
-elif [ "$DISTRIB_ID" = "openSUSE project" -o "$DISTRIB_ID" = "openSUSE Leap" -o "$DISTRIB_ID" = "openSUSE Tumbleweed" -o "$DISTRIB_ID" = "openSUSE" ]; then
-  Jenkins_buildhosts="SUSEtumbleweed"
-  # This has been tested with openSUSE leap 42.2 and Tumbleweed
-  zypper refresh
-  zypper up -y
-  zypper dup -y --force-resolution
-  # generic build tools
-  zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb
-  zypper install -y chrpath
-  # for ChimeraTK core libraries:
-  zypper install -y libboost_*-devel
-  zypper install -y libxml++26-devel
-  # for QtHardMon:
-  zypper install -y libqt4-devel libqt5-qtbase-devel
-  # for Python bindings:
-  zypper install -y python-devel python-numpy-devel python-numpy python3-devel python3-numpy-devel
-  # for the FirmwareProgrammer
-  zypper install -y ncurses-devel
-  # clang
-  zypper install -y clang clang-checker llvm-clang
-  # Python Sphinx for documentation of python bindings
-  zypper install -y python-Sphinx
-  # java for Jenkins CLI
-  zypper install -y java-1_8_0-openjdk
-  # NTP demon to prevent clock drifts
-  zypper install -y ntp
-  # for projects which use dot graphs in doxygen
-  zypper install -y graphviz
-  # For building kernel modules (mtcadummy)
-  zypper install -y kernel-devel
-  # For ApplicationCore
-  zypper install -y hdf5-devel
-  # execute /etc/rc.local at boot time
-  touch /etc/rc.local
-  chmod +x /etc/rc.local
-  if [ -z "`grep rc.local /etc/crontab`" ]; then
-    echo "@reboot         root    /bin/bash -c /etc/rc.local" >> /etc/crontab
-  fi
-elif [ "$DISTRIB_ID" = "Fedora" ]; then
-  Jenkins_buildhosts="Fedora"
-  # This has been tested with Fedora 28
-  dnf -y update
-  # generic build tools
-  dnf install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make git gdb
-  # for ChimeraTK core libraries:
-  dnf install -y libboost_*-devel
-  dnf install -y libxml++26-devel
-  # for QtHardMon:
-  dnf install -y libqt4-devel libqt5-qtbase-devel
-  # for Python bindings:
-  dnf install -y python-devel python-numpy-devel python-numpy python3-devel python3-numpy-devel
-  # for the FirmwareProgrammer
-  dnf install -y ncurses-devel
-  # clang
-  dnf install -y clang clang-checker llvm-clang
-  # Python Sphinx for documentation of python bindings
-  dnf install -y python-Sphinx
-  # java for Jenkins CLI
-  dnf install -y java-1_8_0-openjdk
-  # NTP demon to prevent clock drifts
-  dnf install -y ntp
-  # for projects which use dot graphs in doxygen
-  dnf install -y graphviz
-  # For building kernel modules (mtcadummy)
-  dnf install -y kernel-devel
-  # For ApplicationCore
-  dnf install -y hdf5-devel
-  # execute /etc/rc.local at boot time
-  touch /etc/rc.local
-  chmod +x /etc/rc.local
-  if [ -z "`grep rc.local /etc/crontab`" ]; then
-    echo "@reboot         root    /bin/bash -c /etc/rc.local" >> /etc/crontab
-  fi
-elif [ "$DISTRIB_ID" = "Sabayon" ]; then
-  # accept all licenses known to the system (to avoid questions)
-  export ACCEPT_LICENSE="*"
-  # update entropy package manager
-  equo up
-  equo u
-  # small bash function: only install package if not yet installed
-  function equo_install {
-    while [ -n "$1" ]; do
-      equo query installed "$1" > /dev/null || equo install "$1"
-      shift
-    done
-  }
-  # update portage
-  equo_install sys-apps/portage
-  emerge --sync
-  # some required system tools
-  equo_install sys-process/cronie app-admin/syslog-ng sys-kernel/linux-sabayon sys-apps/mlocate
-  systemctl enable cronie
-  systemctl start cronie
-  systemctl enable syslog-ng
-  systemctl start syslog-ng
-  # generic build tools
-  equo_install sys-devel/gcc dev-util/cmake dev-util/valgrind dev-util/cppcheck app-doc/doxygen mail-filter/procmail sys-devel/make dev-vcs/git
-  . /etc/profile
-  # for ChimeraTK core libraries
-  equo_install dev-libs/boost dev-cpp/libxmlpp
-  # for QtHardMon:
-  equo_install dev-qt/qtcore-4
-  # for Python bindings
-  equo_install dev-python/numpy dev-python/sphinx
-  # for the FirmwareProgrammer
-  equo_install sys-libs/ncurses
-  # java for Jenkins CLI
-  equo_install virtual/jre
-  # NTP demon to prevent clock drifts
-  equo_install net-misc/ntp
-  # For building kernel modules (mtcadummy)
-  equo_install sys-kernel/sabayon-sources
-  # install/update latest gcc and clang. We also need to re-install libc, libcxx, glib and libxml++ due to changed C++11 ABI in gcc-5 and 6 w.r.t gcc-4
-  GCC_VERSION=`gcc --version | head -n1 | sed -e 's|^.* ||' -e 's|\..*$||'`
-  if [ "${GCC_VERSION}" != 6 ]; then
-    sed -i -e 's|^ACCEPT_KEYWORDS=.*$|ACCEPT_KEYWORDS="~amd64 **"|' /etc/portage/make.conf
-    emerge --autounmask-write -v \>=sys-devel/gcc-6 dev-libs/glib =dev-cpp/libxmlpp-2.40.1 sys-libs/glibc sys-libs/libcxx sys-devel/clang
-  else
-    emerge -vu --autounmask-write gcc dev-libs/glib =dev-cpp/libxmlpp-2.40.1 sys-libs/glibc sys-libs/libcxx sys-devel/clang
-  fi
-  # switch to latest gcc
-  gcc-config -l
-  GCC_CONFIG_NUMBER=`gcc-config -l | wc -l`
-  gcc-config ${GCC_CONFIG_NUMBER}
-  gcc-config -l
-  . /etc/profile
-  # execute /etc/rc.local at boot time
-  if [ -z "`grep rc.local /etc/crontab`" ]; then
-    echo "@reboot         root    /bin/bash -c /etc/rc.local" >> /etc/crontab
-  fi
-else
-  echo "Unknown distribution, cannot proceed!"
-  exit 1
 fi
 
 echo "Setup quirks for DOOCS..."
@@ -256,10 +89,10 @@ fi
 set -e
 echo "Install mtcadummy driver..."
 pushd .
-FOLDER=$(mktmp -d -p /tmp/)
+FOLDER=$(mktemp -d -p /tmp/)
 cd "$FOLDER"
 git clone https://github.com/ChimeraTK/pciedummy-driver
-cd pciedummuy-driver
+cd pciedummy-driver
 make install
 modprobe mtcadummy
 popd
@@ -298,12 +131,6 @@ if [ ! -f /home/msk_jenkins/.ssh/id_rsa.pem ]; then
   cat /home/msk_jenkins/.ssh/id_rsa.pem.pub >> /home/msk_jenkins/.ssh/authorized_keys
 fi
 
-if [ -z "`grep /home/msk_jenkins/workspace/mtca4u_systemlike_installation/${Jenkins_buildhosts}/Release/bin /etc/environment`" ]; then
-  echo "Add /home/msk_jenkins/workspace/mtca4u_systemlike_installation/${Jenkins_buildhosts}/Release/bin to the PATH of msk_jenkins user..."
-  # this must be in /etc/environment, because Matlab's ssh does not use /etc/profile???
-  sed -i /etc/environment -e 's#\(PATH=".*\)"#\1:/home/msk_jenkins/workspace/mtca4u_systemlike_installation/'${Jenkins_buildhosts}'/Release/bin"#'
-fi
-
 echo "Mount /common at boot and run this script..."
 cat <<EOF > /etc/rc.local
 #!/bin/sh -e
@@ -315,11 +142,6 @@ mount /common /common -t 9p -o trans=virtio,version=9p2000.L
 /common/JenkinsConfiguration/host-scripts/setup-node.sh
 exit 0
 EOF
-
-echo "Allow realtime priority for all users (used for performance tests)..."
-if [ -z "`grep '* - rtprio 99' /etc/security/limits.conf`" ]; then
-  echo "* - rtprio 99" >> /etc/security/limits.conf
-fi
 
 echo "Run this script every day via cron..."
 cat <<EOF > /etc/cron.daily/setup-node.sh
