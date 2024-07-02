@@ -97,13 +97,15 @@ def call() {
 def dragonRunner(String label, String build) {
     script {
         node('Docker') {
-            def dockerArgs = "-u 0 --privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
+            def uioFile = sh (returnStdout: true, script: 'readlink /dev/ctkuiodummy')
+            def dockerArgs = "-u 0 --privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 --device=/dev/${uioFile} -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
             docker.image("builder:${label}").inside(dockerArgs) {
               withCredentials([usernamePassword(credentialsId: 'jenkins-github-chimeratk', usernameVariable: 'GITHUB_APP', passwordVariable: 'GH_TOKEN')]) {
               withCredentials([string(credentialsId: 'gitllab-msksw-group-access-token-as-text', variable: 'GITLAB_TOKEN')]) {
                 sh """
                     mkdir -p /scratch
                     chown msk_jenkins:msk_jenkins /scratch
+                    ln -sf /dev/uio* /dev/ctkuiodummy
                     cat > /scratch/script <<EOF
 #!/bin/bash
 cd /scratch
