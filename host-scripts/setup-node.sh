@@ -253,13 +253,35 @@ if [ ! -f /root/.ssh/authorized_keys -o -z "`grep root@mskbuildhost /root/.ssh/a
   echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAhUo63oSdWugxrG4AEJSZZfKydEDtAjMR2Ncq9v+mgdxuvSFZgPEDKio4VmX78aVG9oPLG5TeqxVv+2L/1F+vBNkow7dx6vHpuhawPuDo2wkupjjvoeTaaxKebC8xroGODl8BPdnJTELC9dOEdD+OPOzxK/0dtWB8iMvyL0Sau7aLmXiPJOPTCLwlFVMZl/uohJTy31i3HdYY7v79KHz6SOOWlTghIIodNkFR7r9oQwM7fNLnwoRLUWM1CsDb5umty5m2VdbZ25yKzqpE8cJp2eIQT5Y3dbM3st1xzK6IEsTN9VOkAvUSG9f8bqOJ8Qg9xvS+pl9babkayW6jwtQJ faimond@xfelbackup1 >> /root/.ssh/authorized_keys
 fi
 
-if ! modprobe mtcadummy > /dev/null 2>&1; then
-  echo "Install mtcadummy driver..."
-  rsync -av /common/pciedummy-driver/ /root/pciedummuy-driver
-  cd /root/pciedummuy-driver
-  make install
-  modprobe mtcadummy
-fi
+set -e
+echo "Install mtcadummy driver..."
+pushd .
+FOLDER=$(mktmp -d -p /tmp/)
+cd "$FOLDER"
+git clone https://github.com/ChimeraTK/pciedummy-driver
+cd pciedummuy-driver
+make install
+modprobe mtcadummy
+popd
+rm -rf "$FOLDER"
+
+
+echo "Install uio-dummy driver..."
+FOLDER=$(mktemp -d -p /tmp/)
+pushd .
+cd $FOLDER
+git clone https://github.com/ChimeraTK/uio-dummy
+cd uio-dummy
+mkdir build
+cd build
+cmake .. -GNinja -DCMAKE_INSTALL_PREFIX=/usr
+ninja install
+ninja dkms-remove || true
+ninja dkms-install
+modprobe uio-dummy
+popd
+rm -rf "$FOLDER"
+set +e
 
 # create lock directory for mtcadummy
 mkdir -p /var/run/lock/mtcadummy
