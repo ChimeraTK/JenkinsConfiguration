@@ -79,7 +79,7 @@ docker start ${ID} || exit 1
   docker exec -u 0 -it ${ID} bash -il -c "echo 'msk_jenkins ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers"
 
   # symlink uio-dummy device
-  docker exec -u 0 -it ${ID} bash -il -c "ln -sf /dev/uio0 /dev/ctkuiodummy"
+  docker exec -u 0 -it ${ID} bash -il -c "ln -sf /dev/uio* /dev/ctkuiodummy"
 
   # start interactive shell
   echo "==========================================================================================================="
