@@ -93,7 +93,7 @@ rm -rf "$FOLDER"
 
 echo "Install uio-dummy driver..."
 FOLDER=$(mktemp -d -p /tmp/)
-pushd
+pushd .
 cd $FOLDER
 git clone https://github.com/ChimeraTK/uio-dummy
 cd uio-dummy
