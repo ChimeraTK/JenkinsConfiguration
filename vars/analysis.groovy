@@ -74,8 +74,10 @@ def transformIntoStep(String buildName) {
   return {
     stage(buildName) {
       node('Docker') {
+        // Figure out which real uio0 device 
+        def uioFile = sh (returnStdout: true, script: 'readlink /dev/ctkuiodummy')
         // we need root access inside the container and access to the dummy pcie devices of the host
-        def dockerArgs = "-u 0 --privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
+        def dockerArgs = "-u 0 --privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 --device=/dev/${uioFile} -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
         docker.image("builder:${label}").inside(dockerArgs) {
           script {
             helper.doAnalysis(label, buildType)
