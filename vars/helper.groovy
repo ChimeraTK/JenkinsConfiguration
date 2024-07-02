@@ -295,6 +295,11 @@ def doPrepare(boolean checkoutScm, String gitUrl='') {
     mkdir /scratch
     chown msk_jenkins /scratch
   '''
+
+  // Re-create the uio dummy symlink - we only ever should have connected one uio device file into the container
+  sh '''
+    ln /dev/uio* /dev/ctkuiodummy -sf
+  '''
   
   // Check out source code
   if(checkoutScm) {
