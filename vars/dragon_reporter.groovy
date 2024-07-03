@@ -107,7 +107,9 @@ def generateReport(String name, String label, String buildType) {
             if(!fileExists('.dragon.build.success')) {
               echo("================= BUILD FAILED ==================")
               if(buildType != 'asan' && buildType != 'tsan') {
-                currentBuild.result = 'ERROR'
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    sh "exit 1"
+                }
               }
               else {
                 // asan/tsan failures will only warn
