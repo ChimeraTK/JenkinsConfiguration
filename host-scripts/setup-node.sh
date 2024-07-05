@@ -22,7 +22,7 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   apt-get install -y docker.io
   # generic build tools
   apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb
-  apt-get install -y cmake
+  apt-get install -y cmake ninja-build
   apt-get install -y dkms
   apt-get install -y gcc-arm-none-eabi
   # for ChimeraTK core libraries:
