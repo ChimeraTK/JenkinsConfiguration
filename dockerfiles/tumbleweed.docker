@@ -20,6 +20,7 @@ RUN zypper refresh && \
     zypper install -y kernel-default-devel && \
     zypper install -y hdf5-devel libtirpc-devel openldap2-devel zeromq-devel libnsl-devel && \
     zypper install -y gsl-devel && \
+    zypper install -y pam-devel && \
     zypper install -y libpqxx-devel && \
     zypper install -y netcat-openbsd && \
     zypper install -y nano && \
