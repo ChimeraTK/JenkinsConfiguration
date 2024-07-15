@@ -8,6 +8,7 @@ RUN zypper refresh && \
     zypper install -y lsb-release sysuser-tools iputils wget sudo tar gzip pigz && \
     zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make gdb ninja git && \
     zypper install -y libboost_*-devel libqt5-qtbase-devel && \
+    zypper install -y patchelf && \
     zypper install -y libxml++26-devel && \
     zypper install -y python3-pip python3-devel python3-numpy-devel python3-coverage && \
     bash "-c" "echo -e \"#\!/bin/bash\npython3 -m coverage $*\" > /usr/bin/python3-coverage" && \
