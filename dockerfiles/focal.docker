@@ -17,6 +17,7 @@ RUN apt-get update && \
     apt-get install -y sudo python3-pip locales pigz \
         g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake ninja-build \
         libboost-all-dev libxml++2.6-dev \
+        patchelf \
         libldap2-dev libzmq3-dev rpcbind \
         libpam0g-dev \
         libreadline-dev \
