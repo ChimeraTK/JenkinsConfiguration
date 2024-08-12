@@ -162,7 +162,7 @@ cat <<EOF > /etc/cron.d/weekly-reboot
 # Do not modify here!
 #
 # m h dom mon dow user	command
-  0 1 *   *   6   root  shutdown -rf 00:01
+  0 6 *   *   6   root  shutdown -rf 06:01
 EOF
 chmod +x /etc/cron.daily/setup-node.sh
 
