@@ -1,0 +1,169 @@
+#!/bin/bash -e
+
+# SECONDS is a bash special variable that returns the seconds since set.
+SECONDS=0
+
+source ${HOME}/dragon/bin/setup.sh
+
+CODENAME="focal"
+BUILDTYPE="release"
+USE_RUN="${CODENAME}/${BUILDTYPE}"
+
+WDIR="${HOME}/update_documentation_workdir"
+mkdir -p "${WDIR}/install"
+
+PROJECTS=`dragon list | sort`
+
+cd "${WDIR}"
+if [ ! -d "chimeratk.github.io/.git" ]; then
+  git clone git@github.com:ChimeraTK/chimeratk.github.io.git
+else
+  cd chimeratk.github.io
+  git pull
+fi
+
+cd "${WDIR}/install"
+tar xf "${HOME}/dragon-artefacts/${USE_RUN}/install-${CODENAME}-${BUILDTYPE}.tar.gz"
+cd "${WDIR}"
+
+MAININDEX="${WDIR}/chimeratk.github.io/index.html"
+# Create new index.html file with header
+cat > "${MAININDEX}" <<EOF
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>ChimeraTK Documentation</title>
+  <meta charset="utf-8" />
+  <link href="bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body>
+
+  <div class="p-3 text-center" style="background-color:#e0f1fa">
+    <h1 class="mb-3">
+      <img src="ChimeraTK_Logo.svg" height="100" alt="ChimeraTK Logo" loading="lazy"/>
+    </h1>
+    <h4 class="mb-3">ChimeraTK Documentation</h4>
+  </div>
+
+  <br/>
+
+  <div class="container">
+
+    <div class="card">
+      <div class="card-body">
+        ChimeraTK is the &quot;Control system and Hardware Interface with Mapped and Extensible Register-based device Abstraction Tool Kit&quot;. It provides several libraries for accessing hardware and for creating control system applications. The source code repositories can be found on <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github"
+          viewBox="0 0 16 16">
+          <path
+            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8" />
+        </svg> <a href="https://github.com/ChimeraTK/">GitHub</a>.
+      </div>
+    </div>
+
+    <br/>
+
+    <div class="card">
+      <div class="card-header">Automatically generated documentation for ChimeraTK projects</div>
+      <div class="card-body">
+        <ul class="list-group">
+EOF
+
+for p in $PROJECTS; do
+  cd "${WDIR}"
+  echo "====== Project ${p} -- ${HOME}/dragon-artefacts/${USE_RUN}/${p}.tar.gz"
+
+  if tar xf "${HOME}/dragon-artefacts/${USE_RUN}/${p}.tar.gz" ./.dragon.build.log; then
+    DIR=`grep -- '-- Installing: /scratch/dragon/install-release/share/doc/' .dragon.build.log | head -n1 | sed -e 's_-- Installing: /scratch/dragon/install-release/share/doc/__' -e 's_/.*$__'`
+
+    if [ ! -z "${DIR}" ]; then
+      mkdir -p "${WDIR}/chimeratk.github.io/${p}/head"
+      rsync -a --delete "${WDIR}/install/share/doc/${DIR}/" "${WDIR}/chimeratk.github.io/${p}/head/"
+    else
+      echo "No documentation found!"
+    fi
+  else
+    echo "No build log found, build failed?"
+  fi
+
+  # Update main index.html if some documentation was found
+  if [ -d "${WDIR}/chimeratk.github.io/${p}/head" ]; then
+    if [[ $p == ChimeraTK* ]]; then
+      # obtain name to index.html of package, relative to root of chimeratk.github.io
+      cd "${WDIR}/chimeratk.github.io"
+      INDEX=`find "${p}/head" -name index.html`
+      if [ ! -z "${INDEX}" ]; then
+        echo '          <li class="list-group-item">' >> "${MAININDEX}"
+        echo "            ${p}" >> "${MAININDEX}"
+        echo '            <ul class="list-group list-group-horizontal">' >> "${MAININDEX}"
+        echo '              <li class="list-group-item">' >> "${MAININDEX}"
+        echo "                <a href=\"${INDEX}\">head</a>" >> "${MAININDEX}"
+        echo '              </li>' >> "${MAININDEX}"
+        echo '            </ul>' >> "${MAININDEX}"
+        echo '          </li>' >> "${MAININDEX}"
+      else
+        echo "Some documentation found, but no index.html!"
+      fi
+    fi
+  fi
+
+done
+
+# add footer to new index.html
+LASTUPDATE=`date`
+cat >> "${MAININDEX}" <<EOF
+        </ul>
+      </div>
+    </div>
+
+    <br />
+
+    <div class="card">
+      <div class="card-header">Binary packages</div>
+      <div class="card-body">
+        Ubuntu 20.04 packages are available in the DESY DOOCS repository, which can be added to your system like this:
+        <pre>
+wget -O - https://doocs-web.desy.de/pub/doocs/DOOCS-key.gpg.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/doocs-keyring.gpg
+sudo sh -c 'echo "deb https://doocs-web.desy.de/pub/doocs  jammy main" > /etc/apt/sources.list.d/doocs.list'
+</pre>
+      </div>
+    </div>
+
+    <br />
+
+    <div class="card">
+      <div class="card-header">Support and release notes</div>
+      <div class="card-body">
+        <ul>
+          <li>
+            To receive notifications about new releases, please subscribe to our mailing list by following
+            <a href="https://lists.desy.de/sympa/subscribe/chimeratk-announcements">this link</a>.
+          </li>
+          <li>
+            To contact the developers for support, please write to this mail address:
+            <a ref="mailto:chimeratk-support@desy.de">chimeratk-support@desy.de</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <br />
+
+  <footer class="text-end" style="background-color:#e0f1fa">
+    <div class="text-end p-2 small">
+        Generated on ${LASTUPDATE} in ${SECONDS} seconds.
+    </div>
+  </footer>
+
+</body>
+
+</html>
+EOF
+
+# commit and push
+cd "${WDIR}/chimeratk.github.io"
+git add .
+git commit -a -m "Automated documentation update"
+git push
