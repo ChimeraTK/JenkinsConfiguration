@@ -9,7 +9,8 @@ def getBuilds() {
             'focal-asan',
             'noble-debug',
             'tumbleweed-debug',
-            'tumbleweed-release']
+            'tumbleweed-release',
+            'focal-tag']
 }
 
 def getArtefactsDir() {

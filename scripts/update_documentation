@@ -8,9 +8,11 @@ source ${HOME}/dragon/bin/setup.sh
 CODENAME="focal"
 BUILDTYPE="release"
 USE_RUN="${CODENAME}/${BUILDTYPE}"
+USE_RUN_TAG="${CODENAME}/tag"
 
 WDIR="${HOME}/update_documentation_workdir"
 mkdir -p "${WDIR}/install"
+mkdir -p "${WDIR}/install-tags"
 
 PROJECTS=`dragon list | sort`
 
@@ -24,6 +26,8 @@ fi
 
 cd "${WDIR}/install"
 tar xf "${HOME}/dragon-artefacts/${USE_RUN}/install-${CODENAME}-${BUILDTYPE}.tar.gz"
+cd "${WDIR}/install-tags"
+tar xf "${HOME}/dragon-artefacts/${USE_RUN_TAG}/install-${CODENAME}-debug.tar.gz"
 cd "${WDIR}"
 
 MAININDEX="${WDIR}/chimeratk.github.io/index.html"
@@ -71,34 +75,63 @@ EOF
 
 for p in $PROJECTS; do
   cd "${WDIR}"
-  echo "====== Project ${p} -- ${HOME}/dragon-artefacts/${USE_RUN}/${p}.tar.gz"
+  echo "====== Project ${p}"
 
-  if tar xf "${HOME}/dragon-artefacts/${USE_RUN}/${p}.tar.gz" ./.dragon.build.log; then
+  if tar xf "${HOME}/dragon-artefacts/${USE_RUN}/${p}.tar.gz" ./.dragon.build.log ./.git-describe; then
     DIR=`grep -- '-- Installing: /scratch/dragon/install-release/share/doc/' .dragon.build.log | head -n1 | sed -e 's_-- Installing: /scratch/dragon/install-release/share/doc/__' -e 's_/.*$__'`
 
     if [ ! -z "${DIR}" ]; then
       mkdir -p "${WDIR}/chimeratk.github.io/${p}/head"
       rsync -a --delete "${WDIR}/install/share/doc/${DIR}/" "${WDIR}/chimeratk.github.io/${p}/head/"
+      mv .git-describe "${WDIR}/chimeratk.github.io/${p}/head/"
     else
-      echo "No documentation found!"
+      echo "No documentation found for head!"
     fi
   else
-    echo "No build log found, build failed?"
+    echo "No build log found for head, build failed?"
+  fi
+
+  if tar xf "${HOME}/dragon-artefacts/${USE_RUN_TAG}/${p}.tar.gz" ./.dragon.build.log ./.git-describe; then
+    DIR=`grep -- '-- Installing: /scratch/dragon/install-debug/share/doc/' .dragon.build.log | head -n1 | sed -e 's_-- Installing: /scratch/dragon/install-debug/share/doc/__' -e 's_/.*$__'`
+
+    if [ ! -z "${DIR}" ]; then
+      mkdir -p "${WDIR}/chimeratk.github.io/${p}/tag"
+      rsync -a --delete "${WDIR}/install-tags/share/doc/${DIR}/" "${WDIR}/chimeratk.github.io/${p}/tag/"
+      mv .git-describe "${WDIR}/chimeratk.github.io/${p}/tag/"
+    else
+      echo "No documentation found for tag!"
+    fi
+  else
+    echo "No build log found for tag, build failed?"
   fi
 
   # Update main index.html if some documentation was found
   if [ -d "${WDIR}/chimeratk.github.io/${p}/head" ]; then
     if [[ $p == ChimeraTK* ]]; then
-      # obtain name to index.html of package, relative to root of chimeratk.github.io
+      # Obtain name to index.html of package, relative to root of chimeratk.github.io
+      # We search for all index.html files, print them with the depth, then sort by depth, remove the depth and take
+      # the first. This way we get the index.html on the highest level.
       cd "${WDIR}/chimeratk.github.io"
-      INDEX=`find "${p}/head" -name index.html`
+      INDEX=`find "${p}/head" -name index.html -printf "%d %p\n" | sort -n | sed -e 's/^[0-9]* //' | head -n1`
       if [ ! -z "${INDEX}" ]; then
         echo '          <li class="list-group-item">' >> "${MAININDEX}"
         echo "            ${p}" >> "${MAININDEX}"
         echo '            <ul class="list-group list-group-horizontal">' >> "${MAININDEX}"
         echo '              <li class="list-group-item">' >> "${MAININDEX}"
-        echo "                <a href=\"${INDEX}\">head</a>" >> "${MAININDEX}"
+        DESCR=""
+        if [ -f "${WDIR}/chimeratk.github.io/${p}/head/.git-describe" ]; then
+          DESCR=" ("`cat "${WDIR}/chimeratk.github.io/${p}/head/.git-describe"`")"
+        fi
+        echo "                <a href=\"${INDEX}\">head${DESCR}</a>" >> "${MAININDEX}"
         echo '              </li>' >> "${MAININDEX}"
+        if [ -d "${WDIR}/chimeratk.github.io/${p}/tag" ]; then
+          cd "${WDIR}/chimeratk.github.io"
+          INDEX=`find "${p}/tag" -name index.html -printf "%d %p\n" | sort -n | sed -e 's/^[0-9]* //' | head -n1`
+          TAG=`cat "${WDIR}/chimeratk.github.io/${p}/tag/.git-describe"`
+          echo '              <li class="list-group-item">' >> "${MAININDEX}"
+          echo "                <a href=\"${INDEX}\">${TAG}</a>" >> "${MAININDEX}"
+          echo '              </li>' >> "${MAININDEX}"
+        fi
         echo '            </ul>' >> "${MAININDEX}"
         echo '          </li>' >> "${MAININDEX}"
       else

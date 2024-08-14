@@ -97,6 +97,7 @@ def call() {
 def dragonRunner(String label, String build) {
     script {
         node('Docker') {
+            def dragonbuild = build != 'tag' ? build : 'debug'
             def uioFile = sh (returnStdout: true, script: 'readlink /dev/ctkuiodummy')
             def dockerArgs = "-u 0 --privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 --device=/dev/${uioFile} -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins"
             docker.image("builder:${label}").inside(dockerArgs) {
@@ -112,18 +113,23 @@ cd /scratch
 cp -r /home/msk_jenkins/dragon/ dragon/
 source dragon/bin/setup.sh
 
-dragon build -t ${build} -k
-dragon test -t ${build}
+if [ ${build} == tag ]; then
+  dragon update --greatest-tag --orphan-on-failure
+fi
+
+dragon build -t ${dragonbuild} -k
+dragon test -t ${dragonbuild}
 echo Building artefacts...
-dragon foreach -t ${build} tar zcf /scratch/\\\\\\\${PROJECT}.tar.gz .
-tar zcf /scratch/install-${label}-${build}.tar.gz -C /scratch/dragon/install-${build} .
+dragon foreach -k -t source \'git describe --tags > \\\${DIRS_${dragonbuild}}/.git-describe\'
+dragon foreach -k -t ${dragonbuild} tar zcf /scratch/\\\\\\\${PROJECT}.tar.gz .
+tar zcf /scratch/install-${label}-${dragonbuild}.tar.gz -C /scratch/dragon/install-${dragonbuild} .
 mkdir -p "${dragon_builds.getArtefactsDir()}/${label}/${build}"
 cd "${dragon_builds.getArtefactsDir()}/${label}/${build}"
 cp /scratch/*.tar.gz .
 EOF
                 cat /scratch/script
                 chmod +x /scratch/script
-                sudo -H -E -u msk_jenkins /scratch/script                
+                sudo -H -E -u msk_jenkins /scratch/script
                 """
               }
             }}
