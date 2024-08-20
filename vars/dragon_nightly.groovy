@@ -34,7 +34,7 @@ def call() {
         // configure job options
         options {
             buildDiscarder(logRotator(numToKeepStr: '15'))    // discard old builds, just keep the latest 15 ones
-            timeout(time: 8, unit: 'HOURS')                   // abort stuck build
+            timeout(time: 10, unit: 'HOURS')                  // abort stuck build
             timestamps()                                      // enable timestamps in log messages
             disableConcurrentBuilds()                         // do not run job in parallel with itself (e.g. manually
                                                               // triggered build)
@@ -117,19 +117,35 @@ if [ ${build} == tag ]; then
   dragon update --greatest-tag --orphan-on-failure
 fi
 
+echo ===================================================================================================
+echo ==== Running dragon build
 dragon build -t ${dragonbuild} -k
+echo ===================================================================================================
+echo ==== Running test build
 dragon test -t ${dragonbuild}
-echo Building artefacts...
-dragon foreach -k -t source \'git describe --tags > \\\${DIRS_${dragonbuild}}/.git-describe\'
+echo ===================================================================================================
+echo ==== Running git describe
+dragon foreach -k -t source \'git describe --tags --always > \\\${DIRS_${dragonbuild}}/.git-describe\'
+echo ===================================================================================================
+echo ==== Creating build artefacts
 dragon foreach -k -t ${dragonbuild} tar zcf /scratch/\\\\\\\${PROJECT}.tar.gz .
+echo ===================================================================================================
+echo ==== Creating install artefact
 tar zcf /scratch/install-${label}-${dragonbuild}.tar.gz -C /scratch/dragon/install-${dragonbuild} .
+echo ===================================================================================================
+echo ==== Storing artefacts
 mkdir -p "${dragon_builds.getArtefactsDir()}/${label}/${build}"
+pwd
 cd "${dragon_builds.getArtefactsDir()}/${label}/${build}"
-cp /scratch/*.tar.gz .
+cp -v /scratch/*.tar.gz .
+echo ===================================================================================================
+echo ==== All done, terminating
 EOF
                 cat /scratch/script
                 chmod +x /scratch/script
+                echo ---- launching script...
                 sudo -H -E -u msk_jenkins /scratch/script
+                echo ---- script has terminated...
                 """
               }
             }}
