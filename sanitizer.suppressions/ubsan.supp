@@ -1,4 +1,0 @@
-# BEGIN Miss-aligned access from boost::lockfree_queue
-alignment:/usr/include/boost/lockfree/queue.hpp
-alignment:/usr/include/boost/lockfree/detail/freelist.hpp
-# END Miss-aligned access from boost::lockfree_queue
