@@ -67,8 +67,10 @@ def generateReport(String name, String label, String buildType) {
         script {
             // extract artefact
             sh """
-                pwd
-                rm -rf *
+                PWD=`pwd`
+                rm -rf "\${PWD}"
+                mkdir "\${PWD}"
+                cd "\${PWD}"
                 tar xf "${dragon_builds.getArtefactsDir()}/${label}/${buildType}/${name}.tar.gz"
             """
 
