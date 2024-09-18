@@ -5,7 +5,7 @@ ENV https_proxy ${https_proxy}
 RUN zypper refresh && \
     zypper up -y && \
     zypper dup -y --force-resolution --allow-vendor-change && \
-    zypper install -y lsb-release sysuser-tools iputils wget sudo tar gzip pigz && \
+    zypper install -y lsb-release sysuser-tools iputils wget sudo tar gzip pigz busybox-which && \
     zypper install -y gcc-c++ cmake valgrind cppcheck lcov doxygen procmail make gdb ninja git && \
     zypper install -y libboost_*-devel libqt5-qtbase-devel && \
     zypper install -y patchelf && \
