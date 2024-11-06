@@ -49,7 +49,8 @@ RUN apt-get update && \
         libtirpc-dev \
         libjpeg-dev \
         libmbedtls-dev \
-        meson && \
+        meson \
+        socat && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
