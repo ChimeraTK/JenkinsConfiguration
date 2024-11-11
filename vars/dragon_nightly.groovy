@@ -119,19 +119,19 @@ fi
 
 echo ===================================================================================================
 echo ==== Running dragon build
-dragon build -t ${dragonbuild} -k
+time dragon build -t ${dragonbuild} -k
 echo ===================================================================================================
 echo ==== Running test build
-dragon test -t ${dragonbuild}
+time timeout 7200 dragon test -t ${dragonbuild}
 echo ===================================================================================================
 echo ==== Running git describe
-dragon foreach -k -t source \'git describe --tags --always > \\\${DIRS_${dragonbuild}}/.git-describe\'
+time dragon foreach -k -t source \'git describe --tags --always > \\\${DIRS_${dragonbuild}}/.git-describe\'
 echo ===================================================================================================
 echo ==== Creating build artefacts
-dragon foreach -k -t ${dragonbuild} tar zcf /scratch/\\\\\\\${PROJECT}.tar.gz .
+time dragon foreach -k -t ${dragonbuild} tar zcf /scratch/\\\\\\\${PROJECT}.tar.gz .
 echo ===================================================================================================
 echo ==== Creating install artefact
-tar zcf /scratch/install-${label}-${dragonbuild}.tar.gz -C /scratch/dragon/install-${dragonbuild} .
+time tar zcf /scratch/install-${label}-${dragonbuild}.tar.gz -C /scratch/dragon/install-${dragonbuild} .
 echo ===================================================================================================
 echo ==== Storing artefacts
 mkdir -p "${dragon_builds.getArtefactsDir()}/${label}/${build}"
