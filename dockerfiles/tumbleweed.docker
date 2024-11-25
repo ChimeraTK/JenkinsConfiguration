@@ -66,4 +66,4 @@ RUN zypper refresh && \
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 
 # Start rpcbind at launch of the container, required for DOOCS
-ENTRYPOINT ["bash", "-c", "rpcbind -f -w ; bash"]
+ENTRYPOINT ["bash", "-c", "rpcbind ; bash"]
