@@ -93,7 +93,10 @@ FOLDER=$(mktemp -d -p /tmp/)
 cd "$FOLDER"
 git clone https://github.com/ChimeraTK/pciedummy-driver
 cd pciedummy-driver
-make install
+mkdir build
+cd build
+cmake .. -GNinja -DCMAKE_INSTALL_PREFIX=/usr
+ninja install
 modprobe mtcadummy
 popd
 rm -rf "$FOLDER"
