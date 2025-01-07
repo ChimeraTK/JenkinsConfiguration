@@ -112,8 +112,6 @@ mkdir build
 cd build
 cmake .. -GNinja -DCMAKE_INSTALL_PREFIX=/usr
 ninja install
-ninja dkms-remove || true
-ninja dkms-install
 modprobe uio-dummy
 popd
 rm -rf "$FOLDER"
