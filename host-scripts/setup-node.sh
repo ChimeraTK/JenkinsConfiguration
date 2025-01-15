@@ -97,6 +97,7 @@ mkdir build
 cd build
 cmake .. -GNinja -DCMAKE_INSTALL_PREFIX=/usr
 ninja install
+rmmod mtcadummy || true
 modprobe mtcadummy
 popd
 rm -rf "$FOLDER"
@@ -112,6 +113,7 @@ mkdir build
 cd build
 cmake .. -GNinja -DCMAKE_INSTALL_PREFIX=/usr
 ninja install
+rmmod uio-dummy || true
 modprobe uio-dummy
 popd
 rm -rf "$FOLDER"
