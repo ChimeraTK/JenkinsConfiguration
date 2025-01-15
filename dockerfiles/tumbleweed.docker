@@ -39,6 +39,7 @@ RUN zypper refresh && \
     zypper install -y armadillo-devel && \
     zypper install -y grpc-devel && \
     zypper install -y socat && \
+    zypper install -y fftw3-devel && \
     bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
     bash "-c" "echo \"root ALL = (ALL) NOPASSWD: ALL\" >> /etc/sudoers" && \
     useradd -u 30996 msk_jenkins && \
