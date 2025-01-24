@@ -116,6 +116,22 @@ source dragon/bin/setup.sh
 if [ ${build} == tag ]; then
   dragon update --greatest-tag --orphan-on-failure
 fi
+echo ===================================================================================================
+echo PWD for ${build}:
+pwd
+echo ENVIRONMENT for ${build}:
+env
+echo WHOAMI for ${build}:
+whoami
+echo GLAB AUTH STATUS for ${build}:
+glab auth status
+echo /scratch/dragon/sources/AmtfDbAccess: git remote get-url origin for ${build}:
+cd /scratch/dragon/sources/AmtfDbAccess
+git remote get-url origin
+cd /scratch
+echo PWD for ${build}:
+pwd
+echo continue for ${build}:
 
 echo ===================================================================================================
 echo ==== Running dragon build
