@@ -122,7 +122,7 @@ env
 echo WHOAMI for ${build}:
 whoami
 echo GLAB AUTH STATUS for ${build}:
-glab auth status
+/home/msk_jenkins/bin/glab auth status
 echo /scratch/dragon/sources/AmtfDbAccess: git remote get-url origin for ${build}:
 cd /scratch/dragon/sources/AmtfDbAccess
 git remote get-url origin
