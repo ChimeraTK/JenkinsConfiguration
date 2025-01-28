@@ -51,6 +51,7 @@ RUN apt-get update && \
         nlohmann-json3-dev \
         libmbedtls-dev \
         libjpeg-dev \
+        libtirpc-dev \
         socat && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3 && \
