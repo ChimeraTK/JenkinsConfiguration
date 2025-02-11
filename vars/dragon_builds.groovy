@@ -3,14 +3,15 @@
  * It will always not find it although the same syntax has worked in different context.
  */
 def getBuilds() {
-    return ['focal-debug',
-            'focal-release',
-            'focal-tsan',
-            'focal-asan',
-            'noble-debug',
+    return ['noble-debug',
+            'noble-release',
+            'noble-tsan',
+            'noble-asan',
+            'bookworm-debug',
+            'bookworm-release',
             'tumbleweed-debug',
             'tumbleweed-release',
-            'focal-tag']
+            'noble-tag']
 }
 
 def getArtefactsDir() {
