@@ -4,7 +4,7 @@
 
   The idea is to run all builds and tests within the single Dragon Nightly job (all projects sequentially) and
   generate artefacts containing the build directories (including log files) for each project and build type (like
-  focal-Debug or tumbleweed-Release). Once this is complete, a so-called reporter job for each project (but not per
+  noble-Debug or tumbleweed-Release). Once this is complete, a so-called reporter job for each project (but not per
   build type) is created and triggered, which will pick up the artefacts for the corresponding job and publish the
   result (as if the build/test would have been run inside that reporter job).
 

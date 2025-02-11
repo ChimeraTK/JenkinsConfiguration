@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:noble
 ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV DEBIAN_FRONTEND noninteractive

@@ -5,7 +5,7 @@ SECONDS=0
 
 source ${HOME}/dragon/bin/setup.sh
 
-CODENAME="focal"
+CODENAME="noble"
 BUILDTYPE="release"
 USE_RUN="${CODENAME}/${BUILDTYPE}"
 USE_RUN_TAG="${CODENAME}/tag"
