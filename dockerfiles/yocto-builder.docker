@@ -11,6 +11,6 @@ RUN apt-get update && \
             mesa-common-dev zstd liblz4-tool apt-utils && \
     locale-gen en_US.UTF-8 && \
     update-locale && \
-    pip3 install kas==3.2 && \
+    pip3 install --break-system-packages kas==3.2 && \
     useradd -u 30996 msk_jenkins
 
