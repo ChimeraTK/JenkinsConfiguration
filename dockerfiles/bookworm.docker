@@ -10,7 +10,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
     apt-get install -y sudo pipx locales pigz \
-        g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake ninja-build \
+        g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake ninja-build clang-format-19 \
         libboost-all-dev libxml++2.6-dev \
         patchelf \
         libldap2-dev libzmq3-dev rpcbind \
