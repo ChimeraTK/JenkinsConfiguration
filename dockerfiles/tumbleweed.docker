@@ -14,7 +14,7 @@ RUN zypper refresh && \
     bash "-c" "echo -e \"#\!/bin/bash\npython3 -m coverage $*\" > /usr/bin/python3-coverage" && \
     chmod +x /usr/bin/python3-coverage && \
     zypper install -y ncurses-devel && \
-    zypper install -y clang clang14 && \
+    zypper install -y clang clang19 && \
     zypper install -y python3-Sphinx && \
     zypper install -y graphviz && \
     zypper install -y kernel-devel && \
@@ -49,7 +49,7 @@ RUN zypper refresh && \
     ln -sfn /var/run/lock /var/lock && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
     pip3 install --break-system-packages meson && \
-    ln -sfn `find /usr/bin/clang-format-14*` /usr/bin/clang-format-14     # Fix to provide clang-format-14. In tumbleweed only the variant with full version name is available
+    ln -sfn `find /usr/bin/clang-format-19*` /usr/bin/clang-format-19     # Fix to provide clang-format-19. In tumbleweed only the variant with full version name is available
 
 #    zypper install -y diffutils && \  ----> probably now redundant, conflicts with busybox-diffutils
 
@@ -60,7 +60,7 @@ RUN zypper refresh && \
 
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
 
-# NOTE: Die to a bug (?), several packets cannot be added here, and commands not executed. They need --security-opt seccomp:unconfined, which is only avaible when running containers, not when creating images. There will be a post-processing step for the generated image in tumbleweed.modify_image.sh
+# NOTE: Due to a bug (?), several packets cannot be added here, and commands not executed. They need --security-opt seccomp:unconfined, which is only avaible when running containers, not when creating images. There will be a post-processing step for the generated image in tumbleweed.modify_image.sh
 
 # NOTE: install clang for latest clang compiler and clang14 for clang-format-14 because we fixed the fomatter to 14 to avoid inconsistencies
 
