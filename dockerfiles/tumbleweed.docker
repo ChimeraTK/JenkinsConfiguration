@@ -48,14 +48,7 @@ RUN zypper refresh && \
     chmod ugo+rwX /var/run/lock && \
     ln -sfn /var/run/lock /var/lock && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
-    pip3 install --break-system-packages meson && \
-    ln -sfn `find /usr/bin/clang-format-19*` /usr/bin/clang-format-19     # Fix to provide clang-format-19. In tumbleweed only the variant with full version name is available
-
-#    zypper install -y diffutils && \  ----> probably now redundant, conflicts with busybox-diffutils
-
-
-#    git config --system http.proxy http://xfelproxy.desy.de:3128 && \
-#    git config --system https.proxy http://xfelproxy.desy.de:3128
+    pip3 install --break-system-packages meson
 
 
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
