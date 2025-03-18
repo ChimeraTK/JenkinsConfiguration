@@ -3,6 +3,7 @@ ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV DEBIAN_FRONTEND noninteractive
 
+
 RUN apt-get update && \
     apt-get install -y software-properties-common apt-utils && \
     apt-get install -y wget && \
@@ -10,7 +11,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
     apt-get install -y sudo pipx locales pigz \
-        g++ valgrind cppcheck lcov doxygen procmail make git gdb cmake ninja-build clang-format-19 \
+        g++ valgrind cppcheck lcov doxygen procmail make git git-lfs gdb cmake ninja-build clang-format-19 \
         libboost-all-dev libxml++2.6-dev \
         patchelf \
         libldap2-dev libzmq3-dev rpcbind \
@@ -54,6 +55,23 @@ RUN apt-get update && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
+
+
+# Add gcc 13.3 packages. Packages are built with the build-gcc-13.3-bookworm.sh from the DebianPackagingScript repo.
+RUN mkdir -p /usr/local/mydebs/ && \
+    cd /usr/local/mydebs/ && \
+    git lfs install && \
+    git clone https://github.com/ChimeraTK/gcc-13-on-bookworm.git . && \
+    cp local.sources /etc/apt/sources.list.d && \
+    apt-get update
+RUN apt-get install -y 'g\+\+-13' && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 13 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 13 && \
+    update-alternatives --set gcc /usr/bin/gcc-13 && \
+    update-alternatives --set g++ /usr/bin/g++-13
+
 
 ADD lcov-to-cobertura-xml /common/lcov_cobertura-1.6
 
