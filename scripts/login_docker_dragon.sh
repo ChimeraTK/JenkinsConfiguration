@@ -3,8 +3,8 @@
 if [ $# != 1 -a $# != 2 -a $# != 3 ]; then
   echo "Usage: ./login_docker.sh <label> [<buildType> [<jobName>]]"
   echo "  <label> denomiates the Linux system name, e.g. noble, tubleweed etc."
-  echo "  <jobName> denomiates a cmake project name whose build artefact should be unpacked into the container."
   echo "  <buildType> denonminates the build type to retreive the job and artefacts for, i.e. debug, release, asan or tsan."
+  echo "  <jobName> denomiates a cmake project name whose build artefact should be unpacked into the container."
   exit 1
 fi
 
