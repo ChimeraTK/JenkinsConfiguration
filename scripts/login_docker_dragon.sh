@@ -15,7 +15,7 @@ projectName=$3
 ARTEFACTS="/home/msk_jenkins/dragon-artefacts"
 
 # should be the same as in the pipeline script (excluding the -u 0)
-DOCKER_PARAMS="--privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 --device=/dev/ctkuiodummy -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b"
+DOCKER_PARAMS="--privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 --device=/dev/ctkuiodummy -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b --network ip6net"
 
 # create and start container (use options to allow gdb inside!)
 ID=`docker create --cap-add=SYS_PTRACE --security-opt seccomp=unconfined -i ${DOCKER_PARAMS} -v /home/msk_jenkins:/home/msk_jenkins builder:${label}`
