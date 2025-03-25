@@ -154,10 +154,10 @@ cat >> "${MAININDEX}" <<EOF
     <div class="card">
       <div class="card-header">Binary packages</div>
       <div class="card-body">
-        Ubuntu 20.04 packages are available in the DESY DOOCS repository, which can be added to your system like this:
+        Ubuntu 24.04 packages are available in the DESY DOOCS repository, which can be added to your system like this:
         <pre>
 wget -O - https://doocs-web.desy.de/pub/doocs/DOOCS-key.gpg.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/doocs-keyring.gpg
-sudo sh -c 'echo "deb https://doocs-web.desy.de/pub/doocs  jammy main" > /etc/apt/sources.list.d/doocs.list'
+sudo sh -c 'echo "deb https://doocs-web.desy.de/pub/doocs  $(lsb_release -cs) main" > /etc/apt/sources.list.d/doocs.list'
 </pre>
       </div>
     </div>
