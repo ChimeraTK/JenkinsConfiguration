@@ -12,8 +12,7 @@ for repo in $REPOLIST; do
   NMIRRORS=$(( NMIRRORS + 1 ))
 
   echo "=== Mirroring $repo"
-
-  if [[ "$repo" == "chimeratk.github.io" ]]; then
+  if [[ "${repo}" == "chimeratk.github.io" ]] || [[ "${repo}" == "gcc-13-on-bookworm" ]]; then
     echo "(Skipping, big and easy to recreate so no backup necessary)"
     continue
   fi
