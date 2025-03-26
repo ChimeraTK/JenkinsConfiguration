@@ -61,7 +61,7 @@ RUN apt-get update && \
 RUN mkdir -p /usr/local/mydebs/ && \
     cd /usr/local/mydebs/ && \
     git lfs install && \
-    git clone https://github.com/ChimeraTK/gcc-13-on-bookworm.git . && \
+    git clone https://gitlab.desy.de/msk-sw/utilities/gcc-13-on-bookworm.git . && \
     cp local.sources /etc/apt/sources.list.d && \
     apt-get update
 RUN apt-get install -y 'g\+\+-13' && \
