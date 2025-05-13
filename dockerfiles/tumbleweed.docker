@@ -48,7 +48,8 @@ RUN zypper refresh && \
     chmod ugo+rwX /var/run/lock && \
     ln -sfn /var/run/lock /var/lock && \
     ln -sfn /usr/lib64/libzmq.so.5 /usr/lib64/libzmq.so.3 && \
-    pip3 install --break-system-packages meson
+    zypper install -y meson
+    # pip3 install --break-system-packages meson
 
 
 # NOTE: This last line (symlink for libzmq.so.3) is a hack for a bug in DOOCS serverlib, which has the version number hardcoded.
