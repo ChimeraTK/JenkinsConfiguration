@@ -54,6 +54,8 @@ def call() {
                                 export PATH=/home/msk_jenkins/bin:$PATH
                                 cd /home/msk_jenkins/dragon
                                 git pull
+                                git clean -f -d -x
+                                git submodule update
                                 source /home/msk_jenkins/dragon/bin/setup.sh
                                 dragon updatedb
                                 dragon select --all
