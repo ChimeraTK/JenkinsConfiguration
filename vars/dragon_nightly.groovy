@@ -106,7 +106,9 @@ def dragonRunner(String label, String build) {
                 sh """
                     mkdir -p /scratch
                     chown msk_jenkins:msk_jenkins /scratch
-                    ln -sf /dev/uio* /dev/ctkuiodummy
+                    if [ ! -e /dev/ctkuiodummy ]; then
+                      ln -sf /dev/uio* /dev/ctkuiodummy
+                    fi
                     cat > /scratch/script <<EOF
 #!/bin/bash
 cd /scratch
