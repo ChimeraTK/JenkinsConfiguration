@@ -100,7 +100,7 @@ def dragonRunner(String label, String build) {
     script {
         node('Docker') {
             def dragonbuild = build != 'tag' ? build : 'debug'
-            def uioFile = sh (returnStdout: true, script: 'readlink /dev/ctkuiodummy')
+            def uioFile = sh (returnStdout: true, script: 'readlink /dev/ctkuiodummy || echo ctkuiodummy')
             def dockerArgs = "-u 0 --privileged --shm-size=1GB --device=/dev/mtcadummys0 --device=/dev/mtcadummys1 --device=/dev/mtcadummys2 --device=/dev/mtcadummys3 --device=/dev/llrfdummys4 --device=/dev/noioctldummys5 --device=/dev/pcieunidummys6 --device=/dev/${uioFile} -v /var/run/lock/mtcadummy:/var/run/lock/mtcadummy -v /opt/matlab_R2016b:/opt/matlab_R2016b -v /home/msk_jenkins:/home/msk_jenkins --network ip6net"
             docker.image("builder:${label}").inside(dockerArgs) {
                 sh """
