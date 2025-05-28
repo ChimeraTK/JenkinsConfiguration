@@ -51,7 +51,8 @@ RUN apt-get update && \
         libjpeg-dev \
         libmbedtls-dev \
         meson \
-        socat && \
+        socat \
+        gcc-arm-none-eabi && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
