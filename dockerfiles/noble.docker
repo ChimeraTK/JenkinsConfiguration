@@ -52,7 +52,8 @@ RUN apt-get update && \
         libmbedtls-dev \
         meson \
         socat \
-        gcc-arm-none-eabi && \
+        gcc-arm-none-eabi \
+        libusb-1.0-0-dev && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
