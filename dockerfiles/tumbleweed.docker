@@ -41,7 +41,8 @@ RUN zypper refresh && \
     zypper install -y socat && \
     zypper install -y fftw3-devel && \
     zypper install -y libpqxx-devel postgresql-devel && \
-    zypper install -y python3*-argcomplete && \
+    zypper install -y python3*-argcomplete &&
+    zypper install -y cross-arm-none-gcc15 && \
     bash "-c" "echo \"Defaults set_home\" >> /etc/sudoers" && \
     bash "-c" "echo \"root ALL = (ALL) NOPASSWD: ALL\" >> /etc/sudoers" && \
     useradd -u 30996 msk_jenkins && \
