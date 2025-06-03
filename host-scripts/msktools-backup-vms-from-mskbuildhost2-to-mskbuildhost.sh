@@ -1,8 +1,12 @@
 #!/bin/bash
 
 # run this script on mskbuildhost.desy.de (NOT mskbuildhost2!)
+if [ "$( hostname )" != "mskbuildhost" ]; then
+  echo "run this script on mskbuildhost.desy.de (NOT mskbuildhost2!)"
+  exit 1
+fi
 
-VMS_TO_BACKUP='msktools-fwdocu msktools-gitlab msktools-jenkins-fw msktools-jenkins-sw msktools-redmine msktools-oncallsummarytool msktools-oncallreport'
+VMS_TO_BACKUP='msktools-fwdocu msktools-jenkins-fw msktools-jenkins-sw msktools-redmine msktools-oncallsummarytool msktools-oncallreport'
 BACKUP_TARGET='/msktools-backup'
 RSYNC_ARGS='-ax --exclude=swap.img --delete --delete-before'
 
