@@ -14,3 +14,4 @@ done
 
 rsync ${RSYNC_ARGS} "mskbuildhost2:/" "${BACKUP_TARGET}/mskbuildhost2-root/"
 rsync ${RSYNC_ARGS} "mskbuildhost2:/var" "${BACKUP_TARGET}/mskbuildhost2-var/"
+rsync ${RSYNC_ARGS} "mskbuildhost2:/home/www/" "${BACKUP_TARGET}/mskbuildhost2-home-www/"
