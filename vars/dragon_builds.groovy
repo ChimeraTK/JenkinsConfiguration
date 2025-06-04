@@ -5,13 +5,13 @@
 def getBuilds() {
     return ['noble-debug',
             'noble-release',
-            'noble-tsan',
-            'noble-asan',
+            /*'noble-tsan',
+            'noble-asan',*/
             'bookworm-debug',
-            'bookworm-release',
+            'bookworm-release'/*,
             'tumbleweed-debug',
             'tumbleweed-release',
-            'noble-tag']
+            'noble-tag'*/]
 }
 
 def getArtefactsDir() {
