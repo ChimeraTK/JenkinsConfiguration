@@ -3,14 +3,18 @@
 if [ $# != 1 -a $# != 2 -a $# != 3 ]; then
   echo "Usage: ./login_docker.sh <label> [<buildType> [<jobName>]]"
   echo "  <label> denomiates the Linux system name, e.g. noble, tubleweed etc."
-  echo "  <buildType> denonminates the build type to retreive the job and artefacts for, i.e. debug, release, asan or tsan."
+  echo "  <buildType> denonminates the build type to retreive the job and artefacts for, i.e. debug, release, tag, asan or tsan."
   echo "  <jobName> denomiates a cmake project name whose build artefact should be unpacked into the container."
   exit 1
 fi
 
-label=$1
-buildType=$2
-projectName=$3
+label="$1"
+buildType="$2"
+buildName="$2"
+projectName="$3"
+if [ "$buildType" == "tag" ]; then
+  buildType="debug"
+fi
 
 ARTEFACTS="/home/msk_jenkins/dragon-artefacts"
 
@@ -28,13 +32,13 @@ docker start ${ID} || exit 1
 
   # download and unpack install artefact
   if [ -n "${buildType}" ]; then
-    artefact=${ARTEFACTS}/${label}/${buildType}/install-*.tar.gz
+    artefact=${ARTEFACTS}/${label}/${buildName}/install-*.tar.gz
     targetdir="/scratch/dragon/install-${buildType}"
     docker exec -u 0 -it ${ID} bash -c "mkdir -p ${targetdir} ; cd ${targetdir} ; tar xf ${artefact} --keep-directory-symlink"
 
     if [ -n "${projectName}" ]; then
       # download and unpack build artefact
-      artefact="${ARTEFACTS}/${label}/${buildType}/${projectName}.tar.gz"
+      artefact="${ARTEFACTS}/${label}/${buildName}/${projectName}.tar.gz"
       targetdir="/scratch/dragon/build/${projectName}-${buildType}"
       docker exec -u 0 -it ${ID} bash -c "mkdir -p ${targetdir} ; cd ${targetdir} ; tar xf ${artefact} --keep-directory-symlink"
     fi
