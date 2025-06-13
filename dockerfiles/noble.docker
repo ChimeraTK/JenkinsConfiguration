@@ -54,7 +54,7 @@ RUN apt-get update && \
         socat \
         gcc-arm-none-eabi \
         libusb-1.0-0-dev \
-        pybind11-dev && \
+        pybind11-dev mypy && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
