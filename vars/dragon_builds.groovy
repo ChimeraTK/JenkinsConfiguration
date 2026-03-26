@@ -5,8 +5,8 @@
 def getBuilds() {
     return ['noble-debug',
             'noble-release',
-            /*'noble-tsan',
-            'noble-asan',*/
+            /*'noble-tsan',*/
+            'noble-asan',
             'bookworm-debug',
             'bookworm-release',
             /*'tumbleweed-debug',
