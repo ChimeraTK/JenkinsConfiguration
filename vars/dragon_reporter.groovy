@@ -98,21 +98,12 @@ def generateReport(String name, String label, String buildType) {
 
             // report ctest results
             if(fileExists('CTestTestfile.cmake')) {
-              if(buildType != 'asan' && buildType != 'tsan') {
-                xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ], tools: [ CTest(pattern: "Testing/*/*.xml") ])
-              }
-              else {
-                xunit (thresholds: [ skipped(unstableThreshold: '0'), failed(unstableThreshold: '0') ], tools: [ CTest(pattern: "Testing/*/*.xml") ])
-              }
+              xunit (thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ], tools: [ CTest(pattern: "Testing/*/*.xml") ])
             }
 
             // report build failures through job status (test failures are reported through xunit plugin)
             if(!fileExists('.dragon.build.success')) {
               echo("================= BUILD FAILED ==================")
-              if(buildType != 'asan' && buildType != 'tsan') {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    sh "exit 1"
-                }
               }
               else {
                 // asan/tsan failures will only warn
