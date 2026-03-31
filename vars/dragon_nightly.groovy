@@ -127,10 +127,10 @@ echo WHOAMI for ${build}:
 whoami
 echo GLAB AUTH STATUS for ${build}:
 /home/msk_jenkins/bin/glab auth status
-echo /scratch/dragon/sources/AmtfDbAccess: git remote get-url origin for ${build}:
-cd /scratch/dragon/sources/AmtfDbAccess
-git remote get-url origin
-cd /scratch
+echo ls /scratch/dragon/database/sanitizer.suppressions
+ls /scratch/dragon/database/sanitizer.suppressions
+echo cat /scratch/dragon/database/sanitizer.suppressions/lsan.supp
+cat /scratch/dragon/database/sanitizer.suppressions/lsan.supp
 echo PWD for ${build}:
 pwd
 echo continue for ${build}:
