@@ -58,7 +58,8 @@ def call() {
                                 git submodule update
                                 source /home/msk_jenkins/dragon/bin/setup.sh
                                 dragon updatedb
-                                dragon select --all
+                                #dragon select --all
+                                dragon select ChimeraTK-ApplicationCore
                                 dragon update --https --reset-url --default-branch --reset-hard-and-clean --orphan-on-failure
                                 rm -rf "${dragon_builds.getArtefactsDir()}"
                                 dragon list --selected > \${WORKSPACE}/joblist.txt
@@ -119,6 +120,8 @@ if [ ${build} == tag ]; then
   dragon update --greatest-tag --orphan-on-failure
 fi
 echo ===================================================================================================
+export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-18
+export ASAN_OPTIONS="symbolize=1:external_symbolizer_path=/usr/bin/llvm-symbolizer-18:fast_unwind_on_malloc=0:$ASAN_OPTIONS"
 echo PWD for ${build}:
 pwd
 echo ENVIRONMENT for ${build}:
