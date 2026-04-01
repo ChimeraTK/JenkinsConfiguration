@@ -104,10 +104,8 @@ def generateReport(String name, String label, String buildType) {
             // report build failures through job status (test failures are reported through xunit plugin)
             if(!fileExists('.dragon.build.success')) {
               echo("================= BUILD FAILED ==================")
-              }
-              else {
-                // asan/tsan failures will only warn
-                currentBuild.result = 'UNSTABLE'
+              catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                sh "exit 1"
               }
             }
             else {
