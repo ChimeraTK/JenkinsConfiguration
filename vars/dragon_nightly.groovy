@@ -120,8 +120,7 @@ if [ ${build} == tag ]; then
   dragon update --greatest-tag --orphan-on-failure
 fi
 echo ===================================================================================================
-export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-18
-export LSAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-18
+export DEBUGINFOD_URLS=https://debuginfod.ubuntu.com
 echo PWD for ${build}:
 pwd
 echo ENVIRONMENT for ${build}:
