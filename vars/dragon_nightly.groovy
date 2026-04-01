@@ -121,7 +121,9 @@ if [ ${build} == tag ]; then
 fi
 echo ===================================================================================================
 export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-18
+export LSAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-18
 export ASAN_OPTIONS="symbolize=1:external_symbolizer_path=/usr/bin/llvm-symbolizer-18:fast_unwind_on_malloc=0:\$ASAN_OPTIONS"
+export LSAN_OPTIONS="symbolize=1:external_symbolizer_path=/usr/bin/llvm-symbolizer-18:fast_unwind_on_malloc=0:\$LSAN_OPTIONS"
 echo PWD for ${build}:
 pwd
 echo ENVIRONMENT for ${build}:
