@@ -58,8 +58,7 @@ def call() {
                                 git submodule update
                                 source /home/msk_jenkins/dragon/bin/setup.sh
                                 dragon updatedb
-                                #dragon select --all
-                                dragon select ChimeraTK-ApplicationCore
+                                dragon select --all
                                 dragon update --https --reset-url --default-branch --reset-hard-and-clean --orphan-on-failure
                                 rm -rf "${dragon_builds.getArtefactsDir()}"
                                 dragon list --selected > \${WORKSPACE}/joblist.txt
@@ -129,14 +128,9 @@ echo WHOAMI for ${build}:
 whoami
 echo GLAB AUTH STATUS for ${build}:
 /home/msk_jenkins/bin/glab auth status
-echo ls /scratch/dragon/database/sanitizer.suppressions
-ls /scratch/dragon/database/sanitizer.suppressions
-echo cat /scratch/dragon/database/sanitizer.suppressions/lsan.supp
-cat /scratch/dragon/database/sanitizer.suppressions/lsan.supp
 echo PWD for ${build}:
 pwd
 echo continue for ${build}:
-
 echo ===================================================================================================
 echo ==== Running dragon build
 time dragon build -t ${dragonbuild} -k
