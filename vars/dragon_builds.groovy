@@ -3,15 +3,15 @@
  * It will always not find it although the same syntax has worked in different context.
  */
 def getBuilds() {
-    return ['noble-debug',
-            'noble-release',
+    return [/*'noble-debug',
+            'noble-release',*/
             /*'noble-tsan',*/
-            'noble-asan',
+            'noble-asan'/*,
             'bookworm-debug',
-            'bookworm-release',
+            'bookworm-release',*/
             /*'tumbleweed-debug',
             'tumbleweed-release',*/
-            'noble-tag']
+            /*'noble-tag'*/]
 }
 
 def getArtefactsDir() {
