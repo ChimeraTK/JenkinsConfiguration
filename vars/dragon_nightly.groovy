@@ -118,6 +118,11 @@ source dragon/bin/setup.sh
 if [ ${build} == tag ]; then
   dragon update --greatest-tag --orphan-on-failure
 fi
+
+# Change PYTHONPATH from setup.sh to current build-type
+PYTHONPATH="\\\${PYTHONPATH//install-debug/install-${build}}"
+export PYTHONPATH
+
 echo ===================================================================================================
 export DEBUGINFOD_URLS=https://debuginfod.ubuntu.com
 echo PWD for ${build}:
