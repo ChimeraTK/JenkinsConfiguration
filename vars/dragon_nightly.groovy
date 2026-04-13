@@ -120,10 +120,8 @@ if [ ${build} == tag ]; then
 fi
 
 # Change PYTHONPATH from setup.sh to current build-type
-if [ ${build} = "asan" ] || [ ${build} = "tsan" ]; then
-  PYTHONPATH="${PYTHONPATH//install-debug/install-${build}}"
-  export PYTHONPATH
-fi
+PYTHONPATH="${PYTHONPATH//install-debug/install-${build}}"
+export PYTHONPATH
 
 echo ===================================================================================================
 export DEBUGINFOD_URLS=https://debuginfod.ubuntu.com
