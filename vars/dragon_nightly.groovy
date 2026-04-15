@@ -120,7 +120,7 @@ if [ ${build} == tag ]; then
 fi
 
 # Change PYTHONPATH from setup.sh to current build-type
-PYTHONPATH="${PYTHONPATH//install-debug/install-${build}}"
+PYTHONPATH=`echo $PYTHONPATH | sed -e "s,install-debug,install-${build},"`
 export PYTHONPATH
 
 echo ===================================================================================================
