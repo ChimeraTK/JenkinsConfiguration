@@ -115,6 +115,14 @@ cd /scratch
 cp -r /home/msk_jenkins/dragon/ dragon/
 source dragon/bin/setup.sh
 
+# Always build a set of debug python bindings to be used in supporting scripts in tests, unless
+# we are a debug build anyway
+if [ ${build} != debug ]; then
+  dragon select ChimeraTK-DeviceAccess-PythonBindings
+  dragon build || true
+  dragon select --all
+fi
+  
 if [ ${build} == tag ]; then
   dragon update --greatest-tag --orphan-on-failure
 fi
