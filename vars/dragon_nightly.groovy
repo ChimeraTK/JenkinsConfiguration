@@ -117,8 +117,11 @@ source dragon/bin/setup.sh
 
 # Always build a set of debug python bindings to be used in supporting scripts in tests, unless
 # we are a debug build anyway
+# Same for the ApplicationCore python modules
 if [ ${build} != debug ]; then
   dragon select ChimeraTK-DeviceAccess-PythonBindings
+  dragon build || true
+  dragon select ChimeraTK-ApplicationCore
   dragon build || true
   dragon select --all
 fi
