@@ -29,7 +29,7 @@ RUN apt-get update && \
         clang clang-format-14 clang-format-19 \
         libhdf5-dev \
         liblua5.2-dev \
-        python3-sphinx \
+        python3-sphinx python3-sphinx-autodoc-typehints \
         libgsl-dev \
         libssl-dev \
         libpqxx-dev \
