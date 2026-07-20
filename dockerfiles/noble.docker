@@ -26,7 +26,7 @@ RUN apt-get update && \
         libncurses5-dev &&\
     apt-get install -y linux-headers-generic \
         graphviz \
-        clang clang-format-14 clang-format-19 \
+        clang-19 clang-format-19 \
         libhdf5-dev \
         liblua5.2-dev \
         python3-sphinx python3-sphinx-autodoc-typehints python3-sphinx-rtd-theme \
@@ -56,6 +56,7 @@ RUN apt-get update && \
         libusb-1.0-0-dev \
         pybind11-dev mypy \
         libmysqlclient-dev && \
+    sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100 --slave /usr/bin/clang++ clang++ /usr/bin/clang++-19 && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
 
