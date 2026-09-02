@@ -2,6 +2,8 @@
 # shellcheck disable=SC2016
 REPOLIST=$( gh repo list ChimeraTK -L 300 | grep '^ChimeraTK/' | sed -e 's_^ChimeraTK/__' -e 's_[[:space:]].*$__' )
 
+set -x
+
 export GITLAB_HOST=gitlab.desy.de
 
 NMIRRORS=0
@@ -44,8 +46,19 @@ for repo in $REPOLIST; do
 
   git remote update
 
+  # obtain default branch
+  default_branch=$( git default-branch )
+
   # Make sure the master branch is protected, just in case a previous run of this script was interrupted in the wrong place
-  glab api "projects/chimeratk-mirror%2F$repo/protected_branches/master" -F allow_force_push=false -X PATCH
+  # Try this only if the branch actually exists...
+  if [ -n "$( git ls-remote --heads gitlab refs/heads/${default_branch} )" ]; then
+    PROTECTFAIL=0
+    glab api "projects/chimeratk-mirror%2F$repo/protected_branches/${default_branch}" -F allow_force_push=false -X PATCH || PROTECTFAIL=1
+    if [ "${PROTECTFAIL}" != "1" ]; then
+      # Branch is probably not yet protected at all...
+      glab api "projects/chimeratk-mirror%2F$repo/protected_branches?name=${default_branch}&push_access_level=40&merge_access_level=40&unprotect_access_level=40"
+    fi
+  fi
 
   PUSHFAIL=0
   # The following 2 lines are similar to "git push --mirror gitlab" but do not delete anything
@@ -56,18 +69,18 @@ for repo in $REPOLIST; do
     # Pushing to protected master might fail if upstream had force-pushed changes to master
 
     # First create a backup of the previous master branch with a new, unique name and protect it
-    MASTER_BACKUP_NAME="master-$( date +%Y-%m-%d_%H.%M.%S )"
-    git branch "$MASTER_BACKUP_NAME" gitlab/master
+    MASTER_BACKUP_NAME="${default_branch}-$( date +%Y-%m-%d_%H.%M.%S )"
+    git branch "$MASTER_BACKUP_NAME" "gitlab/${default_branch}"
     git push gitlab "$MASTER_BACKUP_NAME"
 
     # Now unprotect the master branch, retry push and finally protect the branch again
-    glab api "projects/chimeratk-mirror%2F$repo/protected_branches/master" -F allow_force_push=true -X PATCH
+    glab api "projects/chimeratk-mirror%2F$repo/protected_branches/${default_branch}" -F allow_force_push=true -X PATCH
 
     PUSHFAIL=0
     git push gitlab --all --force || PUSHFAIL=1
     git push gitlab --tags --force || PUSHFAIL=1
 
-    glab api "projects/chimeratk-mirror%2F$repo/protected_branches/master" -F allow_force_push=false -X PATCH
+    glab api "projects/chimeratk-mirror%2F$repo/protected_branches/${default_branch}" -F allow_force_push=false -X PATCH
 
     # Protect the backed-up previous master branch
     glab api "projects/chimeratk-mirror%2F$repo/protected_branches/" -F "name=$MASTER_BACKUP_NAME" -F allow_force_push=false -X POST
