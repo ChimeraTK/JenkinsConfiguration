@@ -82,6 +82,9 @@ for repo in $REPOLIST; do
   cd ..
   rm -rf temp-checkout
 
+  echo "Sleeping to avoid being rate limited..."
+  sleep 30
+
 done
 
 if [ $NMIRRORS -lt 10 ]; then
