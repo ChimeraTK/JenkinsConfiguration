@@ -56,6 +56,8 @@ RUN apt-get update && \
         libusb-1.0-0-dev \
         pybind11-dev mypy \
         libmysqlclient-dev && \
+    apt-get install -y avr-gcc \
+        avr-libc && \
     sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100 --slave /usr/bin/clang++ clang++ /usr/bin/clang++-19 && \
     useradd -u 30996 msk_jenkins && \
     ln -sfn /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/x86_64-linux-gnu/libzmq.so.3
