@@ -24,7 +24,10 @@ if [ "$DISTRIB_ID" = "Ubuntu" -o "$DISTRIB_ID" = "Debian" ]; then
   apt-get install -y g++ valgrind cppcheck lcov doxygen procmail make git gdb
   apt-get install -y cmake ninja-build
   apt-get install -y dkms
+  # for the LDD firmware
   apt-get install -y gcc-arm-none-eabi
+  # for the FRED firmware
+  apt-get install -y gcc-avr avr-libc
   # for ChimeraTK core libraries:
   apt-get install -y libboost-all-dev libxml++2.6-dev
   # for converting pytest results to xUnit
